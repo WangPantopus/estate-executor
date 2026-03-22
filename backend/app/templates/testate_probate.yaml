@@ -182,12 +182,14 @@
 - key: "file_state_estate_tax"
   title: "File State Estate/Inheritance Tax Return"
   description: "File state estate or inheritance tax return if required by the jurisdiction"
-  instructions: "Check whether the decedent's state of residence or states where property is located impose an estate or inheritance tax. State exemption thresholds are often lower than the federal threshold. Deadlines vary by state."
+  instructions: "Check whether the decedent's state of residence or states where property is located impose an estate or inheritance tax. State exemption thresholds are often lower than the federal threshold. Deadlines vary by state but 9 months from date of death is the most common default."
   phase: "tax"
   priority: "normal"
   default_assignee_role: "professional"
   requires_document: true
-  due_date_rule: null
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 9
   dependencies:
     - "inventory_bank_investment_accounts"
   conditions: null
