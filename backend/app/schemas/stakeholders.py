@@ -86,7 +86,7 @@ class StakeholderResponse(BaseModel):
     email: str
     full_name: str
     role: StakeholderRole
-    relationship: str | None = Field(None, validation_alias="relationship_label")
+    relationship: str | None = Field(None, alias="relationship_label")
     invite_status: InviteStatus
     created_at: datetime
 
