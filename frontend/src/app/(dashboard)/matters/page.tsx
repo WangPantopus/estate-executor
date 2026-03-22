@@ -1,8 +1,11 @@
+import { Suspense } from "react";
+import { LoadingState } from "@/components/layout/LoadingState";
+import { MattersPageContent } from "./_components/MattersPageContent";
+
 export default function MattersPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Matters</h1>
-      <p className="mt-2 text-muted-foreground">Estate matters will appear here.</p>
-    </div>
+    <Suspense fallback={<LoadingState variant="table" count={5} />}>
+      <MattersPageContent />
+    </Suspense>
   );
 }
