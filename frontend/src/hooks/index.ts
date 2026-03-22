@@ -12,6 +12,7 @@ export {
   useRemoveFirmMember,
   // Matters
   useMatters,
+  usePortfolio,
   useMatterDashboard,
   useCreateMatter,
   useUpdateMatter,

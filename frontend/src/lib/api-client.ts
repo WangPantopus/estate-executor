@@ -57,6 +57,7 @@ import type {
   MatterFilters,
   MatterUpdate,
   PaginatedResponse,
+  PortfolioResponse,
   RegisterVersionRequest,
   Stakeholder,
   StakeholderInvite,
@@ -299,6 +300,14 @@ export class ApiClient {
     params?: MatterFilters,
   ): Promise<PaginatedResponse<Matter>> {
     return this.get(`/firms/${firmId}/matters${buildQueryString(params)}`);
+  }
+
+  async getPortfolio(
+    firmId: string,
+    params?: MatterFilters,
+  ): Promise<PortfolioResponse> {
+    const qs = buildQueryString({ ...params, view: "portfolio" });
+    return this.get(`/firms/${firmId}/matters${qs}`);
   }
 
   async getMatterDashboard(

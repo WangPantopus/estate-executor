@@ -433,52 +433,169 @@ async def get_portfolio(
     db: AsyncSession,
     *,
     firm_id: uuid.UUID,
+    status: MatterStatus | None = None,
+    phase: MatterPhase | None = None,
+    search: str | None = None,
+    jurisdiction_state: str | None = None,
     page: int = 1,
     per_page: int = 50,
-) -> tuple[list[dict[str, Any]], int]:
-    """Get portfolio view: all matters with summary stats for firm dashboard."""
-    today = date.today()
+) -> dict[str, Any]:
+    """Get portfolio view: all matters with summary stats for firm dashboard.
 
-    # Count total matters
+    Uses SQL aggregation to compute all stats in minimal queries (no N+1).
+    Returns dict with: summary, items, total.
+    """
+    from datetime import timedelta
+
+    from app.models.communications import Communication
+    from app.models.enums import CommunicationType
+
+    today = date.today()
+    week_end = today + timedelta(days=7)
+
+    # Build base filter
+    base_filters: list[Any] = [Matter.firm_id == firm_id]
+    if status is not None:
+        base_filters.append(Matter.status == status)
+    if phase is not None:
+        base_filters.append(Matter.phase == phase)
+    if jurisdiction_state is not None:
+        base_filters.append(Matter.jurisdiction_state == jurisdiction_state)
+    if search:
+        search_term = f"%{search}%"
+        base_filters.append(
+            or_(
+                Matter.title.ilike(search_term),
+                Matter.decedent_name.ilike(search_term),
+            )
+        )
+
+    # ── Summary: cross-matter aggregates ─────────────────────────────────────
+
+    # Total active matters (unfiltered)
+    active_count = (
+        await db.execute(
+            select(func.count())
+            .select_from(Matter)
+            .where(Matter.firm_id == firm_id, Matter.status == MatterStatus.active)
+        )
+    ).scalar_one()
+
+    # Matters by phase (unfiltered, active only)
+    phase_q = (
+        select(Matter.phase, func.count().label("cnt"))
+        .where(Matter.firm_id == firm_id, Matter.status == MatterStatus.active)
+        .group_by(Matter.phase)
+    )
+    matters_by_phase = {
+        row.phase.value if hasattr(row.phase, "value") else row.phase: row.cnt
+        for row in (await db.execute(phase_q)).all()
+    }
+
+    # All active matter IDs for cross-matter aggregation
+    all_active_ids_q = select(Matter.id).where(
+        Matter.firm_id == firm_id, Matter.status == MatterStatus.active
+    )
+    all_active_ids = [
+        row[0] for row in (await db.execute(all_active_ids_q)).all()
+    ]
+
+    total_overdue_tasks = 0
+    approaching_deadlines_this_week = 0
+
+    if all_active_ids:
+        # Total overdue tasks across all matters
+        total_overdue_tasks = (
+            await db.execute(
+                select(func.count())
+                .select_from(Task)
+                .where(
+                    Task.matter_id.in_(all_active_ids),
+                    Task.due_date < today,
+                    Task.status.notin_(
+                        [TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]
+                    ),
+                    Task.due_date.isnot(None),
+                )
+            )
+        ).scalar_one()
+
+        # Deadlines approaching this week
+        approaching_deadlines_this_week = (
+            await db.execute(
+                select(func.count())
+                .select_from(Deadline)
+                .where(
+                    Deadline.matter_id.in_(all_active_ids),
+                    Deadline.status == DeadlineStatus.upcoming,
+                    Deadline.due_date >= today,
+                    Deadline.due_date <= week_end,
+                )
+            )
+        ).scalar_one()
+
+    summary = {
+        "total_active_matters": active_count,
+        "total_overdue_tasks": total_overdue_tasks,
+        "approaching_deadlines_this_week": approaching_deadlines_this_week,
+        "matters_by_phase": matters_by_phase,
+    }
+
+    # ── Filtered matters with pagination ─────────────────────────────────────
+
     count_q = (
-        select(func.count()).select_from(Matter).where(Matter.firm_id == firm_id)
+        select(func.count()).select_from(Matter).where(*base_filters)
     )
     total = (await db.execute(count_q)).scalar_one()
 
-    # Get matters with pagination
     matters_q = (
         select(Matter)
-        .where(Matter.firm_id == firm_id)
+        .where(*base_filters)
         .order_by(Matter.created_at.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
     )
-    matters_result = await db.execute(matters_q)
-    matters = list(matters_result.scalars().all())
+    matters = list((await db.execute(matters_q)).scalars().all())
 
     if not matters:
-        return [], total
+        return {"summary": summary, "items": [], "total": total}
 
     matter_ids = [m.id for m in matters]
 
-    # Aggregate task stats per matter in one query
+    # ── Per-matter aggregation queries (all in batch) ────────────────────────
+
+    # Task stats per matter (single query)
     task_stats_q = (
         select(
             Task.matter_id,
+            func.count().label("total_count"),
             func.count().filter(
-                Task.status.notin_([TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled])
+                Task.status == TaskStatus.complete
+            ).label("complete_count"),
+            func.count().filter(
+                Task.status.notin_(
+                    [TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]
+                )
             ).label("open_count"),
             func.count().filter(
                 and_(
                     Task.due_date < today,
-                    Task.status.notin_([TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]),
+                    Task.due_date.isnot(None),
+                    Task.status.notin_(
+                        [TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]
+                    ),
                 )
             ).label("overdue_count"),
+            func.min(Task.updated_at).filter(
+                Task.status == TaskStatus.blocked
+            ).label("oldest_blocked_at"),
         )
         .where(Task.matter_id.in_(matter_ids))
         .group_by(Task.matter_id)
     )
-    task_stats = {row.matter_id: row for row in (await db.execute(task_stats_q)).all()}
+    task_stats = {
+        row.matter_id: row for row in (await db.execute(task_stats_q)).all()
+    }
 
     # Next deadline per matter
     next_deadline_q = (
@@ -498,15 +615,104 @@ async def get_portfolio(
         for row in (await db.execute(next_deadline_q)).all()
     }
 
-    # Build response
+    # Approaching deadlines count per matter (this week)
+    approaching_dl_q = (
+        select(
+            Deadline.matter_id,
+            func.count().label("cnt"),
+        )
+        .where(
+            Deadline.matter_id.in_(matter_ids),
+            Deadline.status == DeadlineStatus.upcoming,
+            Deadline.due_date >= today,
+            Deadline.due_date <= week_end,
+        )
+        .group_by(Deadline.matter_id)
+    )
+    approaching_dl = {
+        row.matter_id: row.cnt
+        for row in (await db.execute(approaching_dl_q)).all()
+    }
+
+    # Dispute flags per matter (unresolved)
+    dispute_q = (
+        select(Communication.matter_id)
+        .where(
+            Communication.matter_id.in_(matter_ids),
+            Communication.type == CommunicationType.dispute_flag,
+        )
+        .group_by(Communication.matter_id)
+    )
+    matters_with_disputes = {
+        row[0] for row in (await db.execute(dispute_q)).all()
+    }
+
+    # ── Build response items with risk level ─────────────────────────────────
+
+    from datetime import datetime, timezone
+
     portfolio_items = []
     for matter in matters:
         stats = task_stats.get(matter.id)
+        overdue_count = stats.overdue_count if stats else 0
+        open_count = stats.open_count if stats else 0
+        total_count = stats.total_count if stats else 0
+        complete_count = stats.complete_count if stats else 0
+        has_dispute = matter.id in matters_with_disputes
+
+        # Compute oldest blocked task days
+        oldest_blocked_days: int | None = None
+        if stats and stats.oldest_blocked_at:
+            now_utc = datetime.now(timezone.utc)
+            blocked_at = stats.oldest_blocked_at
+            if blocked_at.tzinfo is None:
+                from datetime import timezone as tz
+                blocked_at = blocked_at.replace(tzinfo=tz.utc)
+            oldest_blocked_days = (now_utc - blocked_at).days
+
+        # Compute risk level
+        risk_level = _compute_risk_level(
+            overdue_count=overdue_count,
+            has_dispute=has_dispute,
+            oldest_blocked_days=oldest_blocked_days,
+        )
+
         portfolio_items.append({
             "matter": matter,
-            "open_task_count": stats.open_count if stats else 0,
-            "overdue_task_count": stats.overdue_count if stats else 0,
+            "total_task_count": total_count,
+            "complete_task_count": complete_count,
+            "open_task_count": open_count,
+            "overdue_task_count": overdue_count,
+            "approaching_deadline_count": approaching_dl.get(matter.id, 0),
             "next_deadline": next_deadlines.get(matter.id),
+            "has_dispute": has_dispute,
+            "oldest_blocked_task_days": oldest_blocked_days,
+            "risk_level": risk_level,
         })
 
-    return portfolio_items, total
+    # Sort by risk level (red first, then amber, then green)
+    risk_order = {"red": 0, "amber": 1, "green": 2}
+    portfolio_items.sort(key=lambda x: risk_order.get(x["risk_level"], 2))
+
+    return {"summary": summary, "items": portfolio_items, "total": total}
+
+
+def _compute_risk_level(
+    *,
+    overdue_count: int,
+    has_dispute: bool,
+    oldest_blocked_days: int | None,
+) -> str:
+    """Compute a risk level for a matter based on its stats.
+
+    - red: any overdue tasks, or dispute flag, or blocked > 14 days
+    - amber: blocked > 7 days, or approaching deadline this week
+    - green: everything on track
+    """
+    if overdue_count > 0 or has_dispute:
+        return "red"
+    if oldest_blocked_days is not None and oldest_blocked_days > 14:
+        return "red"
+    if oldest_blocked_days is not None and oldest_blocked_days > 7:
+        return "amber"
+    return "green"

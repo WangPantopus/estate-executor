@@ -11,6 +11,7 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -44,10 +45,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useMatters } from "@/hooks";
+import { useMatters, usePortfolio } from "@/hooks";
 import { ESTATE_TYPE_LABELS, PHASE_LABELS, US_STATES } from "@/lib/constants";
 import type { Matter, MatterFilters, MatterStatus } from "@/lib/types";
 import { CreateMatterDialog } from "./CreateMatterDialog";
+import { PortfolioSummaryBar } from "./PortfolioSummaryBar";
+import { RiskFlagsPanel } from "./RiskFlagsPanel";
+import { PortfolioTable } from "./PortfolioTable";
 
 function useDebounce(value: string, delay: number) {
   const [debounced, setDebounced] = useState(value);
@@ -78,7 +82,9 @@ export function MattersPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
-  const [view, setView] = useState<"table" | "cards">("table");
+  const [view, setView] = useState<"table" | "cards" | "portfolio">(
+    searchParams.get("view") === "portfolio" ? "portfolio" : "table",
+  );
 
   // Filter state from URL params
   const statusFilter =
@@ -104,6 +110,10 @@ export function MattersPageContent() {
   );
 
   const { data, isLoading, error } = useMatters(FIRM_ID, filters);
+  const { data: portfolioData, isLoading: portfolioLoading } = usePortfolio(
+    FIRM_ID,
+    { status: statusFilter, search: searchQuery || undefined, page, per_page: 20 },
+  );
 
   const updateFilter = useCallback(
     (key: string, value: string | null) => {
@@ -251,9 +261,19 @@ export function MattersPageContent() {
 
         <div className="flex items-center gap-1">
           <Button
+            variant={view === "portfolio" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setView("portfolio")}
+            title="Portfolio view"
+          >
+            <BarChart3 className="size-4 mr-1" />
+            Portfolio
+          </Button>
+          <Button
             variant={view === "table" ? "secondary" : "ghost"}
             size="icon"
             onClick={() => setView("table")}
+            title="Table view"
           >
             <List className="size-4" />
           </Button>
@@ -261,6 +281,7 @@ export function MattersPageContent() {
             variant={view === "cards" ? "secondary" : "ghost"}
             size="icon"
             onClick={() => setView("cards")}
+            title="Card view"
           >
             <LayoutGrid className="size-4" />
           </Button>
@@ -269,7 +290,49 @@ export function MattersPageContent() {
 
       {/* Content */}
       <div className="mt-6">
-        {isLoading ? (
+        {view === "portfolio" ? (
+          portfolioLoading ? (
+            <LoadingState variant="cards" count={4} />
+          ) : portfolioData ? (
+            <div className="space-y-6">
+              <PortfolioSummaryBar summary={portfolioData.summary} />
+              <div className="grid gap-6 lg:grid-cols-4">
+                <div className="lg:col-span-3">
+                  <PortfolioTable items={portfolioData.data} />
+                </div>
+                <div className="lg:col-span-1">
+                  <RiskFlagsPanel items={portfolioData.data} />
+                </div>
+              </div>
+              {/* Portfolio pagination */}
+              {portfolioData.meta.total_pages > 1 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Page {portfolioData.meta.page} of {portfolioData.meta.total_pages} ({portfolioData.meta.total} matters)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={portfolioData.meta.page <= 1}
+                      onClick={() => updateFilter("page", String(portfolioData.meta.page - 1))}
+                    >
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={portfolioData.meta.page >= portfolioData.meta.total_pages}
+                      onClick={() => updateFilter("page", String(portfolioData.meta.page + 1))}
+                    >
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null
+        ) : isLoading ? (
           view === "table" ? (
             <LoadingState variant="table" count={5} />
           ) : (
