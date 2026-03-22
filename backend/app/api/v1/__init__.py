@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.deadlines import router as deadlines_router
 from app.api.v1.entities import entity_map_router
 from app.api.v1.entities import router as entities_router
 from app.api.v1.firms import router as firms_router
@@ -40,4 +41,9 @@ api_router.include_router(
     entity_map_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/entity-map",
     tags=["entities"],
+)
+api_router.include_router(
+    deadlines_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/deadlines",
+    tags=["deadlines"],
 )

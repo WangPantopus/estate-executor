@@ -30,10 +30,14 @@ from .communications import (
     DisputeFlagCreate,
 )
 from .deadlines import (
+    CalendarDeadline,
+    CalendarMonth,
+    CalendarResponse,
     DeadlineCreate,
     DeadlineListResponse,
     DeadlineResponse,
     DeadlineUpdate,
+    TaskBrief,
 )
 from .documents import (
     DocumentConfirmType,
@@ -137,10 +141,14 @@ __all__ = [
     "DocumentResponse",
     "DocumentUploadURL",
     # Deadlines
+    "CalendarDeadline",
+    "CalendarMonth",
+    "CalendarResponse",
     "DeadlineCreate",
     "DeadlineListResponse",
     "DeadlineResponse",
     "DeadlineUpdate",
+    "TaskBrief",
     # Communications
     "CommunicationCreate",
     "CommunicationListResponse",
