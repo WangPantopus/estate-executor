@@ -3,6 +3,13 @@ export {
   queryKeys,
   // Auth
   useCurrentUser,
+  // Firms
+  useFirm,
+  useUpdateFirm,
+  useFirmMembers,
+  useInviteFirmMember,
+  useUpdateFirmMember,
+  useRemoveFirmMember,
   // Matters
   useMatters,
   useMatterDashboard,

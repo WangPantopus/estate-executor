@@ -49,6 +49,11 @@ import type {
   DocumentConfirmType,
   DocumentRequestCreate,
   DisputeFlagCreate,
+  Firm,
+  FirmUpdate,
+  FirmMember,
+  InviteMemberRequest,
+  UpdateMemberRoleRequest,
 } from "@/lib/types";
 
 // ─── Query key factories ────────────────────────────────────────────────────
@@ -111,6 +116,72 @@ export function useCurrentUser(
     queryKey: queryKeys.me,
     queryFn: () => api.getMe(),
     ...options,
+  });
+}
+
+// ─── Firms ──────────────────────────────────────────────────────────────────
+
+export function useFirm(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.firm(firmId),
+    queryFn: () => api.getFirm(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useUpdateFirm(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FirmUpdate) => api.updateFirm(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+      qc.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
+export function useFirmMembers(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.firmMembers(firmId),
+    queryFn: () => api.getFirmMembers(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useInviteFirmMember(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: InviteMemberRequest) => api.inviteFirmMember(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
+  });
+}
+
+export function useUpdateFirmMember(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, data }: { membershipId: string; data: UpdateMemberRoleRequest }) =>
+      api.updateFirmMember(firmId, membershipId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
+  });
+}
+
+export function useRemoveFirmMember(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (membershipId: string) => api.removeFirmMember(firmId, membershipId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
   });
 }
 
