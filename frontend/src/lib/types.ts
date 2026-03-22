@@ -817,6 +817,21 @@ export interface PortfolioResponse {
   meta: PaginationMeta;
 }
 
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+export interface ReportType {
+  type: string;
+  label: string;
+  formats: string[];
+}
+
+export interface ReportJobStatus {
+  job_id: string;
+  status: 'processing' | 'completed' | 'failed';
+  download_url?: string | null;
+  filename?: string | null;
+}
+
 export interface TaskFilters extends PaginationParams {
   phase?: TaskPhase;
   status?: TaskStatus;

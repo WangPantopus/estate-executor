@@ -29,6 +29,7 @@ celery_app.conf.update(
         "app.workers.ai_tasks.*": {"queue": "ai"},
         "app.workers.notification_tasks.*": {"queue": "notifications"},
         "app.workers.document_tasks.*": {"queue": "documents"},
+        "app.workers.report_tasks.*": {"queue": "documents"},
     },
     task_default_queue="default",
     # Default retry policy — exponential backoff

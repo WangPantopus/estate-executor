@@ -70,6 +70,7 @@ const matterNavItems: NavItem[] = [
   { label: "Calendar", href: "/deadlines", icon: Calendar },
   { label: "Communications", href: "/communications", icon: MessageSquare },
   { label: "Activity", href: "/activity", icon: Activity },
+  { label: "Reports", href: "/reports", icon: FileText },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -82,6 +83,7 @@ const PAGE_LABELS: Record<string, string> = {
   deadlines: "Calendar",
   communications: "Communications",
   activity: "Activity",
+  reports: "Reports",
   settings: "Settings",
 };
 
