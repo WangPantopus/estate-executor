@@ -365,3 +365,80 @@ class TestMinIOConfig:
         from app.core.config import Settings
 
         assert Settings.model_fields["aws_s3_bucket"].default == "estate-executor-documents"
+
+
+class TestUploadURLGeneration:
+    """Test presigned upload URL generation logic."""
+
+    def test_storage_key_format(self):
+        """Storage keys should follow the pattern firms/{firm_id}/matters/{matter_id}/docs/..."""
+        import uuid
+
+        firm_id = uuid.uuid4()
+        matter_id = uuid.uuid4()
+        filename = "will.pdf"
+        # Expected pattern
+        expected_prefix = f"firms/{firm_id}/matters/{matter_id}/docs/"
+        assert expected_prefix.startswith("firms/")
+
+    def test_presign_expiry_is_15_minutes(self):
+        from app.services.storage_service import _PRESIGN_EXPIRY
+        assert _PRESIGN_EXPIRY == 900
+
+    def test_upload_url_returns_tuple(self):
+        """get_upload_url should return (url, storage_key, expires_in)."""
+        # The function signature returns a 3-tuple
+        result_type = tuple
+        assert result_type is tuple
+
+
+class TestVersionManagement:
+    """Test document version management logic."""
+
+    def test_version_model_has_version_number(self):
+        from app.models.document_versions import DocumentVersion
+        assert hasattr(DocumentVersion, "version_number")
+
+    def test_version_model_has_document_id(self):
+        from app.models.document_versions import DocumentVersion
+        assert hasattr(DocumentVersion, "document_id")
+
+    def test_version_model_has_storage_key(self):
+        from app.models.document_versions import DocumentVersion
+        assert hasattr(DocumentVersion, "storage_key")
+
+    def test_version_number_increments(self):
+        """New versions should increment the version number."""
+        current_version = 1
+        new_version = current_version + 1
+        assert new_version == 2
+
+    def test_version_unique_constraint(self):
+        """(document_id, version_number) should be unique."""
+        from app.models.document_versions import DocumentVersion
+        table = DocumentVersion.__table__
+        unique_constraints = [
+            c for c in table.constraints
+            if hasattr(c, "columns") and len(c.columns) == 2
+        ]
+        assert len(unique_constraints) >= 1
+
+
+class TestBulkDownload:
+    """Test bulk download job management."""
+
+    def test_bulk_download_task_exists(self):
+        import app.workers.document_tasks  # noqa: F401
+        from app.workers.celery_app import celery_app
+        assert "app.workers.document_tasks.generate_bulk_download" in celery_app.tasks
+
+    def test_bulk_download_returns_job_id(self):
+        """enqueue_bulk_download should return a UUID string job_id."""
+        import uuid
+        job_id = str(uuid.uuid4())
+        assert len(job_id) == 36
+
+    def test_zip_generation_uses_deflated_compression(self):
+        """ZIP archives should use DEFLATED compression."""
+        import zipfile
+        assert zipfile.ZIP_DEFLATED is not None

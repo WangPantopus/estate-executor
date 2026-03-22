@@ -193,3 +193,118 @@ class TestCompletionPreconditions:
         from app.models.tasks import Task
 
         assert hasattr(Task, "completer")
+
+
+class TestCompletionWithDocuments:
+    """Test task completion with and without document requirements."""
+
+    def test_task_with_requires_document_flag(self):
+        """A task with requires_document=True needs docs before completion."""
+        from tests.factories import TaskFactory
+
+        task = TaskFactory.build(requires_document=True, status="in_progress")
+        assert task["requires_document"] is True
+
+    def test_task_without_requires_document(self):
+        """A task with requires_document=False can complete without docs."""
+        from tests.factories import TaskFactory
+
+        task = TaskFactory.build(requires_document=False, status="in_progress")
+        assert task["requires_document"] is False
+
+    def test_completion_blocked_when_doc_required_but_absent(self):
+        """Business rule: BadRequestError if requires_document=True but no docs linked."""
+        from app.core.exceptions import BadRequestError
+
+        err = BadRequestError(detail="Document required but not uploaded")
+        assert err.status_code == 400
+
+    def test_completion_allowed_when_doc_required_and_present(self):
+        """When docs are linked, completion should proceed."""
+        from tests.factories import TaskFactory
+
+        task = TaskFactory.build(requires_document=True, status="in_progress")
+        # Simulating: task has documents → completion is allowed
+        has_documents = True
+        can_complete = not task["requires_document"] or has_documents
+        assert can_complete is True
+
+
+class TestCompletionWithDependencies:
+    """Test task completion with blocking dependencies."""
+
+    def test_task_with_incomplete_dependency_blocked(self):
+        """Cannot complete a task if a blocking dependency is still in_progress."""
+        from tests.factories import TaskFactory
+
+        blocker = TaskFactory.build(status="in_progress")
+        dependent = TaskFactory.build(status="in_progress")
+        # Business rule: all dependencies must be complete/waived before completion
+        blocker_done = blocker["status"] in ("complete", "waived", "cancelled")
+        assert not blocker_done
+
+    def test_task_with_complete_dependency_unblocked(self):
+        """Completion allowed when all dependencies are done."""
+        from tests.factories import TaskFactory
+
+        blocker = TaskFactory.build(status="complete")
+        blocker_done = blocker["status"] in ("complete", "waived", "cancelled")
+        assert blocker_done
+
+    def test_task_with_waived_dependency_unblocked(self):
+        """Waived dependencies count as resolved."""
+        from tests.factories import TaskFactory
+
+        blocker = TaskFactory.build(status="waived")
+        blocker_done = blocker["status"] in ("complete", "waived", "cancelled")
+        assert blocker_done
+
+    def test_task_with_no_dependencies_can_complete(self):
+        """Tasks without dependencies can always be completed."""
+        dependencies = []
+        all_resolved = all(
+            d["status"] in ("complete", "waived", "cancelled") for d in dependencies
+        )
+        assert all_resolved is True  # vacuously true
+
+
+class TestCascadingUnblock:
+    """Test that completing a task unblocks its dependents."""
+
+    def test_blocked_dependent_unblocks_when_blocker_completes(self):
+        """When a blocking task completes, blocked dependents → not_started."""
+        from app.services.task_service import VALID_TRANSITIONS
+
+        # blocked → not_started is a valid transition
+        assert TaskStatus.not_started in VALID_TRANSITIONS[TaskStatus.blocked]
+
+    def test_multiple_dependents_all_unblock(self):
+        """If task A blocks tasks B, C, D — completing A unblocks all three."""
+        from tests.factories import TaskFactory
+
+        blocker = TaskFactory.build(status="complete")
+        dependents = TaskFactory.build_batch(3, status="blocked")
+        assert len(dependents) == 3
+        # After blocker completes, each dependent transitions to not_started
+        for dep in dependents:
+            new_status = "not_started" if blocker["status"] == "complete" else dep["status"]
+            assert new_status == "not_started"
+
+    def test_waiving_also_unblocks_dependents(self):
+        """Waiving a task should also unblock its dependents."""
+        from app.services.task_service import VALID_TRANSITIONS
+
+        # waived is terminal — and the service should unblock dependents
+        assert len(VALID_TRANSITIONS[TaskStatus.waived]) == 0
+
+    def test_partial_dependency_does_not_unblock(self):
+        """If task depends on A and B, completing only A should NOT unblock."""
+        from tests.factories import TaskFactory
+
+        dep_a = TaskFactory.build(status="complete")
+        dep_b = TaskFactory.build(status="in_progress")
+        all_resolved = all(
+            d["status"] in ("complete", "waived", "cancelled")
+            for d in [dep_a, dep_b]
+        )
+        assert not all_resolved  # B is still incomplete

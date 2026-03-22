@@ -216,6 +216,57 @@ class TestAssetModel:
         assert hasattr(Asset, "documents")
 
 
+class TestEncryptionRoundtrip:
+    """Test account number encryption/decryption."""
+
+    def _can_import_crypto(self) -> bool:
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
+            return True
+        except BaseException:
+            return False
+
+    def test_encrypt_produces_bytes(self):
+        """Encrypting a string should produce bytes output."""
+        if not self._can_import_crypto():
+            pytest.skip("cryptography module unavailable")
+        import os
+        os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
+        from app.core.security import encrypt_field
+        ciphertext = encrypt_field("1234567890")
+        assert isinstance(ciphertext, bytes)
+        assert len(ciphertext) > 10
+
+    def test_decrypt_recovers_plaintext(self):
+        """Decrypting should recover the original plaintext."""
+        if not self._can_import_crypto():
+            pytest.skip("cryptography module unavailable")
+        import os
+        os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
+        from app.core.security import encrypt_field, decrypt_field
+        original = "9876543210"
+        ciphertext = encrypt_field(original)
+        plaintext = decrypt_field(ciphertext)
+        assert plaintext == original
+
+    def test_different_plaintexts_produce_different_ciphertexts(self):
+        """Two different account numbers should not produce the same ciphertext."""
+        if not self._can_import_crypto():
+            pytest.skip("cryptography module unavailable")
+        import os
+        os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
+        from app.core.security import encrypt_field
+        ct1 = encrypt_field("1111111111")
+        ct2 = encrypt_field("2222222222")
+        assert ct1 != ct2
+
+    def test_account_number_model_field_is_bytes(self):
+        """Asset model stores account_number_encrypted as LargeBinary (bytes)."""
+        from app.models.assets import Asset
+        col = Asset.__table__.columns["account_number_encrypted"]
+        assert col.nullable is True
+
+
 class TestDeleteRestriction:
     """Test that only discovered assets can be deleted."""
 

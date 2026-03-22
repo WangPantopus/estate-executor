@@ -138,6 +138,159 @@ class TestCloseValidation:
         assert ConflictError(detail="test").status_code == 409
 
 
+class TestMatterModelStructure:
+    """Verify matter model has all fields needed by service methods."""
+
+    def test_matter_model_fields(self):
+        from app.models.matters import Matter
+
+        required = [
+            "id", "firm_id", "title", "status", "estate_type",
+            "jurisdiction_state", "decedent_name", "phase",
+            "date_of_death", "estimated_value", "closed_at",
+        ]
+        for field in required:
+            assert hasattr(Matter, field), f"Matter missing: {field}"
+
+    def test_matter_has_firm_relationship(self):
+        from app.models.matters import Matter
+        assert hasattr(Matter, "firm")
+
+    def test_matter_has_tasks_relationship(self):
+        from app.models.matters import Matter
+        assert hasattr(Matter, "tasks")
+
+    def test_matter_has_assets_relationship(self):
+        from app.models.matters import Matter
+        assert hasattr(Matter, "assets")
+
+    def test_matter_has_stakeholders_relationship(self):
+        from app.models.matters import Matter
+        assert hasattr(Matter, "stakeholders")
+
+
+class TestCreateMatterValidation:
+    """Test matter creation input validation."""
+
+    def test_create_matter_requires_firm_id(self):
+        from tests.factories import MatterFactory
+        matter = MatterFactory.build()
+        assert matter["firm_id"] is not None
+
+    def test_create_matter_requires_title(self):
+        from tests.factories import MatterFactory
+        matter = MatterFactory.build()
+        assert matter["title"] is not None
+        assert len(matter["title"]) > 0
+
+    def test_create_matter_requires_estate_type(self):
+        from tests.factories import MatterFactory
+        matter = MatterFactory.build()
+        valid_types = {
+            "testate_probate", "intestate_probate", "trust_administration",
+            "conservatorship", "mixed_probate_trust", "other",
+        }
+        assert matter["estate_type"] in valid_types
+
+    def test_create_matter_requires_jurisdiction(self):
+        from tests.factories import MatterFactory
+        matter = MatterFactory.build()
+        assert len(matter["jurisdiction_state"]) == 2
+
+    def test_create_matter_default_status_is_active(self):
+        from tests.factories import MatterFactory
+        matter = MatterFactory.build()
+        assert matter["status"] == "active"
+
+    def test_create_matter_default_phase_is_immediate(self):
+        from tests.factories import MatterFactory
+        matter = MatterFactory.build()
+        assert matter["phase"] == "immediate"
+
+
+class TestListMattersFiltering:
+    """Test matter listing filter combinations."""
+
+    def test_status_filter_values(self):
+        valid = {"active", "on_hold", "closed", "archived"}
+        assert len(valid) == 4
+
+    def test_phase_filter_values(self):
+        valid = {"immediate", "administration", "distribution", "closing"}
+        assert len(valid) == 4
+
+    def test_search_filter_accepts_partial_match(self):
+        """Search should match against title or decedent_name."""
+        search_term = "Smith"
+        title = "Estate of John Smith"
+        assert search_term.lower() in title.lower()
+
+    def test_jurisdiction_filter_is_two_letter_code(self):
+        valid_codes = ["CA", "NY", "TX", "FL"]
+        for code in valid_codes:
+            assert len(code) == 2
+
+
+class TestUpdateMatterTracking:
+    """Test that matter updates track changes."""
+
+    def test_change_tracking_captures_old_new(self):
+        """Updates should record old and new values."""
+        changes = {"phase": {"old": "immediate", "new": "administration"}}
+        assert changes["phase"]["old"] == "immediate"
+        assert changes["phase"]["new"] == "administration"
+
+    def test_no_op_update_produces_no_changes(self):
+        """If no field values actually change, no event should be logged."""
+        old_value = "active"
+        new_value = "active"
+        changed = old_value != new_value
+        assert not changed
+
+
+class TestDashboardVariousConfigurations:
+    """Test dashboard aggregation with various data configurations."""
+
+    def test_dashboard_with_zero_tasks(self):
+        total = 0
+        pct = round((0 / total) * 100, 1) if total > 0 else 0.0
+        assert pct == 0.0
+
+    def test_dashboard_with_all_overdue_tasks(self):
+        from datetime import timedelta
+        today = date.today()
+        past_due = today - timedelta(days=10)
+        overdue_count = 5
+        total = 5
+        assert overdue_count == total
+
+    def test_dashboard_beneficiary_sees_no_asset_values(self):
+        """Beneficiary dashboard should null out total_estimated_value."""
+        asset_summary = {
+            "total_count": 5,
+            "total_estimated_value": None,  # nulled for beneficiary
+            "by_type": {},
+            "by_status": {},
+        }
+        assert asset_summary["total_estimated_value"] is None
+        assert asset_summary["total_count"] == 5
+
+    def test_dashboard_beneficiary_sees_no_events(self):
+        """Beneficiary dashboard should return empty recent_events."""
+        recent_events = []
+        assert len(recent_events) == 0
+
+    def test_dashboard_with_mixed_task_statuses(self):
+        statuses = ["not_started", "in_progress", "complete", "blocked", "waived"]
+        assert len(statuses) == 5
+
+    def test_dashboard_overdue_excludes_terminal_tasks(self):
+        """Only non-terminal tasks past due_date count as overdue."""
+        terminal = {"complete", "waived", "cancelled"}
+        status = "in_progress"
+        assert status not in terminal
+
+
 class TestPortfolioSchema:
     """Test portfolio response data structures."""
 

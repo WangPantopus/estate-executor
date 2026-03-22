@@ -1,8 +1,7 @@
 """Test data factories for Estate Executor models.
 
-Uses factory_boy patterns but implemented as simple dataclass-like builders
-to avoid tight coupling to SQLAlchemy session (tests mock the DB layer).
-Each factory returns a dict that can be used as kwargs or unpacked into models.
+Provides both class-based Factory pattern (FirmFactory, UserFactory, etc.)
+and function-based helpers (make_firm, make_user, etc.) for convenience.
 """
 
 from __future__ import annotations
@@ -21,102 +20,103 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-# ─── Firm ─────────────────────────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════════════════════
+# Base Factory
+# ═════════════════════════════════════════════════════════════════════════════
 
 
-def make_firm(**overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
+class BaseFactory:
+    """Base class for test data factories."""
+
+    DEFAULTS: dict[str, Any] = {}
+
+    @classmethod
+    def build(cls, **overrides: Any) -> dict[str, Any]:
+        """Build a dict of model attributes with optional overrides."""
+        data = {}
+        for key, value in cls.DEFAULTS.items():
+            data[key] = value() if callable(value) else value
+        data.update(overrides)
+        return data
+
+    @classmethod
+    def build_batch(cls, count: int, **overrides: Any) -> list[dict[str, Any]]:
+        return [cls.build(**overrides) for _ in range(count)]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Model Factories
+# ═════════════════════════════════════════════════════════════════════════════
+
+
+class FirmFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
         "name": "Smith & Associates LLP",
-        "slug": f"smith-associates-{uuid.uuid4().hex[:6]}",
+        "slug": lambda: f"smith-associates-{uuid.uuid4().hex[:6]}",
         "type": "law_firm",
         "subscription_tier": "professional",
-        "settings": {},
-        "created_at": _now(),
-        "updated_at": _now(),
+        "settings": dict,
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── User ─────────────────────────────────────────────────────────────────────
-
-
-def make_user(**overrides: Any) -> dict[str, Any]:
-    uid = _uuid()
-    defaults = {
-        "id": uid,
-        "auth_provider_id": f"auth0|{uid.hex[:24]}",
-        "email": f"user-{uid.hex[:8]}@example.com",
+class UserFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "auth_provider_id": lambda: f"auth0|{uuid.uuid4().hex[:24]}",
+        "email": lambda: f"user-{uuid.uuid4().hex[:8]}@example.com",
         "full_name": "Jane Doe",
         "phone": None,
         "avatar_url": None,
-        "created_at": _now(),
-        "updated_at": _now(),
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Matter ───────────────────────────────────────────────────────────────────
-
-
-def make_matter(firm_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "firm_id": firm_id or _uuid(),
+class MatterFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "firm_id": _uuid,
         "title": "Estate of John Smith",
         "status": "active",
         "estate_type": "testate_probate",
         "jurisdiction_state": "CA",
-        "date_of_death": date(2026, 1, 15),
+        "date_of_death": lambda: date(2026, 1, 15),
         "date_of_incapacity": None,
         "decedent_name": "John Smith",
-        "estimated_value": Decimal("2500000.00"),
+        "estimated_value": lambda: Decimal("2500000.00"),
         "phase": "immediate",
-        "settings": {},
-        "created_at": _now(),
-        "updated_at": _now(),
+        "settings": dict,
+        "created_at": _now,
+        "updated_at": _now,
         "closed_at": None,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Stakeholder ──────────────────────────────────────────────────────────────
-
-
-def make_stakeholder(
-    matter_id: uuid.UUID | None = None,
-    user_id: uuid.UUID | None = None,
-    **overrides: Any,
-) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
-        "user_id": user_id,
-        "email": f"stakeholder-{uuid.uuid4().hex[:8]}@example.com",
+class StakeholderFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
+        "user_id": None,
+        "email": lambda: f"stakeholder-{uuid.uuid4().hex[:8]}@example.com",
         "full_name": "Sarah Chen",
         "role": "matter_admin",
         "relationship_label": "estate attorney",
-        "permissions": {},
+        "permissions": dict,
         "invite_status": "accepted",
         "invite_token": None,
-        "notification_preferences": {},
-        "created_at": _now(),
-        "updated_at": _now(),
+        "notification_preferences": dict,
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Task ─────────────────────────────────────────────────────────────────────
-
-
-def make_task(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
+class TaskFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
         "parent_task_id": None,
         "template_key": None,
         "title": "Obtain Death Certificates",
@@ -126,27 +126,22 @@ def make_task(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str,
         "status": "not_started",
         "priority": "normal",
         "assigned_to": None,
-        "due_date": date(2026, 2, 15),
+        "due_date": lambda: date(2026, 2, 15),
         "due_date_rule": None,
         "requires_document": False,
         "completed_at": None,
         "completed_by": None,
         "sort_order": 0,
-        "metadata": {},
-        "created_at": _now(),
-        "updated_at": _now(),
+        "metadata": dict,
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Asset ────────────────────────────────────────────────────────────────────
-
-
-def make_asset(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
+class AssetFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
         "asset_type": "bank_account",
         "title": "Chase Checking Account",
         "description": "Primary checking account",
@@ -155,24 +150,19 @@ def make_asset(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str
         "ownership_type": "individual",
         "transfer_mechanism": "probate",
         "status": "discovered",
-        "date_of_death_value": Decimal("50000.00"),
-        "current_estimated_value": Decimal("50000.00"),
+        "date_of_death_value": lambda: Decimal("50000.00"),
+        "current_estimated_value": lambda: Decimal("50000.00"),
         "final_appraised_value": None,
-        "metadata": {},
-        "created_at": _now(),
-        "updated_at": _now(),
+        "metadata": dict,
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Entity ───────────────────────────────────────────────────────────────────
-
-
-def make_entity(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
+class EntityFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
         "entity_type": "revocable_trust",
         "name": "Smith Family Trust",
         "trustee": "Jane Smith",
@@ -180,25 +170,19 @@ def make_entity(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[st
         "trigger_conditions": None,
         "funding_status": "fully_funded",
         "distribution_rules": None,
-        "metadata": {},
-        "created_at": _now(),
-        "updated_at": _now(),
+        "metadata": dict,
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Document ─────────────────────────────────────────────────────────────────
-
-
-def make_document(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    doc_id = overrides.get("id", _uuid())
-    defaults = {
-        "id": doc_id,
-        "matter_id": matter_id or _uuid(),
-        "uploaded_by": _uuid(),
+class DocumentFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
+        "uploaded_by": _uuid,
         "filename": "death_certificate.pdf",
-        "storage_key": f"firms/docs/{doc_id}.pdf",
+        "storage_key": lambda: f"firms/docs/{uuid.uuid4()}.pdf",
         "mime_type": "application/pdf",
         "size_bytes": 245000,
         "doc_type": "death_certificate",
@@ -206,87 +190,82 @@ def make_document(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[
         "doc_type_confirmed": False,
         "ai_extracted_data": None,
         "current_version": 1,
-        "created_at": _now(),
+        "created_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Deadline ─────────────────────────────────────────────────────────────────
-
-
-def make_deadline(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
+class DeadlineFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
         "task_id": None,
         "title": "Federal Estate Tax Return (Form 706)",
         "description": "Due 9 months from date of death",
-        "due_date": date(2026, 10, 15),
+        "due_date": lambda: date(2026, 10, 15),
         "source": "auto",
-        "rule": {"type": "federal_estate_tax", "base": "date_of_death", "months": 9},
+        "rule": lambda: {"type": "federal_estate_tax", "base": "date_of_death", "months": 9},
         "status": "upcoming",
         "assigned_to": None,
-        "reminder_config": {"days_before": [30, 7, 1]},
+        "reminder_config": lambda: {"days_before": [30, 7, 1]},
         "last_reminder_sent": None,
-        "created_at": _now(),
-        "updated_at": _now(),
+        "created_at": _now,
+        "updated_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Event ────────────────────────────────────────────────────────────────────
-
-
-def make_event(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
-        "actor_id": _uuid(),
+class EventFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
+        "actor_id": _uuid,
         "actor_type": "user",
         "entity_type": "task",
-        "entity_id": _uuid(),
+        "entity_id": _uuid,
         "action": "created",
         "changes": None,
-        "metadata": {},
+        "metadata": dict,
         "ip_address": None,
         "user_agent": None,
-        "created_at": _now(),
+        "created_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── Communication ────────────────────────────────────────────────────────────
-
-
-def make_communication(matter_id: uuid.UUID | None = None, **overrides: Any) -> dict[str, Any]:
-    defaults = {
-        "id": _uuid(),
-        "matter_id": matter_id or _uuid(),
-        "sender_id": _uuid(),
+class CommunicationFactory(BaseFactory):
+    DEFAULTS = {
+        "id": _uuid,
+        "matter_id": _uuid,
+        "sender_id": _uuid,
         "type": "message",
         "subject": "Status update",
         "body": "Everything is proceeding as planned.",
         "visibility": "all_stakeholders",
         "visible_to": None,
         "acknowledged_by": None,
-        "created_at": _now(),
+        "created_at": _now,
     }
-    defaults.update(overrides)
-    return defaults
 
 
-# ─── CurrentUser (schema, not model) ─────────────────────────────────────────
-
-
-def make_current_user(**overrides: Any) -> dict[str, Any]:
-    uid = overrides.get("user_id", _uuid())
-    defaults = {
-        "user_id": uid,
-        "email": f"user-{str(uid)[:8]}@example.com",
-        "firm_memberships": [],
+class CurrentUserFactory(BaseFactory):
+    DEFAULTS = {
+        "user_id": _uuid,
+        "email": lambda: f"user-{uuid.uuid4().hex[:8]}@example.com",
+        "firm_memberships": list,
     }
-    defaults.update(overrides)
-    return defaults
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Convenience function aliases
+# ═════════════════════════════════════════════════════════════════════════════
+
+make_firm = FirmFactory.build
+make_user = UserFactory.build
+make_matter = MatterFactory.build
+make_stakeholder = StakeholderFactory.build
+make_task = TaskFactory.build
+make_asset = AssetFactory.build
+make_entity = EntityFactory.build
+make_document = DocumentFactory.build
+make_deadline = DeadlineFactory.build
+make_event = EventFactory.build
+make_communication = CommunicationFactory.build
+make_current_user = CurrentUserFactory.build
