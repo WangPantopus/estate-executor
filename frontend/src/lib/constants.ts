@@ -109,3 +109,50 @@ export const PHASE_LABELS: Record<string, string> = {
   distribution: "Distribution",
   closing: "Closing",
 };
+
+export const TASK_PHASE_LABELS: Record<string, string> = {
+  immediate: "Immediate",
+  asset_inventory: "Asset Inventory",
+  notification: "Notification",
+  probate_filing: "Probate Filing",
+  tax: "Tax",
+  transfer_distribution: "Transfer & Distribution",
+  family_communication: "Family Communication",
+  closing: "Closing",
+  custom: "Custom",
+};
+
+export const TASK_PHASE_ORDER: string[] = [
+  "immediate",
+  "asset_inventory",
+  "notification",
+  "probate_filing",
+  "tax",
+  "transfer_distribution",
+  "family_communication",
+  "closing",
+  "custom",
+];
+
+export const TASK_STATUS_LABELS: Record<string, string> = {
+  not_started: "Not Started",
+  in_progress: "In Progress",
+  blocked: "Blocked",
+  complete: "Complete",
+  waived: "Waived",
+  cancelled: "Cancelled",
+};
+
+export const TASK_PRIORITY_LABELS: Record<string, string> = {
+  critical: "Critical",
+  normal: "Normal",
+  informational: "Informational",
+};
+
+export const STAKEHOLDER_ROLE_LABELS: Record<string, string> = {
+  matter_admin: "Matter Admin",
+  professional: "Professional",
+  executor_trustee: "Executor / Trustee",
+  beneficiary: "Beneficiary",
+  read_only: "Read Only",
+};
