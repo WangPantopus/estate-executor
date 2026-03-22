@@ -43,4 +43,9 @@ export {
   useCreateCommunication,
   // Events
   useEvents,
+  // Documents
+  useDocuments,
+  useDocument,
+  useConfirmDocType,
+  useRequestDocument,
 } from "./use-queries";

@@ -205,3 +205,17 @@ export const FUNDING_STATUS_LABELS: Record<FundingStatus, string> = {
   partially_funded: "Partially Funded",
   unfunded: "Unfunded",
 };
+
+export const DOC_TYPE_LABELS: Record<string, string> = {
+  death_certificate: "Death Certificate",
+  will: "Will",
+  trust_document: "Trust Document",
+  deed: "Deed",
+  account_statement: "Account Statement",
+  insurance_policy: "Insurance Policy",
+  court_filing: "Court Filing",
+  tax_return: "Tax Return",
+  appraisal: "Appraisal",
+  correspondence: "Correspondence",
+  other: "Other",
+};

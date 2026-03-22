@@ -44,6 +44,10 @@ import type {
   TaskFilters,
   TaskUpdate,
   UserProfile,
+  DocumentResponse,
+  DocumentDetail,
+  DocumentConfirmType,
+  DocumentRequestCreate,
 } from "@/lib/types";
 
 // ─── Query key factories ────────────────────────────────────────────────────
@@ -90,6 +94,10 @@ export const queryKeys = {
     ] as const,
   events: (firmId: string, matterId: string, filters?: EventFilters) =>
     ["firms", firmId, "matters", matterId, "events", filters] as const,
+  documents: (firmId: string, matterId: string) =>
+    ["firms", firmId, "matters", matterId, "documents"] as const,
+  document: (firmId: string, matterId: string, docId: string) =>
+    ["firms", firmId, "matters", matterId, "documents", docId] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -619,5 +627,46 @@ export function useEvents(
     queryKey: queryKeys.events(firmId, matterId, filters),
     queryFn: () => api.getEvents(firmId, matterId, filters),
     enabled: !!firmId && !!matterId,
+  });
+}
+
+// ─── Documents ──────────────────────────────────────────────────────────────
+
+export function useDocuments(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.documents(firmId, matterId),
+    queryFn: () => api.getDocuments(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useDocument(firmId: string, matterId: string, docId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.document(firmId, matterId, docId),
+    queryFn: () => api.getDocument(firmId, matterId, docId),
+    enabled: !!firmId && !!matterId && !!docId,
+  });
+}
+
+export function useConfirmDocType(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ docId, data }: { docId: string; data: DocumentConfirmType }) =>
+      api.confirmDocType(firmId, matterId, docId, data),
+    onSuccess: (_, { docId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.document(firmId, matterId, docId) });
+      qc.invalidateQueries({ queryKey: queryKeys.documents(firmId, matterId) });
+    },
+  });
+}
+
+export function useRequestDocument(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data: DocumentRequestCreate) =>
+      api.requestDocument(firmId, matterId, data),
   });
 }
