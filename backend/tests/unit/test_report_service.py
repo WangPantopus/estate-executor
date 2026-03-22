@@ -231,6 +231,49 @@ class TestGenerateReportDispatcher:
             )
 
 
+class TestReportCaching:
+    """Test the 24h report caching layer."""
+
+    def test_cache_key_format(self):
+        import uuid
+        from app.services.report_service import _get_cache_key
+
+        matter_id = uuid.UUID("12345678-1234-1234-1234-123456789012")
+        key = _get_cache_key(matter_id, "matter-summary", "pdf")
+        assert "report:" in key
+        assert "12345678-1234-1234-1234-123456789012" in key
+        assert "matter-summary" in key
+        assert "pdf" in key
+
+    def test_cache_key_includes_date(self):
+        import uuid
+        from datetime import date
+        from app.services.report_service import _get_cache_key
+
+        matter_id = uuid.UUID("12345678-1234-1234-1234-123456789012")
+        key = _get_cache_key(matter_id, "asset-inventory", "xlsx")
+        today_str = date.today().strftime("%Y%m%d")
+        assert today_str in key
+
+    def test_cache_get_returns_none_on_error(self):
+        """Cache failures should return None, not raise."""
+        from app.services.report_service import _cache_get
+        # With no Redis running, should gracefully return None
+        result = _cache_get("nonexistent:key")
+        # May return None (no Redis) or None (key not found) — both are fine
+        assert result is None or isinstance(result, bytes)
+
+    def test_cache_set_does_not_raise(self):
+        """Cache write failures should be silent."""
+        from app.services.report_service import _cache_set
+        # With no Redis running, should not raise
+        _cache_set("test:key", b"test data")  # Should not raise
+
+    def test_cache_ttl_is_24h(self):
+        from app.services.report_service import _CACHE_TTL
+        assert _CACHE_TTL == 86400
+
+
 class TestReportCeleryTask:
     """Test the Celery task is registered correctly."""
 

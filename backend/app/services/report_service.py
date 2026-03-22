@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -30,6 +31,7 @@ from app.models.enums import (
     MatterStatus,
     TaskStatus,
 )
+from app.models.events import Event
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.tasks import Task
@@ -297,6 +299,15 @@ async def _get_deadlines(db: AsyncSession, matter_id: uuid.UUID) -> list[Deadlin
     return list(result.scalars().all())
 
 
+async def _get_recent_events(db: AsyncSession, matter_id: uuid.UUID, limit: int = 10) -> list[Event]:
+    result = await db.execute(
+        select(Event).where(Event.matter_id == matter_id)
+        .order_by(Event.created_at.desc())
+        .limit(limit)
+    )
+    return list(result.scalars().all())
+
+
 async def _get_distributions(db: AsyncSession, matter_id: uuid.UUID) -> list[Communication]:
     result = await db.execute(
         select(Communication)
@@ -326,6 +337,7 @@ async def generate_matter_summary_pdf(
     tasks = await _get_tasks(db, matter_id)
     assets = await _get_assets(db, matter_id)
     deadlines = await _get_deadlines(db, matter_id)
+    recent_events = await _get_recent_events(db, matter_id, limit=8)
 
     firm_name = matter.firm.name if matter.firm else None
     report_title = f"Matter Summary — Estate of {matter.decedent_name}"
@@ -394,6 +406,21 @@ async def generate_matter_summary_pdf(
         for d in upcoming:
             dl_data.append([d.title, _format_date(d.due_date), _enum_label(d.status)])
         elements.append(_styled_table(dl_data, [250, 100, 80]))
+
+    # Recent activity
+    if recent_events:
+        elements.append(Spacer(1, 8))
+        elements.append(_section_heading("Recent Activity"))
+        act_data = [["Date", "Action", "Entity", "Actor"]]
+        for ev in recent_events:
+            actor_label = _enum_label(ev.actor_type) if ev.actor_type else "—"
+            act_data.append([
+                _format_date(ev.created_at),
+                f"{ev.entity_type} {ev.action}",
+                str(ev.entity_id)[:12] + "...",
+                actor_label,
+            ])
+        elements.append(_styled_table(act_data, [85, 120, 120, 80]))
 
     def on_page(canvas, doc_obj):
         _header_footer(canvas, doc_obj, firm_name=firm_name, report_title=report_title)
@@ -621,18 +648,38 @@ async def generate_distribution_ledger_pdf(
     elements.append(Spacer(1, 8))
 
     if distributions:
-        data = [["Date", "Subject", "Details", "Sender", "Acknowledged"]]
+        data = [["Date", "Beneficiary / Recipients", "Description", "Amount", "Acknowledged"]]
         for d in distributions:
-            sender_name = d.sender.full_name if d.sender else "—"
+            # Build recipient list from visible_to stakeholder IDs
+            if d.visible_to:
+                recipients = ", ".join(
+                    sh_lookup.get(str(uid), str(uid)[:8]) for uid in d.visible_to
+                )
+            else:
+                recipients = "All stakeholders"
+
+            # Extract amount if present in subject (e.g. "$150,000")
+            amount = "—"
+            body_text = d.body or ""
+            subject_text = d.subject or ""
+            for text in [subject_text, body_text]:
+                match = re.search(r'\$[\d,]+\.?\d*', text)
+                if match:
+                    amount = match.group(0)
+                    break
+
             ack_count = len(d.acknowledged_by or [])
+            total_visible = len(d.visible_to or [])
+            ack_label = f"{ack_count}/{total_visible}" if total_visible > 0 else f"{ack_count}"
+
             data.append([
                 _format_date(d.created_at),
-                d.subject or "Distribution Notice",
-                (d.body or "")[:60],
-                sender_name,
-                f"{ack_count} ack",
+                recipients[:40],
+                (d.subject or "Distribution Notice")[:40],
+                amount,
+                ack_label,
             ])
-        elements.append(_styled_table(data, [70, 100, 180, 80, 60]))
+        elements.append(_styled_table(data, [70, 120, 120, 70, 60]))
     else:
         elements.append(_body_text("No distributions recorded for this matter."))
 
@@ -727,6 +774,42 @@ REPORT_GENERATORS = {
 }
 
 
+_CACHE_TTL = 86400  # 24 hours
+
+
+def _get_cache_key(matter_id: uuid.UUID, report_type: str, output_format: str) -> str:
+    today_str = date.today().strftime("%Y%m%d")
+    return f"report:{matter_id}:{report_type}:{output_format}:{today_str}"
+
+
+def _cache_get(key: str) -> bytes | None:
+    """Try to get a cached report from Redis. Returns None on miss or error."""
+    try:
+        import redis
+        from app.core.config import settings
+
+        r = redis.from_url(settings.redis_url)
+        data = r.get(key)
+        r.close()
+        return data  # type: ignore[return-value]
+    except Exception:
+        logger.debug("report_cache_miss", extra={"key": key})
+        return None
+
+
+def _cache_set(key: str, data: bytes) -> None:
+    """Cache a generated report in Redis. Fire-and-forget."""
+    try:
+        import redis
+        from app.core.config import settings
+
+        r = redis.from_url(settings.redis_url)
+        r.setex(key, _CACHE_TTL, data)
+        r.close()
+    except Exception:
+        logger.debug("report_cache_set_failed", extra={"key": key})
+
+
 async def generate_report(
     db: AsyncSession,
     *,
@@ -736,7 +819,8 @@ async def generate_report(
 ) -> tuple[bytes, str, str]:
     """Generate a report and return (bytes, filename, content_type).
 
-    Raises ValueError if report_type or format is invalid.
+    Reports are cached in Redis for 24 hours (keyed by matter, type,
+    format, and date). Raises ValueError if report_type or format is invalid.
     """
     if report_type not in REPORT_GENERATORS:
         raise ValueError(f"Unknown report type: {report_type}")
@@ -748,8 +832,17 @@ async def generate_report(
             f"Available: {config['formats']}"
         )
 
-    generator = config[output_format]
-    content = await generator(db, matter_id=matter_id)
+    # Check cache first
+    cache_key = _get_cache_key(matter_id, report_type, output_format)
+    cached = _cache_get(cache_key)
+
+    if cached is not None:
+        logger.info("report_cache_hit", extra={"key": cache_key})
+        content = cached
+    else:
+        generator = config[output_format]
+        content = await generator(db, matter_id=matter_id)
+        _cache_set(cache_key, content)
 
     matter = await _get_matter_with_firm(db, matter_id)
     safe_name = matter.decedent_name.replace(" ", "_")[:30]
