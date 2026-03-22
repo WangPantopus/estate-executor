@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
@@ -22,4 +23,9 @@ api_router.include_router(
     tasks_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/tasks",
     tags=["tasks"],
+)
+api_router.include_router(
+    assets_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/assets",
+    tags=["assets"],
 )

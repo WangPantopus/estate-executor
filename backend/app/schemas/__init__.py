@@ -12,10 +12,14 @@ from .ai import (
 )
 from .assets import (
     AssetCreate,
+    AssetDetailResponse,
+    AssetLinkDocument,
+    AssetListItem,
     AssetListResponse,
-    AssetResponse,
     AssetUpdate,
+    AssetValuation,
     EntityBrief,
+    ValuationEntry,
 )
 from .auth import CurrentUser, FirmMembershipBrief, TokenPayload
 from .common import APIResponse, ErrorDetail, PaginationMeta, PaginationParams
@@ -112,10 +116,14 @@ __all__ = [
     "TaskWaive",
     # Assets
     "AssetCreate",
+    "AssetDetailResponse",
+    "AssetLinkDocument",
+    "AssetListItem",
     "AssetListResponse",
-    "AssetResponse",
     "AssetUpdate",
+    "AssetValuation",
     "EntityBrief",
+    "ValuationEntry",
     # Entities
     "AssetBrief",
     "EntityCreate",
