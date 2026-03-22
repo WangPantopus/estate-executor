@@ -80,7 +80,13 @@ async def create_matter(
     db.add(stakeholder)
     await db.flush()
 
-    # TODO: trigger task generation (sync for now, async later)
+    # Generate tasks from templates (sync for now, async later)
+    from app.services.task_generation_service import generate_tasks
+
+    generated_tasks = await generate_tasks(
+        db, matter_id=matter.id, actor_id=current_user.user_id
+    )
+    logger.info("Generated %d tasks for new matter %s", len(generated_tasks), matter.id)
 
     await event_logger.log(
         db,

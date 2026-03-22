@@ -1,0 +1,311 @@
+# Base tasks — common to ALL estate types
+# These are generated for every new matter regardless of estate_type or jurisdiction.
+
+- key: "obtain_death_certificates"
+  title: "Obtain Death Certificates"
+  description: "Order certified copies of the death certificate (typically 10-15 copies needed)"
+  instructions: "Contact the funeral home or county vital records office to order certified copies. Most institutions require an original certified copy, not a photocopy. Order at least 10 copies — you'll need them for banks, insurance companies, the court, and other institutions."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "notify_social_security"
+  title: "Notify Social Security Administration"
+  description: "Report the death to the Social Security Administration and stop benefits"
+  instructions: "Call the SSA at 1-800-772-1213 to report the death. The funeral home may have already done this, but confirm. If the decedent was receiving benefits, any payments received after death must be returned."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 7
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "freeze_credit_bureaus"
+  title: "Freeze Decedent's Credit (All 3 Bureaus)"
+  description: "Place a deceased alert/freeze with Equifax, Experian, and TransUnion to prevent identity theft"
+  instructions: "Contact each bureau to place a deceased alert:\n- Equifax: 1-800-525-6285\n- Experian: 1-888-397-3742\n- TransUnion: 1-800-680-7289\nYou'll need the death certificate and your letters testamentary/administration."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies:
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "locate_original_will_trust"
+  title: "Locate Original Will and/or Trust Documents"
+  description: "Find the original signed will, any trust documents, and amendments/codicils"
+  instructions: "Check the decedent's home (safe, filing cabinet, desk), safe deposit box, attorney's office, and with any known estate planning attorney. The original signed document is required for probate — copies may not be accepted."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "open_estate_bank_account"
+  title: "Open Estate Bank Account"
+  description: "Open a dedicated bank account for the estate to manage income and expenses"
+  instructions: "Visit a bank with your letters testamentary/administration, the EIN, death certificate, and your ID. Open a checking account in the name of the estate (e.g., 'Estate of John Smith'). All estate income and expenses should flow through this account."
+  phase: "immediate"
+  priority: "normal"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "apply_for_ein"
+  conditions: null
+  subtasks: []
+
+- key: "apply_for_ein"
+  title: "Apply for Estate EIN (Tax ID)"
+  description: "Obtain an Employer Identification Number from the IRS for the estate"
+  instructions: "Apply online at irs.gov/ein or by phone at 1-800-829-4933. You'll need the decedent's SSN and your own information. The EIN is needed to open estate bank accounts and file estate tax returns."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "inventory_safe_deposit_boxes"
+  title: "Inventory Safe Deposit Boxes"
+  description: "Access and inventory all safe deposit boxes held by the decedent"
+  instructions: "Contact banks where the decedent held safe deposit boxes. You'll need the death certificate and your letters to gain access. Document all contents with photos and a written inventory. Some states require a witness (often a bank officer) present during the opening."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "cancel_redirect_mail"
+  title: "Cancel or Redirect Mail"
+  description: "Forward the decedent's mail to the executor/trustee and cancel subscriptions"
+  instructions: "File a change of address form at the post office or online at usps.com to forward the decedent's mail to your address. This helps catch bills, statements, and other correspondence that may reveal unknown assets or debts."
+  phase: "immediate"
+  priority: "normal"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 7
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "notify_insurance_companies"
+  title: "Notify Insurance Companies (Life, Health, Auto, Home)"
+  description: "Notify all insurance carriers of the death and file claims where applicable"
+  instructions: "Contact each insurance company with a copy of the death certificate. For life insurance, file a claim. For health insurance, notify the carrier to stop premiums. For auto and homeowner's insurance, ensure policies remain active to protect estate assets until they are distributed."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "inventory_real_estate"
+  title: "Inventory Real Estate"
+  description: "Identify and document all real property owned by the decedent"
+  instructions: "Gather deeds, property tax records, mortgage documents, and HOA information for all real property. Check county recorder records in jurisdictions where the decedent may have owned property. Note the type of ownership (sole, joint tenancy, trust, etc.) as this affects how the property transfers."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "inventory_bank_investment_accounts"
+  title: "Inventory Bank and Investment Accounts"
+  description: "Identify all bank accounts, brokerage accounts, and other financial accounts"
+  instructions: "Review mail, email, tax returns, and financial statements to identify all accounts. Contact each institution with the death certificate to get date-of-death values. Check for POD/TOD designations — these accounts may pass outside probate."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies:
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "inventory_retirement_accounts"
+  title: "Inventory Retirement Accounts"
+  description: "Identify all IRAs, 401(k)s, pensions, and other retirement accounts"
+  instructions: "Review tax returns and statements for retirement accounts. Contact each custodian/plan administrator with the death certificate. Note beneficiary designations — retirement accounts typically pass by beneficiary designation, not through the will."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies:
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "inventory_digital_assets"
+  title: "Inventory Digital Assets and Subscriptions"
+  description: "Identify digital accounts, cryptocurrency, online services, and subscriptions"
+  instructions: "Check email accounts, password managers, phone apps, and billing statements for digital assets and subscriptions. This includes social media accounts, cloud storage, cryptocurrency wallets, domain names, online businesses, and streaming/subscription services."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "inventory_vehicles"
+  title: "Inventory Vehicles"
+  description: "Identify all vehicles (cars, boats, RVs, etc.) and determine ownership/liens"
+  instructions: "Gather titles, registration documents, and loan/lease agreements for all vehicles. Check with the DMV for registered vehicles. Ensure insurance coverage is maintained on all vehicles until they are transferred or sold."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "inventory_personal_property"
+  title: "Inventory Personal Property of Significant Value"
+  description: "Document jewelry, art, antiques, collectibles, and other high-value personal property"
+  instructions: "Walk through the decedent's home and storage locations. Photograph and list items of significant value. Get appraisals for jewelry, art, antiques, and collectibles. Secure valuable items to prevent loss or theft."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "identify_debts_liabilities"
+  title: "Identify All Debts and Liabilities"
+  description: "Compile a complete list of the decedent's debts, including mortgages, loans, credit cards, and other obligations"
+  instructions: "Review credit reports, mail, email, and financial records to identify all debts. Contact known creditors for payoff amounts. Check for any pending lawsuits or tax liens. The estate is responsible for paying valid debts before distributions."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "freeze_credit_bureaus"
+  conditions: null
+  subtasks: []
+
+- key: "notify_utility_companies"
+  title: "Notify Utility Companies"
+  description: "Contact utility companies to transfer or cancel services"
+  instructions: "Notify electric, gas, water, internet, cable, and phone companies. Transfer accounts to the estate or a responsible party if the property will remain occupied. Cancel services for vacant properties but maintain essential services until the property is sold."
+  phase: "notification"
+  priority: "informational"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "file_final_federal_income_tax"
+  title: "File Final Federal Income Tax Return"
+  description: "File the decedent's final Form 1040 covering January 1 through date of death"
+  instructions: "Prepare and file the decedent's final Form 1040. This covers income from January 1 to the date of death. The return is due on the normal April 15 filing deadline. If the decedent was married, this may be a joint return with the surviving spouse."
+  phase: "tax"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 4
+  dependencies:
+    - "inventory_bank_investment_accounts"
+  conditions: null
+  subtasks: []
+
+- key: "file_final_state_income_tax"
+  title: "File Final State Income Tax Return"
+  description: "File the decedent's final state income tax return if applicable"
+  instructions: "Check whether the decedent's state of residence requires a final state income tax return. Most states do. The deadline typically mirrors the federal deadline."
+  phase: "tax"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 4
+  dependencies:
+    - "file_final_federal_income_tax"
+  conditions: null
+  subtasks: []
+
+- key: "cancel_subscriptions"
+  title: "Review and Cancel Ongoing Subscriptions"
+  description: "Cancel recurring subscriptions, memberships, and services no longer needed"
+  instructions: "Review bank and credit card statements for recurring charges. Cancel streaming services, gym memberships, magazine subscriptions, software subscriptions, and any other recurring payments. Some services may offer refunds for unused periods."
+  phase: "notification"
+  priority: "informational"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies: []
+  conditions: null
+  subtasks: []

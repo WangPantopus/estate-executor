@@ -1,0 +1,93 @@
+# Florida — State-specific tasks and deadline rules
+
+tasks:
+  - key: "fl_file_probate_circuit_court"
+    title: "File Probate with Circuit Court (Florida)"
+    description: "File probate petition with the Circuit Court in the appropriate county"
+    instructions: "File the petition for administration with the Circuit Court (Probate Division) in the county where the decedent was domiciled. Florida has two types of probate: formal administration (estates over $75,000) and summary administration (estates $75,000 or less, or if the decedent has been dead for more than 2 years)."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "fl_summary_administration"
+    title: "Consider Summary Administration (Under $75,000)"
+    description: "Determine if estate qualifies for Florida summary administration"
+    instructions: "Florida allows summary administration for estates valued at $75,000 or less (excluding exempt homestead property), or if the decedent has been dead more than 2 years. This simplified process avoids appointing a personal representative."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "fl_homestead_determination"
+    title: "Determine Homestead Status (Florida)"
+    description: "Determine homestead status and restrictions on the decedent's primary residence"
+    instructions: "Florida's homestead laws significantly impact estate administration. Homestead property may pass outside probate and has restrictions on devise (the decedent cannot freely will homestead property away from a surviving spouse or minor children). Determine homestead status early."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "fl_notice_to_creditors"
+    title: "Publish Notice to Creditors (Florida)"
+    description: "Publish notice in a local newspaper and serve known creditors"
+    instructions: "Florida requires the personal representative to publish a Notice to Creditors in a local newspaper once a week for two consecutive weeks. Also serve a copy on all known or reasonably ascertainable creditors within the later of 3 months or 30 days after the first publication."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "fl_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "fl_creditor_claim_period"
+    title: "Florida Creditor Claim Period (3 Months)"
+    description: "Creditors have 3 months from first publication of notice (or 30 days from service of individual notice)"
+    relative_to: "matter_created"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "fl_inventory_deadline"
+    title: "Florida Inventory Deadline (60 Days)"
+    description: "Inventory must be filed within 60 days of appointment as personal representative"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "fl_estate_closing_deadline"
+    title: "Florida Estate Closing Deadline (12 Months)"
+    description: "Personal representative should close estate within 12 months of opening"
+    relative_to: "matter_created"
+    offset_months: 12
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -1,0 +1,110 @@
+# California — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ca_file_petition_superior_court"
+    title: "File Petition with California Superior Court"
+    description: "File probate petition with the Superior Court of the county where decedent resided"
+    instructions: "File Petition for Probate (Form DE-111) with the Superior Court. California requires the petition to be filed in the county of the decedent's domicile. Include the original will, death certificate, and all required Judicial Council forms."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ca_spousal_property_petition"
+    title: "File Spousal Property Petition (if applicable)"
+    description: "File petition to confirm community property rights of surviving spouse"
+    instructions: "If the decedent had a surviving spouse and community property, file a Spousal or Domestic Partner Property Petition (Form DE-221). This can transfer community property without full probate."
+    phase: "probate_filing"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule: null
+    dependencies:
+      - "ca_file_petition_superior_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "ca_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $184,500)"
+    description: "Determine if estate qualifies for simplified transfer via small estate affidavit"
+    instructions: "In California, estates with personal property valued at $184,500 or less may be transferred by affidavit (Probate Code §13100) without full probate. Real property up to $184,500 may use a simplified petition. Evaluate if this applies."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ca_notify_dept_health_care"
+    title: "Notify CA Department of Health Care Services"
+    description: "Notify DHCS if decedent received Medi-Cal benefits (Medi-Cal recovery)"
+    instructions: "California requires notice to the Department of Health Care Services if the decedent received Medi-Cal benefits. DHCS may file a claim for recovery against the estate. File notice promptly to avoid delays."
+    phase: "notification"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 90
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ca_trust_notification_120_days"
+    title: "Send CA Trust Notification (Prob Code §16061.7)"
+    description: "Send statutory trust notification to beneficiaries within 60 days"
+    instructions: "California Probate Code §16061.7 requires the trustee to serve notice to all beneficiaries and heirs within 60 days of the trustor's death (or of becoming aware of it). Beneficiaries then have 120 days to contest the trust."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_days: 60
+    dependencies:
+      - "locate_original_will_trust"
+    conditions:
+      estate_types: ["trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ca_creditor_claim_period"
+    title: "California Creditor Claim Period Closes"
+    description: "4-month creditor claim period from date letters are issued (or 60 days from notice to known creditors, whichever is later)"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ca_trust_contest_period"
+    title: "California Trust Contest Period (120 Days)"
+    description: "Beneficiaries have 120 days from receipt of §16061.7 notice to contest the trust"
+    relative_to: "date_of_death"
+    offset_days: 180
+    conditions:
+      estate_types: ["trust_administration", "mixed_probate_trust"]
+
+  - key: "ca_probate_inventory_deadline"
+    title: "California Probate Inventory Deadline"
+    description: "Inventory and appraisal must be filed within 4 months of appointment"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -1,0 +1,156 @@
+# Conservatorship — Incapacity-based administration
+# Tasks for managing affairs when the principal is incapacitated (not deceased).
+
+- key: "conserv_obtain_medical_certification"
+  title: "Obtain Medical Certification of Incapacity"
+  description: "Obtain physician certification of the principal's incapacity"
+  instructions: "Request a written certification from the principal's physician(s) confirming incapacity. Many trust documents require one or two physician certifications before the successor trustee can act. Keep the originals for your records."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "conserv_review_power_of_attorney"
+  title: "Review Power of Attorney Documents"
+  description: "Review existing POA documents for scope and limitations"
+  instructions: "Review any existing durable power of attorney documents. Determine whether the POA is 'springing' (activated by incapacity) or 'durable' (already in effect). Note any limitations on the agent's authority and whether the POA covers financial, healthcare, or both."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 7
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "conserv_petition_guardianship"
+  title: "Petition for Guardianship/Conservatorship if Needed"
+  description: "If no POA exists, petition the court for guardianship or conservatorship"
+  instructions: "If no valid power of attorney exists, file a petition with the court for appointment as guardian (personal decisions) and/or conservator (financial decisions). This requires a hearing and medical evidence of incapacity."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "conserv_obtain_medical_certification"
+  conditions: null
+  subtasks: []
+
+- key: "conserv_secure_assets"
+  title: "Secure and Protect All Assets"
+  description: "Take immediate steps to protect the incapacitated person's assets"
+  instructions: "Ensure all assets are secure. Change locks if needed, ensure insurance is current, protect against financial exploitation. Review recent transactions for signs of undue influence or exploitation."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 7
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "conserv_inventory_assets"
+  title: "Inventory All Assets"
+  description: "Create a comprehensive inventory of the protected person's assets"
+  instructions: "Document all assets including real estate, financial accounts, vehicles, personal property, and income sources. The court may require this inventory within a specific timeframe after appointment."
+  phase: "asset_inventory"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "conserv_secure_assets"
+  conditions: null
+  subtasks: []
+
+- key: "conserv_establish_care_plan"
+  title: "Establish Care Plan"
+  description: "Create a care plan addressing the protected person's medical, personal, and financial needs"
+  instructions: "Work with healthcare providers to establish a comprehensive care plan. Address housing, medical care, daily needs, and financial management. Consider whether the current living situation is adequate."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "conserv_manage_bills_income"
+  title: "Manage Ongoing Bills and Income"
+  description: "Take over management of the protected person's financial obligations and income"
+  instructions: "Redirect mail, set up bill payments, manage income sources (Social Security, pension, investment income). Ensure all regular obligations are being met (mortgage, insurance, utilities, medical costs)."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "conserv_file_court_reports"
+  title: "File Required Court Reports"
+  description: "File periodic accountings and status reports as required by the court"
+  instructions: "If a conservatorship was established, file periodic reports with the court. These typically include financial accountings and personal status reports. Check your jurisdiction for the required frequency (often annual)."
+  phase: "closing"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_months: 12
+  dependencies:
+    - "conserv_petition_guardianship"
+  conditions: null
+  subtasks: []
+
+- key: "conserv_apply_government_benefits"
+  title: "Apply for Government Benefits"
+  description: "Apply for Medicaid, VA benefits, or other programs the protected person may qualify for"
+  instructions: "Evaluate the protected person's eligibility for government benefits programs. This may include Medicaid (for long-term care), VA benefits, Social Security disability, or state-specific programs."
+  phase: "notification"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "conserv_inventory_assets"
+  conditions: null
+  subtasks: []
+
+- key: "conserv_review_estate_plan"
+  title: "Review Existing Estate Plan"
+  description: "Review the protected person's existing estate plan for any needed updates"
+  instructions: "Review the existing will, trust, beneficiary designations, and other estate planning documents. While you may not be able to change these, understanding them helps you manage assets appropriately."
+  phase: "immediate"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies: []
+  conditions: null
+  subtasks: []

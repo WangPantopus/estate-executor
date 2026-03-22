@@ -1,0 +1,95 @@
+# Illinois — State-specific tasks and deadline rules
+
+tasks:
+  - key: "il_file_probate_circuit_court"
+    title: "File Probate with Circuit Court (Illinois)"
+    description: "File petition to open probate with the Circuit Court"
+    instructions: "File the petition for probate with the Circuit Court in the county where the decedent resided. Illinois has supervised administration (court approval needed for most actions) and independent administration (executor can act without court approval). Request independent administration if the will allows it."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "il_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $100,000)"
+    description: "Determine if estate qualifies for simplified transfer by affidavit"
+    instructions: "Illinois allows transfer of personal property by small estate affidavit for estates valued at $100,000 or less (excluding real estate). The affidavit can be used 30 days after death. Real estate valued under $100,000 has a separate simplified process."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "il_publish_creditor_claims"
+    title: "Publish Notice of Claims (Illinois)"
+    description: "Publish notice in a newspaper in the county where the estate is being administered"
+    instructions: "Publish the notice within 14 days of appointment as representative. The publication must appear in a newspaper published in the county. Known creditors must receive individual written notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "il_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "il_file_estate_tax"
+    title: "File Illinois Estate Tax Return"
+    description: "File Illinois estate tax return if estate exceeds state exemption"
+    instructions: "Illinois imposes an estate tax on estates exceeding $4 million. File the Illinois estate tax return within 9 months of death. The tax rate is graduated up to 16%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "il_creditor_claim_period"
+    title: "Illinois Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "il_estate_tax_deadline"
+    title: "Illinois Estate Tax Return Deadline"
+    description: "Illinois estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "il_inventory_deadline"
+    title: "Illinois Inventory Deadline (60 Days)"
+    description: "Inventory must be filed within 60 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

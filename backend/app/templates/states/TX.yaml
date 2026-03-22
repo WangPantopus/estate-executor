@@ -1,0 +1,94 @@
+# Texas — State-specific tasks and deadline rules
+
+tasks:
+  - key: "tx_file_application_probate"
+    title: "File Application to Probate Will (Texas)"
+    description: "File application with the county court to admit will to probate"
+    instructions: "File the application to probate the will with the county court in the county where the decedent resided. Texas requires the will to be filed within 4 years of death. You can seek Independent Administration (no ongoing court supervision) if the will allows it."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "tx_muniment_of_title"
+    title: "Consider Muniment of Title (Texas)"
+    description: "If no debts, consider probating will as muniment of title only"
+    instructions: "Texas allows probating a will as a 'muniment of title' when the estate has no unpaid debts (other than those secured by real property). This simplified process avoids full administration and is faster and less expensive."
+    phase: "probate_filing"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate"]
+    subtasks: []
+
+  - key: "tx_independent_administration"
+    title: "Establish Independent Administration (Texas)"
+    description: "Obtain court order for independent administration to avoid ongoing court supervision"
+    instructions: "Texas strongly favors independent administration. If the will provides for it (or all heirs agree), the executor can manage the estate without ongoing court approval for most actions. This is much more efficient than dependent administration."
+    phase: "probate_filing"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 60
+    dependencies:
+      - "tx_file_application_probate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "tx_notice_creditors"
+    title: "Publish Notice to Creditors (Texas)"
+    description: "Publish notice to creditors in a county newspaper"
+    instructions: "Texas requires a published notice to creditors within one month of receiving letters. Publish in a newspaper of general circulation in the county. Secured creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 60
+    dependencies:
+      - "tx_file_application_probate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "tx_will_filing_deadline"
+    title: "Texas Will Filing Deadline (4 Years)"
+    description: "A will must be admitted to probate within 4 years of the decedent's death"
+    relative_to: "date_of_death"
+    offset_months: 48
+    conditions:
+      estate_types: ["testate_probate", "mixed_probate_trust"]
+
+  - key: "tx_inventory_deadline"
+    title: "Texas Inventory Filing Deadline (90 Days)"
+    description: "Inventory, appraisement, and list of claims due within 90 days of qualification"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "tx_creditor_notice_deadline"
+    title: "Texas Creditor Notice Publication Deadline"
+    description: "Notice to creditors must be published within 1 month of receiving letters"
+    relative_to: "matter_created"
+    offset_days: 30
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

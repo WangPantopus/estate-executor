@@ -23,6 +23,7 @@ from app.schemas.tasks import (
     TaskComplete,
     TaskCreate,
     TaskDetailResponse,
+    TaskGenerateRequest,
     TaskLinkDocument,
     TaskListItem,
     TaskListResponse,
@@ -31,6 +32,7 @@ from app.schemas.tasks import (
     TaskWaive,
 )
 from app.services import task_service
+from app.services import task_generation_service
 
 router = APIRouter()
 
@@ -140,6 +142,77 @@ async def create_task(
         dependencies=dep_ids,
         created_at=task.created_at,
         updated_at=task.updated_at,
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /firms/{firm_id}/matters/{matter_id}/tasks/generate — (Re)generate tasks
+# ---------------------------------------------------------------------------
+
+
+@router.post("/generate", response_model=TaskListResponse)
+async def generate_tasks_endpoint(
+    firm_id: UUID,
+    matter_id: UUID,
+    body: TaskGenerateRequest | None = None,
+    _membership: FirmMembership = Depends(require_firm_member),
+    stakeholder: Stakeholder = Depends(require_stakeholder),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> TaskListResponse:
+    """Trigger task (re)generation from templates.
+
+    With regenerate=true, only adds missing tasks without modifying existing ones.
+    """
+    if stakeholder.role not in _WRITE_ROLES:
+        raise PermissionDeniedError(
+            detail="Only matter admins and professionals can generate tasks"
+        )
+
+    if body and body.regenerate:
+        tasks = await task_generation_service.regenerate_tasks(
+            db, matter_id=matter_id, actor_id=current_user.user_id
+        )
+    else:
+        tasks = await task_generation_service.generate_tasks(
+            db, matter_id=matter_id, actor_id=current_user.user_id
+        )
+
+    items = [
+        TaskListItem(
+            id=t.id,
+            matter_id=t.matter_id,
+            parent_task_id=t.parent_task_id,
+            template_key=t.template_key,
+            title=t.title,
+            description=t.description,
+            instructions=t.instructions,
+            phase=t.phase,
+            status=t.status,
+            priority=t.priority,
+            assigned_to=t.assigned_to,
+            due_date=t.due_date,
+            requires_document=t.requires_document,
+            completed_at=t.completed_at,
+            completed_by=t.completed_by,
+            sort_order=t.sort_order,
+            metadata=t.metadata_,
+            document_count=0,
+            dependency_ids=[],
+            created_at=t.created_at,
+            updated_at=t.updated_at,
+        )
+        for t in tasks
+    ]
+
+    return TaskListResponse(
+        data=items,
+        meta=PaginationMeta(
+            total=len(items),
+            page=1,
+            per_page=len(items) or 50,
+            total_pages=1 if items else 0,
+        ),
     )
 
 
