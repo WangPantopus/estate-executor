@@ -826,13 +826,13 @@ export class ApiClient {
     return this.get(this.reportBase(firmId, matterId));
   }
 
-  async generateReportUrl(
+  generateReportUrl(
     firmId: string,
     matterId: string,
     reportType: string,
     format: string = "pdf",
   ): string {
-    const base = this.baseURL || process.env.NEXT_PUBLIC_API_URL || "";
+    const base = this.baseUrl || process.env.NEXT_PUBLIC_API_URL || "";
     return `${base}/api/v1${this.reportBase(firmId, matterId)}/${reportType}?format=${format}`;
   }
 
