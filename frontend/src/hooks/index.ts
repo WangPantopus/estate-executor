@@ -41,6 +41,8 @@ export {
   // Communications
   useCommunications,
   useCreateCommunication,
+  useAcknowledgeCommunication,
+  useCreateDisputeFlag,
   // Events
   useEvents,
   // Documents

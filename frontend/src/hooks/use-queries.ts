@@ -48,6 +48,7 @@ import type {
   DocumentDetail,
   DocumentConfirmType,
   DocumentRequestCreate,
+  DisputeFlagCreate,
 } from "@/lib/types";
 
 // ─── Query key factories ────────────────────────────────────────────────────
@@ -607,6 +608,34 @@ export function useCreateCommunication(firmId: string, matterId: string) {
   return useMutation({
     mutationFn: (data: CommunicationCreate) =>
       api.createCommunication(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.communications(firmId, matterId),
+      });
+    },
+  });
+}
+
+export function useAcknowledgeCommunication(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (commId: string) =>
+      api.acknowledgeCommunication(firmId, matterId, commId),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.communications(firmId, matterId),
+      });
+    },
+  });
+}
+
+export function useCreateDisputeFlag(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DisputeFlagCreate) =>
+      api.createDisputeFlag(firmId, matterId, data),
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: queryKeys.communications(firmId, matterId),
