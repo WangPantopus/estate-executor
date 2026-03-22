@@ -1,3 +1,5 @@
+import logging
+
 from pydantic_settings import BaseSettings
 
 
@@ -7,6 +9,8 @@ class Settings(BaseSettings):
     # App
     app_env: str = "development"
     app_secret_key: str = "change-me-to-a-random-secret"
+    environment: str = "dev"
+    log_level: str = "INFO"
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/estate_executor"
@@ -17,10 +21,12 @@ class Settings(BaseSettings):
 
     # CORS
     backend_cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3000"]
 
     # Auth0
     auth0_domain: str = ""
     auth0_api_audience: str = ""
+    auth0_algorithms: list[str] = ["RS256"]
     auth0_client_id: str = ""
     auth0_client_secret: str = ""
 
@@ -56,11 +62,25 @@ class Settings(BaseSettings):
 
     @property
     def is_development(self) -> bool:
-        return self.app_env == "development"
+        return self.app_env == "development" or self.environment == "dev"
 
     @property
     def is_production(self) -> bool:
-        return self.app_env == "production"
+        return self.app_env == "production" or self.environment == "production"
+
+    @property
+    def auth0_issuer(self) -> str:
+        return f"https://{self.auth0_domain}/"
+
+    @property
+    def auth0_jwks_url(self) -> str:
+        return f"https://{self.auth0_domain}/.well-known/jwks.json"
+
+    def configure_logging(self) -> None:
+        logging.basicConfig(
+            level=getattr(logging, self.log_level.upper(), logging.INFO),
+            format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        )
 
 
 settings = Settings()
