@@ -279,6 +279,7 @@ async def _create_state_deadlines(
     matter_created = matter.created_at.date() if matter.created_at else date.today()
     skip_keys = existing_deadline_keys or set()
     count = 0
+    new_deadlines: list[tuple[Deadline, str, str | None]] = []
 
     for dl in state_deadlines:
         dl_key = dl.get("key", "")
@@ -311,21 +312,23 @@ async def _create_state_deadlines(
             },
         )
         db.add(deadline)
+        new_deadlines.append((deadline, dl_key, dl.get("title")))
         count += 1
 
+    if count:
+        await db.flush()
+
+    for deadline, dl_key, dl_title in new_deadlines:
         await event_logger.log(
             db,
             matter_id=matter.id,
             actor_id=actor_id,
             actor_type=ActorType.system,
             entity_type="deadline",
-            entity_id=matter.id,  # placeholder; flushed ID not yet available
+            entity_id=deadline.id,
             action="generated",
-            metadata={"key": dl_key, "title": dl.get("title")},
+            metadata={"key": dl_key, "title": dl_title},
         )
-
-    if count:
-        await db.flush()
 
     return count
 
