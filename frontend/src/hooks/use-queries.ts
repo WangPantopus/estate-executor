@@ -398,6 +398,9 @@ export function useAddValuation(firmId: string, matterId: string) {
       qc.invalidateQueries({
         queryKey: queryKeys.assets(firmId, matterId),
       });
+      qc.invalidateQueries({
+        queryKey: queryKeys.matterDashboard(firmId, matterId),
+      });
     },
   });
 }
@@ -567,6 +570,9 @@ export function useUpdateDeadline(firmId: string, matterId: string) {
       });
       qc.invalidateQueries({
         queryKey: queryKeys.deadlineCalendar(firmId, matterId),
+      });
+      qc.invalidateQueries({
+        queryKey: queryKeys.matterDashboard(firmId, matterId),
       });
     },
   });

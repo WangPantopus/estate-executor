@@ -52,7 +52,7 @@ const matterSchema = z.object({
   date_of_incapacity: z.string().optional(),
   estimated_value: z.number().nullable().optional(),
   asset_types_present: z.array(z.string()).optional(),
-  flags: z.record(z.string(), z.boolean()).optional(),
+  flags: z.record(z.string(), z.boolean()).optional(), // UI tracks as record, converted to string[] on submit
 });
 
 type MatterFormData = z.infer<typeof matterSchema>;
@@ -139,7 +139,9 @@ export function CreateMatterDialog({
       date_of_incapacity: values.date_of_incapacity || undefined,
       estimated_value: values.estimated_value ?? undefined,
       asset_types_present: (values.asset_types_present ?? []) as AssetType[],
-      flags: values.flags,
+      flags: Object.entries(values.flags ?? {})
+        .filter(([, v]) => v)
+        .map(([k]) => k),
     };
 
     try {

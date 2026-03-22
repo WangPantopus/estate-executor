@@ -27,6 +27,7 @@ export function EmptyState({
         <div className="mb-4 text-muted-foreground/40">{icon}</div>
       ) : (
         <svg
+          aria-hidden="true"
           className="mb-4 size-16 text-muted-foreground/20"
           viewBox="0 0 64 64"
           fill="none"

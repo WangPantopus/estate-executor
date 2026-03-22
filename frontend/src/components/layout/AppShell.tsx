@@ -231,6 +231,7 @@ export function AppShell({
           <Separator className="bg-sidebar-border" />
           <button
             onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="flex items-center justify-center py-3 text-sidebar-muted hover:text-sidebar-foreground transition-colors"
           >
             {collapsed ? (

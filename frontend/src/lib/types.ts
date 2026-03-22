@@ -212,7 +212,7 @@ export interface MatterCreate {
   date_of_incapacity?: string | null;
   estimated_value?: number | null;
   asset_types_present?: AssetType[];
-  flags?: Record<string, unknown>;
+  flags?: string[];
 }
 
 export interface MatterUpdate {
@@ -422,12 +422,13 @@ export interface AssetListItem {
   title: string;
   description: string | null;
   institution: string | null;
-  account_number: string | null;
+  account_number_masked: string | null;
   ownership_type: OwnershipType | null;
   transfer_mechanism: TransferMechanism | null;
   status: AssetStatus;
   date_of_death_value: number | null;
   current_estimated_value: number | null;
+  final_appraised_value: number | null;
   metadata: Record<string, unknown>;
   document_count: number;
   entities: EntityBrief[];
@@ -454,9 +455,9 @@ export interface EntityCreate {
   name: string;
   trustee?: string;
   successor_trustee?: string;
-  trigger_conditions?: string;
+  trigger_conditions?: Record<string, unknown>;
   funding_status?: FundingStatus;
-  distribution_rules?: string;
+  distribution_rules?: Record<string, unknown>;
   asset_ids?: string[];
 }
 
@@ -465,9 +466,9 @@ export interface EntityUpdate {
   name?: string;
   trustee?: string;
   successor_trustee?: string;
-  trigger_conditions?: string;
+  trigger_conditions?: Record<string, unknown>;
   funding_status?: FundingStatus;
-  distribution_rules?: string;
+  distribution_rules?: Record<string, unknown>;
   asset_ids?: string[];
 }
 
@@ -478,9 +479,9 @@ export interface Entity {
   name: string;
   trustee: string | null;
   successor_trustee: string | null;
-  trigger_conditions: string | null;
+  trigger_conditions: Record<string, unknown> | null;
   funding_status: FundingStatus;
-  distribution_rules: string | null;
+  distribution_rules: Record<string, unknown> | null;
   metadata: Record<string, unknown>;
   assets: AssetBrief[];
   created_at: string;
@@ -649,7 +650,7 @@ export interface DeadlineResponse {
   description: string | null;
   due_date: string;
   source: DeadlineSource;
-  rule: string | null;
+  rule: Record<string, unknown> | null;
   status: DeadlineStatus;
   assigned_to: string | null;
   assignee_name: string | null;
@@ -686,9 +687,9 @@ export interface CalendarResponse {
 
 export interface CommunicationCreate {
   type: CommunicationType;
-  subject: string;
+  subject?: string;
   body: string;
-  visibility: CommunicationVisibility;
+  visibility?: CommunicationVisibility;
   visible_to?: string[];
 }
 

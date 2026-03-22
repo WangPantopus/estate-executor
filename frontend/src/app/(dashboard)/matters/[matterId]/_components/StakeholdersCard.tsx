@@ -1,8 +1,4 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -25,13 +21,11 @@ const ROLE_LABELS: Record<string, string> = {
 
 interface StakeholdersCardProps {
   stakeholders: Stakeholder[];
-  firmId: string;
   matterId: string;
 }
 
 export function StakeholdersCard({
   stakeholders,
-  firmId,
   matterId,
 }: StakeholdersCardProps) {
   const display = stakeholders.slice(0, 5);

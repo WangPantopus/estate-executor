@@ -86,7 +86,6 @@ export default function MatterDashboardPage({
           />
           <StakeholdersCard
             stakeholders={stakeholders}
-            firmId={FIRM_ID}
             matterId={matterId}
           />
           <UpcomingDeadlinesCard
