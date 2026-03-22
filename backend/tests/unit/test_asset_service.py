@@ -222,7 +222,8 @@ class TestEncryptionRoundtrip:
     def _can_import_crypto(self) -> bool:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
-            return True
+            # Verify it's the real module, not a mock
+            return hasattr(AESGCM, "__module__") and not str(type(AESGCM)).startswith("<class 'unittest.mock")
         except BaseException:
             return False
 
