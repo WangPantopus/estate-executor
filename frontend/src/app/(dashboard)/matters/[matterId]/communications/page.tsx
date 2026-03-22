@@ -39,9 +39,21 @@ export default function CommunicationsPage({
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
   const { data: currentUser } = useCurrentUser();
 
-  const communications = commsData?.data ?? [];
+  const allComms = commsData?.data ?? [];
   const stakeholders = stakeholdersData?.data ?? [];
   const currentUserId = currentUser?.user_id ?? null;
+
+  // Filter by visibility based on current user's role
+  const currentStakeholder = stakeholders.find((s) => s.user_id === currentUserId);
+  const isBeneficiaryOrReadOnly =
+    currentStakeholder?.role === "beneficiary" || currentStakeholder?.role === "read_only";
+  const communications = useMemo(
+    () =>
+      isBeneficiaryOrReadOnly
+        ? allComms.filter((c) => c.visibility !== "professionals_only")
+        : allComms,
+    [allComms, isBeneficiaryOrReadOnly],
+  );
 
   // ─── UI state ───────────────────────────────────────────────────────────────
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -162,7 +174,7 @@ export default function CommunicationsPage({
 
       {/* Mobile: show detail as overlay when selected */}
       {selectedComm && (
-        <div className="sm:hidden fixed inset-0 z-40 bg-card">
+        <div className="sm:hidden fixed inset-0 z-50 bg-card">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <Button
               variant="ghost"

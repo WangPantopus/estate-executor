@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   Search,
   Briefcase,
-  ListTodo,
-  Landmark,
-  FileText,
+  Settings,
+  User,
   Plus,
-  Upload,
   ArrowRight,
 } from "lucide-react";
 import {
@@ -87,14 +85,14 @@ export function CommandPalette() {
     {
       id: "nav-settings",
       label: "Go to Settings",
-      icon: <ListTodo className="size-4" />,
+      icon: <Settings className="size-4" />,
       action: () => { router.push("/settings"); setOpen(false); },
       category: "navigation",
     },
     {
       id: "nav-profile",
       label: "Go to Profile",
-      icon: <Landmark className="size-4" />,
+      icon: <User className="size-4" />,
       action: () => { router.push("/settings/profile"); setOpen(false); },
       category: "navigation",
     },

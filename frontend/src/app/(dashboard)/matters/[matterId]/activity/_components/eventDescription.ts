@@ -5,7 +5,8 @@ import type { EventResponse } from "@/lib/types";
  * Handles all entity_type + action combinations.
  */
 export function describeEvent(event: EventResponse): string {
-  const actor = event.actor_name ?? event.actor_type;
+  const rawActor = event.actor_name ?? event.actor_type;
+  const actor = rawActor === "system" ? "System" : rawActor === "ai" ? "AI" : rawActor;
   const meta = event.metadata ?? {};
   const changes = event.changes ?? {};
 

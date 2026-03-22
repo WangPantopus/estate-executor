@@ -55,8 +55,7 @@ import {
   useUpdateFirmMember,
   useRemoveFirmMember,
 } from "@/hooks";
-import { ESTATE_TYPE_LABELS } from "@/lib/constants";
-import type { FirmRole, FirmMember } from "@/lib/types";
+import type { FirmRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

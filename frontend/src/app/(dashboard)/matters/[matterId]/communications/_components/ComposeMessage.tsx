@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Loader2, Send, X, Bold, Italic, List as ListIcon, Link2 } from "lucide-react";
 import {
   Dialog,
@@ -108,9 +108,24 @@ export function ComposeMessage({
     }
   };
 
-  // For bold/italic formatting helpers
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
   const insertFormatting = (prefix: string, suffix: string) => {
-    setBody((prev) => prev + prefix + suffix);
+    const el = bodyRef.current;
+    if (!el) {
+      setBody((prev) => prev + prefix + suffix);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = body.substring(start, end);
+    const newText = body.substring(0, start) + prefix + selected + suffix + body.substring(end);
+    setBody(newText);
+    // Restore cursor after prefix + selected text
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+    });
   };
 
   return (
@@ -215,6 +230,7 @@ export function ComposeMessage({
                 </Button>
               </div>
               <Textarea
+                ref={bodyRef}
                 id="compose-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}

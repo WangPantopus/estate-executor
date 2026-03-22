@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   Briefcase,
   Settings,
   ChevronLeft,
@@ -57,7 +56,6 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/matters", icon: LayoutDashboard },
   { label: "Matters", href: "/matters", icon: Briefcase },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
@@ -88,11 +86,15 @@ const PAGE_LABELS: Record<string, string> = {
 
 // ─── Helper: extract matter context from pathname ─────────────────────────────
 
+const NON_MATTER_ROUTES = new Set(["create", "new"]);
+
 function parseMatterContext(pathname: string) {
   const match = pathname.match(/^\/matters\/([^/]+)(\/(.*))?$/);
   if (!match) return null;
+  const matterId = match[1];
+  if (NON_MATTER_ROUTES.has(matterId)) return null;
   return {
-    matterId: match[1],
+    matterId,
     subPage: match[3]?.split("/")[0] ?? null,
   };
 }

@@ -137,7 +137,9 @@ export default function ActivityPage({
       let exportCursor: string | null = null;
       let more = true;
 
-      while (more) {
+      let iterations = 0;
+      while (more && iterations < 50) {
+        iterations++;
         const params: Record<string, string | number> = { per_page: 200 };
         if (exportCursor) params.cursor = exportCursor;
         if (filters.entityType) params.entity_type = filters.entityType;
@@ -150,11 +152,13 @@ export default function ActivityPage({
         );
 
         allEvents = [...allEvents, ...result.data];
+        const prevCursor: string | null = exportCursor;
         exportCursor = result.meta.next_cursor;
         more = result.meta.has_more;
 
-        // Safety limit
+        // Guard against non-advancing cursor or safety limit
         if (allEvents.length >= 5000) break;
+        if (exportCursor === prevCursor) break;
       }
 
       // Generate CSV
