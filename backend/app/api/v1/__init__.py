@@ -2,6 +2,8 @@ from fastapi import APIRouter
 
 from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.communications import dispute_flag_router
+from app.api.v1.communications import router as communications_router
 from app.api.v1.deadlines import router as deadlines_router
 from app.api.v1.entities import entity_map_router
 from app.api.v1.entities import router as entities_router
@@ -46,4 +48,14 @@ api_router.include_router(
     deadlines_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/deadlines",
     tags=["deadlines"],
+)
+api_router.include_router(
+    communications_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/communications",
+    tags=["communications"],
+)
+api_router.include_router(
+    dispute_flag_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/dispute-flag",
+    tags=["communications"],
 )
