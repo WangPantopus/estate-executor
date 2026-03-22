@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
-import math
 import uuid
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from typing import Any
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -160,24 +159,26 @@ async def update_deadline(
     # Handle due_date change — log old/new and auto-extend
     new_due_date = updates.pop("due_date", None)
     if new_due_date is not None and new_due_date != deadline.due_date:
+        old_due_date = deadline.due_date
         changes["due_date"] = {
-            "old": str(deadline.due_date),
+            "old": str(old_due_date),
             "new": str(new_due_date),
         }
         deadline.due_date = new_due_date
 
-        # If extending (new date is later), auto-set status to extended
-        if new_due_date > deadline.due_date or (
-            "status" not in updates and deadline.status in (
-                DeadlineStatus.upcoming, DeadlineStatus.missed
-            )
+        # If extending (new date is later) and no explicit status provided,
+        # auto-set status to 'extended'
+        if (
+            new_due_date > old_due_date
+            and "status" not in updates
+            and deadline.status
+            in (DeadlineStatus.upcoming, DeadlineStatus.missed)
         ):
-            if "status" not in updates:
-                changes["status"] = {
-                    "old": deadline.status.value,
-                    "new": DeadlineStatus.extended.value,
-                }
-                deadline.status = DeadlineStatus.extended
+            changes["status"] = {
+                "old": deadline.status.value,
+                "new": DeadlineStatus.extended.value,
+            }
+            deadline.status = DeadlineStatus.extended
 
     # Handle explicit status change
     new_status = updates.pop("status", None)
