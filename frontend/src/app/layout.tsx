@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Auth0Provider } from "@auth0/nextjs-auth0";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,7 +29,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
-        <Auth0Provider>{children}</Auth0Provider>
+        <Auth0Provider>
+          <QueryProvider>{children}</QueryProvider>
+        </Auth0Provider>
       </body>
     </html>
   );
