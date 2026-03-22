@@ -485,6 +485,7 @@ async def complete_task(
     Returns (updated task, list of unblocked task IDs).
     """
     task = await _get_task_or_404(db, task_id=task_id, matter_id=matter_id)
+    old_status = task.status.value
 
     # Validate state transition
     _validate_transition(task.status, TaskStatus.complete)
@@ -542,7 +543,7 @@ async def complete_task(
         entity_type="task",
         entity_id=task.id,
         action="completed",
-        changes={"status": {"old": "in_progress", "new": "complete"}},
+        changes={"status": {"old": old_status, "new": "complete"}},
         metadata={"notes": notes} if notes else None,
     )
 
