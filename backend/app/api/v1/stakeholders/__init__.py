@@ -15,7 +15,6 @@ from app.core.security import (
     require_permission,
     require_stakeholder,
 )
-from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
 from app.schemas.auth import CurrentUser

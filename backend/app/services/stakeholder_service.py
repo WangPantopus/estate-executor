@@ -8,6 +8,7 @@ import uuid
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -21,8 +22,11 @@ from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
-# Roles visible to beneficiaries when listing stakeholders
-_BENEFICIARY_VISIBLE_ROLES = {StakeholderRole.beneficiary, StakeholderRole.professional}
+# Roles visible to beneficiaries and read_only viewers when listing stakeholders
+_RESTRICTED_VISIBLE_ROLES = {StakeholderRole.beneficiary, StakeholderRole.professional}
+
+# Viewer roles that get a filtered stakeholder list
+_RESTRICTED_VIEWER_ROLES = {StakeholderRole.beneficiary, StakeholderRole.read_only}
 
 
 def _generate_invite_token() -> str:
@@ -59,18 +63,22 @@ async def invite_stakeholder(
     """
     matter = await _get_matter_or_404(db, matter_id)
 
-    # Check for duplicate email on this matter
+    normalized_email = email.lower()
+
+    # Check for duplicate email on this matter (case-insensitive)
     result = await db.execute(
         select(Stakeholder).where(
             Stakeholder.matter_id == matter_id,
-            Stakeholder.email == email,
+            func.lower(Stakeholder.email) == normalized_email,
         )
     )
     if result.scalar_one_or_none() is not None:
         raise ConflictError(detail="A stakeholder with this email already exists on this matter")
 
-    # Check if email matches an existing user
-    result = await db.execute(select(User).where(User.email == email))
+    # Check if email matches an existing user (case-insensitive)
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == normalized_email)
+    )
     existing_user = result.scalar_one_or_none()
 
     invite_token = _generate_invite_token()
@@ -78,7 +86,7 @@ async def invite_stakeholder(
     stakeholder = Stakeholder(
         matter_id=matter_id,
         user_id=existing_user.id if existing_user else None,
-        email=email,
+        email=normalized_email,
         full_name=full_name,
         role=role,
         relationship_label=relationship,
@@ -86,7 +94,11 @@ async def invite_stakeholder(
         invite_token=None if existing_user else invite_token,
     )
     db.add(stakeholder)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        raise ConflictError(detail="A stakeholder with this email already exists on this matter")
 
     await event_logger.log(
         db,
@@ -129,9 +141,9 @@ async def list_stakeholders(
     """
     base_filter = [Stakeholder.matter_id == matter_id]
 
-    # Beneficiaries see limited stakeholder list
-    if viewer_role == StakeholderRole.beneficiary:
-        base_filter.append(Stakeholder.role.in_(_BENEFICIARY_VISIBLE_ROLES))
+    # Beneficiaries and read_only viewers see limited stakeholder list
+    if viewer_role in _RESTRICTED_VIEWER_ROLES:
+        base_filter.append(Stakeholder.role.in_(_RESTRICTED_VISIBLE_ROLES))
 
     count_q = (
         select(func.count())
@@ -234,11 +246,6 @@ async def remove_stakeholder(
         admin_count = (await db.execute(count_q)).scalar_one()
         if admin_count <= 1:
             raise BadRequestError(detail="Cannot remove the last matter admin")
-
-    # If invite is pending, mark as revoked before deletion
-    if stakeholder.invite_status == InviteStatus.pending:
-        stakeholder.invite_status = InviteStatus.revoked
-        stakeholder.invite_token = None
 
     await event_logger.log(
         db,
