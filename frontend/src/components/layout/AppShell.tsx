@@ -24,6 +24,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -453,20 +454,23 @@ export function AppShell({
               <Breadcrumbs matterContext={matterContext} />
             </div>
 
-            {/* Right side: Cmd+K hint */}
-            <button
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent("open-command-palette"));
-              }}
-              className="hidden sm:flex items-center gap-2 rounded-md border border-border bg-surface-elevated/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-            >
-              <Search className="size-3.5" />
-              <span>Search...</span>
-              <kbd className="ml-2 rounded bg-surface-elevated px-1.5 py-0.5 text-[10px] font-mono border border-border">
-                ⌘K
-              </kbd>
-            </button>
+            {/* Right side: connection indicator + Cmd+K hint */}
+            <div className="flex items-center gap-3">
+              <ConnectionStatus />
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("open-command-palette"));
+                }}
+                className="hidden sm:flex items-center gap-2 rounded-md border border-border bg-surface-elevated/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+              >
+                <Search className="size-3.5" />
+                <span>Search...</span>
+                <kbd className="ml-2 rounded bg-surface-elevated px-1.5 py-0.5 text-[10px] font-mono border border-border">
+                  ⌘K
+                </kbd>
+              </button>
+            </div>
           </header>
 
           {/* Page content with fade-in */}

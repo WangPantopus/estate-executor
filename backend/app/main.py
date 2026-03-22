@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -20,13 +21,30 @@ from app.core.middleware import (
     TenantIsolationMiddleware,
 )
 
+# Background task handle for the realtime subscriber
+_subscriber_task: asyncio.Task | None = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    global _subscriber_task
     # Startup
     settings.configure_logging()
+
+    # Start the Redis pub/sub → Socket.IO bridge
+    from app.realtime.subscriber import start_subscriber
+
+    _subscriber_task = asyncio.create_task(start_subscriber())
+
     yield
+
     # Shutdown
+    if _subscriber_task is not None:
+        _subscriber_task.cancel()
+        try:
+            await _subscriber_task
+        except asyncio.CancelledError:
+            pass
 
 
 def _rfc7807_response(status_code: int, title: str, detail: str, request_path: str) -> JSONResponse:
@@ -44,7 +62,7 @@ def _rfc7807_response(status_code: int, title: str, detail: str, request_path: s
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
+    fastapi_app = FastAPI(
         title="Estate Executor OS",
         description="Coordination Operating System for Estate Administration",
         version="0.1.0",
@@ -55,7 +73,7 @@ def create_app() -> FastAPI:
 
     # CORS — applied first by FastAPI
     all_origins = list(set(settings.backend_cors_origins + settings.cors_origins))
-    app.add_middleware(
+    fastapi_app.add_middleware(
         CORSMiddleware,
         allow_origins=all_origins,
         allow_credentials=True,
@@ -64,37 +82,37 @@ def create_app() -> FastAPI:
     )
 
     # Exception handler (outermost custom middleware — catches everything)
-    app.add_middleware(ExceptionHandlerMiddleware)
+    fastapi_app.add_middleware(ExceptionHandlerMiddleware)
 
     # Request logging
-    app.add_middleware(RequestLoggingMiddleware)
+    fastapi_app.add_middleware(RequestLoggingMiddleware)
 
     # Tenant isolation
-    app.add_middleware(TenantIsolationMiddleware)
+    fastapi_app.add_middleware(TenantIsolationMiddleware)
 
     # --- Exception handlers for known HTTP exceptions ---
 
-    @app.exception_handler(UnauthorizedError)
+    @fastapi_app.exception_handler(UnauthorizedError)
     async def _unauthorized(request: Request, exc: UnauthorizedError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Unauthorized", exc.detail, request.url.path)
 
-    @app.exception_handler(NotFoundError)
+    @fastapi_app.exception_handler(NotFoundError)
     async def _not_found(request: Request, exc: NotFoundError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Not Found", exc.detail, request.url.path)
 
-    @app.exception_handler(PermissionDeniedError)
+    @fastapi_app.exception_handler(PermissionDeniedError)
     async def _forbidden(request: Request, exc: PermissionDeniedError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Forbidden", exc.detail, request.url.path)
 
-    @app.exception_handler(ConflictError)
+    @fastapi_app.exception_handler(ConflictError)
     async def _conflict(request: Request, exc: ConflictError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Conflict", exc.detail, request.url.path)
 
-    @app.exception_handler(ValidationError)
+    @fastapi_app.exception_handler(ValidationError)
     async def _validation(request: Request, exc: ValidationError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Validation Error", exc.detail, request.url.path)
 
-    @app.exception_handler(RateLimitError)
+    @fastapi_app.exception_handler(RateLimitError)
     async def _rate_limit(request: Request, exc: RateLimitError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Too Many Requests", exc.detail, request.url.path)
 
@@ -102,9 +120,16 @@ def create_app() -> FastAPI:
 
     from app.api.v1 import api_router
 
-    app.include_router(api_router, prefix="/api/v1")
+    fastapi_app.include_router(api_router, prefix="/api/v1")
 
-    return app
+    # --- Mount Socket.IO ---
+
+    from app.realtime import create_socketio_app
+
+    socketio_asgi = create_socketio_app()
+    fastapi_app.mount("/ws", socketio_asgi)
+
+    return fastapi_app
 
 
 app = create_app()
