@@ -46,7 +46,9 @@ class Settings(BaseSettings):
 
     # Email
     resend_api_key: str = ""
-    email_from: str = "notifications@estate-executor.com"
+    email_from: str = "Estate Executor <notifications@estate-executor.com>"
+    mailpit_smtp_host: str = "localhost"
+    mailpit_smtp_port: int = 1025
 
     # URLs
     backend_url: str = "http://localhost:8000"
