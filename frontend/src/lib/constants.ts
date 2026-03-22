@@ -1,4 +1,4 @@
-import type { EstateType, AssetType } from "./types";
+import type { EstateType, AssetType, OwnershipType, TransferMechanism, AssetStatus } from "./types";
 
 export const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -156,3 +156,35 @@ export const STAKEHOLDER_ROLE_LABELS: Record<string, string> = {
   beneficiary: "Beneficiary",
   read_only: "Read Only",
 };
+
+export const OWNERSHIP_TYPE_LABELS: Record<OwnershipType, string> = {
+  in_trust: "In Trust",
+  joint_tenancy: "Joint Tenancy",
+  community_property: "Community Property",
+  pod_tod: "POD / TOD",
+  individual: "Individual",
+  business_owned: "Business Owned",
+  other: "Other",
+};
+
+export const TRANSFER_MECHANISM_LABELS: Record<TransferMechanism, string> = {
+  probate: "Probate",
+  trust_administration: "Trust Administration",
+  beneficiary_designation: "Beneficiary Designation",
+  joint_survivorship: "Joint Survivorship",
+  other: "Other",
+};
+
+export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
+  discovered: "Discovered",
+  valued: "Valued",
+  transferred: "Transferred",
+  distributed: "Distributed",
+};
+
+export const ASSET_STATUS_ORDER: AssetStatus[] = [
+  "discovered",
+  "valued",
+  "transferred",
+  "distributed",
+];
