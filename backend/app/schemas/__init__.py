@@ -53,7 +53,7 @@ from .entities import (
     EntityResponse,
     EntityUpdate,
 )
-from .events import EventListResponse, EventResponse
+from .events import CursorMeta, EventListResponse, EventResponse
 from .firms import FirmCreate, FirmListResponse, FirmResponse, FirmUpdate
 from .matters import (
     AssetSummary,
@@ -155,6 +155,7 @@ __all__ = [
     "CommunicationResponse",
     "DisputeFlagCreate",
     # Events
+    "CursorMeta",
     "EventListResponse",
     "EventResponse",
     # AI

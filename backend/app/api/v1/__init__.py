@@ -7,6 +7,7 @@ from app.api.v1.communications import router as communications_router
 from app.api.v1.deadlines import router as deadlines_router
 from app.api.v1.entities import entity_map_router
 from app.api.v1.entities import router as entities_router
+from app.api.v1.events import router as events_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
 from app.api.v1.matters import router as matters_router
@@ -58,4 +59,9 @@ api_router.include_router(
     dispute_flag_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/dispute-flag",
     tags=["communications"],
+)
+api_router.include_router(
+    events_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/events",
+    tags=["events"],
 )
