@@ -251,12 +251,15 @@ async def close_matter(
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MatterResponse:
-    """Close a matter. All critical tasks must be complete or waived."""
-    if stakeholder.role not in (StakeholderRole.matter_admin, StakeholderRole.professional):
+    """Close a matter. All critical tasks must be complete or waived.
+
+    Only matter_admin can close a matter (per permission model §7.2).
+    """
+    if stakeholder.role != StakeholderRole.matter_admin:
         from app.core.exceptions import PermissionDeniedError
 
         raise PermissionDeniedError(
-            detail="Only matter admins and professionals can close matters"
+            detail="Only matter admins can close matters"
         )
 
     matter = await matter_service.close_matter(

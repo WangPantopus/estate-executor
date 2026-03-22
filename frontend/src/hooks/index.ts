@@ -58,3 +58,5 @@ export {
   useConfirmDocType,
   useRequestDocument,
 } from "./use-queries";
+export { usePermissions } from "./use-permissions";
+export { useMatterSocket } from "./use-matter-socket";

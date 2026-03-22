@@ -65,7 +65,12 @@ async def list_events(
     _stakeholder: Stakeholder = Depends(require_stakeholder),
     db: AsyncSession = Depends(get_db),
 ) -> EventListResponse:
-    """Query events with filters. Cursor-based pagination, newest first."""
+    """Query events with filters. Cursor-based pagination, newest first.
+
+    Beneficiaries and read_only users cannot access the audit log.
+    """
+    if _stakeholder.role in (StakeholderRole.beneficiary, StakeholderRole.read_only):
+        raise PermissionDeniedError(detail="Insufficient permissions")
     events, actor_names, next_cursor = await event_service.list_events(
         db,
         matter_id=matter_id,

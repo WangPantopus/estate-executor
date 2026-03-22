@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
-from app.core.exceptions import PermissionDeniedError
+from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
 from app.models.enums import AssetStatus, AssetType, OwnershipType, StakeholderRole, TransferMechanism
 from app.models.firm_memberships import FirmMembership
@@ -110,7 +110,14 @@ async def list_assets(
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> AssetListResponse:
-    """List assets with filters, entity briefs, document count, and pagination."""
+    """List assets with filters, entity briefs, document count, and pagination.
+
+    read_only users cannot access assets. Beneficiaries see limited info
+    (no financial values).
+    """
+    if stakeholder.role == StakeholderRole.read_only:
+        raise NotFoundError(detail="Assets not found")
+
     items, total = await asset_service.list_assets(
         db,
         matter_id=matter_id,
@@ -122,8 +129,20 @@ async def list_assets(
         page=pagination.page,
         per_page=pagination.per_page,
     )
+    result_items = items
+    # Beneficiaries see asset titles but not financial values
+    if stakeholder.role == StakeholderRole.beneficiary:
+        result_items = []
+        for item in items:
+            sanitized = dict(item)
+            sanitized["date_of_death_value"] = None
+            sanitized["current_estimated_value"] = None
+            sanitized["final_appraised_value"] = None
+            sanitized["account_number_masked"] = None
+            result_items.append(sanitized)
+
     return AssetListResponse(
-        data=[AssetListItem(**item) for item in items],
+        data=[AssetListItem(**item) for item in result_items],
         meta=PaginationMeta(
             total=total,
             page=pagination.page,
@@ -147,26 +166,34 @@ async def get_asset_detail(
     stakeholder: Stakeholder = Depends(require_stakeholder),
     db: AsyncSession = Depends(get_db),
 ) -> AssetDetailResponse:
-    """Get full asset detail with documents, entities, and valuations history."""
+    """Get full asset detail with documents, entities, and valuations history.
+
+    Beneficiaries see limited info. read_only users blocked entirely.
+    """
+    if stakeholder.role == StakeholderRole.read_only:
+        raise NotFoundError(detail="Asset not found")
+
     detail = await asset_service.get_asset_detail(db, asset_id=asset_id, matter_id=matter_id)
+    # Beneficiaries see limited info — no financial values
+    is_beneficiary = stakeholder.role == StakeholderRole.beneficiary
     return AssetDetailResponse(
         id=detail["id"],
         matter_id=detail["matter_id"],
         asset_type=detail["asset_type"],
         title=detail["title"],
         description=detail["description"],
-        institution=detail["institution"],
-        account_number_masked=detail["account_number_masked"],
+        institution=detail["institution"] if not is_beneficiary else None,
+        account_number_masked=detail["account_number_masked"] if not is_beneficiary else None,
         ownership_type=detail["ownership_type"],
         transfer_mechanism=detail["transfer_mechanism"],
         status=detail["status"],
-        date_of_death_value=detail["date_of_death_value"],
-        current_estimated_value=detail["current_estimated_value"],
-        final_appraised_value=detail["final_appraised_value"],
-        metadata=detail["metadata"],
-        documents=[DocumentBrief(**d) for d in detail["documents"]],
+        date_of_death_value=detail["date_of_death_value"] if not is_beneficiary else None,
+        current_estimated_value=detail["current_estimated_value"] if not is_beneficiary else None,
+        final_appraised_value=detail["final_appraised_value"] if not is_beneficiary else None,
+        metadata=detail["metadata"] if not is_beneficiary else {},
+        documents=[DocumentBrief(**d) for d in detail["documents"]] if not is_beneficiary else [],
         entities=[EntityBrief(**e) for e in detail["entities"]],
-        valuations=[ValuationEntry(**v) for v in detail["valuations"]],
+        valuations=[ValuationEntry(**v) for v in detail["valuations"]] if not is_beneficiary else [],
         created_at=detail["created_at"],
         updated_at=detail["updated_at"],
     )

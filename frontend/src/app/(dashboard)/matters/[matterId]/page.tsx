@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { useMatterDashboard, useTasks, useStakeholders } from "@/hooks";
+import { usePermissions } from "@/hooks/use-permissions";
 import { LoadingState } from "@/components/layout/LoadingState";
 import { Card, CardContent } from "@/components/ui/card";
 import { MatterHeader } from "./_components/MatterHeader";
@@ -25,6 +26,7 @@ export default function MatterDashboardPage({
   const { data: dashboard, isLoading, error } = useMatterDashboard(FIRM_ID, matterId);
   const { data: tasksData } = useTasks(FIRM_ID, matterId, { per_page: 100 });
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
+  const { can, isBeneficiary, isReadOnly } = usePermissions(matterId);
 
   if (isLoading) {
     return <LoadingState variant="detail" />;
@@ -70,20 +72,28 @@ export default function MatterDashboardPage({
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Left column (60%) */}
         <div className="lg:col-span-3 space-y-6">
+          {/* Beneficiary/read_only: simplified tasks view (progress only) */}
           <TasksByPhase
             tasks={tasks}
             firmId={FIRM_ID}
             matterId={matterId}
           />
-          <RecentActivity events={recent_events} matterId={matterId} />
+          {/* Activity feed: hidden for beneficiary/read_only */}
+          {can("event:read") && (
+            <RecentActivity events={recent_events} matterId={matterId} />
+          )}
         </div>
 
         {/* Right column (40%) */}
         <div className="lg:col-span-2 space-y-6">
-          <AssetSummaryCard
-            assetSummary={asset_summary}
-            matterId={matterId}
-          />
+          {/* Asset summary: hidden for read_only */}
+          {!isReadOnly && (
+            <AssetSummaryCard
+              assetSummary={asset_summary}
+              matterId={matterId}
+            />
+          )}
+          {/* Stakeholders card: visible to all (but card can adapt internally) */}
           <StakeholdersCard
             stakeholders={stakeholders}
             matterId={matterId}

@@ -33,6 +33,7 @@ import {
   useUpdateTask,
   useAssignTask,
 } from "@/hooks";
+import { usePermissions } from "@/hooks/use-permissions";
 import type { Task, TaskStatus, TaskPriority } from "@/lib/types";
 
 import {
@@ -60,6 +61,9 @@ export default function TasksPage({
   params: Promise<{ matterId: string }>;
 }) {
   const { matterId } = use(params);
+
+  // ─── Permissions ──────────────────────────────────────────────────────────
+  const { can, canWrite, isReadOnly, isBeneficiary } = usePermissions(matterId);
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
   const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useTasks(
@@ -362,11 +366,13 @@ export default function TasksPage({
               </Button>
             </div>
 
-            {/* Add task */}
-            <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="size-4 mr-1" />
-              Add Task
-            </Button>
+            {/* Add task — only for admins/professionals */}
+            {canWrite && (
+              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="size-4 mr-1" />
+                Add Task
+              </Button>
+            )}
           </div>
         }
       />

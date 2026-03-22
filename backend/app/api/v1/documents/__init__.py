@@ -9,7 +9,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
+from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
 from app.schemas.auth import CurrentUser
@@ -34,6 +36,39 @@ from app.schemas.documents import (
 from app.services import document_service
 
 router = APIRouter()
+
+# Roles that can upload/modify documents
+_UPLOAD_ROLES = {
+    StakeholderRole.matter_admin,
+    StakeholderRole.professional,
+    StakeholderRole.executor_trustee,
+}
+
+# Roles that can read documents
+_READ_ROLES = {
+    StakeholderRole.matter_admin,
+    StakeholderRole.professional,
+    StakeholderRole.executor_trustee,
+    StakeholderRole.beneficiary,
+}
+
+
+def _require_doc_read(stakeholder: Stakeholder) -> None:
+    """Raise NotFoundError if role cannot read documents."""
+    if stakeholder.role not in _READ_ROLES:
+        raise NotFoundError(detail="Documents not found")
+
+
+def _require_doc_upload(stakeholder: Stakeholder) -> None:
+    """Raise PermissionDeniedError if role cannot upload documents."""
+    if stakeholder.role not in _UPLOAD_ROLES:
+        raise PermissionDeniedError(detail="Insufficient permissions")
+
+
+def _require_doc_admin(stakeholder: Stakeholder) -> None:
+    """Raise PermissionDeniedError if role cannot admin documents."""
+    if stakeholder.role not in {StakeholderRole.matter_admin, StakeholderRole.professional}:
+        raise PermissionDeniedError(detail="Insufficient permissions")
 
 
 def _doc_to_response(doc) -> DocumentResponse:
@@ -109,7 +144,11 @@ async def get_upload_url(
     _membership: FirmMembership = Depends(require_firm_member),
     _stakeholder: Stakeholder = Depends(require_stakeholder),
 ) -> DocumentUploadURL:
-    """Get a presigned S3 upload URL for direct browser upload."""
+    """Get a presigned S3 upload URL for direct browser upload.
+
+    Requires at least executor_trustee role (beneficiary/read_only blocked).
+    """
+    _require_doc_upload(_stakeholder)
     upload_url, storage_key, expires_in = document_service.get_upload_url(
         firm_id=firm_id,
         matter_id=matter_id,
@@ -139,6 +178,7 @@ async def register_document(
     db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Register a document after successful S3 upload."""
+    _require_doc_upload(stakeholder)
     doc = await document_service.register_document(
         db,
         matter_id=matter_id,
@@ -173,7 +213,11 @@ async def list_documents(
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> DocumentListResponse:
-    """List documents with filters and pagination."""
+    """List documents with filters and pagination.
+
+    read_only role cannot access documents at all.
+    """
+    _require_doc_read(_stakeholder)
     docs, total = await document_service.list_documents(
         db,
         matter_id=matter_id,
@@ -213,6 +257,7 @@ async def request_document(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Request a document from a stakeholder. Sends email with upload link."""
+    _require_doc_admin(stakeholder)
     comm = await document_service.request_document(
         db,
         matter_id=matter_id,
@@ -243,6 +288,7 @@ async def bulk_download(
     db: AsyncSession = Depends(get_db),
 ) -> BulkDownloadStatusResponse:
     """Enqueue async ZIP generation for bulk document download."""
+    _require_doc_read(_stakeholder)
     job_id = await document_service.enqueue_bulk_download(
         db,
         matter_id=matter_id,
@@ -267,6 +313,7 @@ async def bulk_download_status(
     _stakeholder: Stakeholder = Depends(require_stakeholder),
 ) -> BulkDownloadStatusResponse:
     """Check status of a bulk download ZIP generation job."""
+    _require_doc_read(_stakeholder)
     from app.workers.celery_app import celery_app
 
     result = celery_app.AsyncResult(job_id)
@@ -300,6 +347,7 @@ async def get_document(
     db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Get full document detail with versions, linked tasks, and linked assets."""
+    _require_doc_read(_stakeholder)
     doc = await document_service.get_document(db, doc_id=doc_id, matter_id=matter_id)
     return _doc_to_detail(doc)
 
@@ -320,6 +368,7 @@ async def get_download_url(
     db: AsyncSession = Depends(get_db),
 ) -> DownloadURLResponse:
     """Get a presigned download URL. Access is logged for audit."""
+    _require_doc_read(_stakeholder)
     download_url, expires_in = await document_service.get_download_url(
         db, doc_id=doc_id, matter_id=matter_id, current_user=current_user
     )
@@ -343,6 +392,7 @@ async def confirm_doc_type(
     db: AsyncSession = Depends(get_db),
 ) -> DocumentResponse:
     """Confirm or override the AI-classified document type."""
+    _require_doc_admin(_stakeholder)
     doc = await document_service.confirm_doc_type(
         db, doc_id=doc_id, matter_id=matter_id, doc_type=body.doc_type, current_user=current_user
     )
@@ -365,6 +415,7 @@ async def reupload_document(
     db: AsyncSession = Depends(get_db),
 ) -> DocumentUploadURL:
     """Get a presigned upload URL for uploading a new version."""
+    _require_doc_upload(_stakeholder)
     # Verify doc exists
     await document_service.get_document(db, doc_id=doc_id, matter_id=matter_id)
 
@@ -399,6 +450,7 @@ async def register_version(
     db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """Register a new version for an existing document."""
+    _require_doc_upload(stakeholder)
     doc = await document_service.register_version(
         db,
         doc_id=doc_id,
