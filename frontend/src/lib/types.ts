@@ -1,7 +1,10 @@
 /**
- * Shared TypeScript types matching backend schemas.
- * These will be expanded as API endpoints are built.
+ * Shared TypeScript types matching backend Pydantic schemas.
  */
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
 
 export type MatterStatus = "active" | "on_hold" | "closed" | "archived";
 
@@ -36,6 +39,8 @@ export type StakeholderRole =
   | "beneficiary"
   | "read_only";
 
+export type InviteStatus = "pending" | "accepted" | "revoked";
+
 export type AssetType =
   | "real_estate"
   | "bank_account"
@@ -65,13 +70,55 @@ export type FirmType =
   | "family_office"
   | "other";
 
+export type SubscriptionTier =
+  | "starter"
+  | "professional"
+  | "growth"
+  | "enterprise";
+
+// ---------------------------------------------------------------------------
+// Auth types
+// ---------------------------------------------------------------------------
+
+export interface FirmMembershipBrief {
+  firm_id: string;
+  firm_role: string;
+}
+
+export interface FirmMembershipDetail {
+  firm_id: string;
+  firm_name: string;
+  firm_slug: string;
+  firm_role: string;
+}
+
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  full_name: string;
+  firm_memberships: FirmMembershipDetail[];
+}
+
+export interface AcceptInviteResponse {
+  stakeholder_id: string;
+  matter_id: string;
+  matter_title: string;
+  role: string;
+}
+
+// ---------------------------------------------------------------------------
+// Domain types
+// ---------------------------------------------------------------------------
+
 export interface Firm {
   id: string;
   name: string;
   slug: string;
   type: FirmType;
-  subscription_tier: string;
+  subscription_tier: SubscriptionTier;
+  settings: Record<string, unknown> | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Matter {
@@ -83,23 +130,68 @@ export interface Matter {
   jurisdiction_state: string;
   date_of_death: string | null;
   decedent_name: string;
-  estimated_value: number | null;
+  estimated_value: string | null;
   phase: MatterPhase;
   created_at: string;
   updated_at: string;
+  closed_at: string | null;
 }
 
 export interface Task {
   id: string;
   matter_id: string;
+  parent_task_id: string | null;
+  template_key: string | null;
   title: string;
   description: string | null;
+  instructions: string | null;
   phase: string;
   status: TaskStatus;
   priority: TaskPriority;
   assigned_to: string | null;
   due_date: string | null;
   requires_document: boolean;
+  completed_at: string | null;
+  completed_by: string | null;
+  sort_order: number;
+  metadata: Record<string, unknown> | null;
+  documents: DocumentBrief[];
+  dependencies: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface DocumentBrief {
+  id: string;
+  filename: string;
+  doc_type: string | null;
+  created_at: string;
+}
+
+export interface Stakeholder {
+  id: string;
+  matter_id: string;
+  user_id: string | null;
+  email: string;
+  full_name: string;
+  role: StakeholderRole;
+  relationship: string | null;
+  invite_status: InviteStatus;
+  created_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination
+// ---------------------------------------------------------------------------
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
 }
