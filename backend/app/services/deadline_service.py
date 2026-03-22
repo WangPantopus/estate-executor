@@ -191,14 +191,18 @@ async def update_deadline(
 
     # Apply remaining scalar fields
     for field, value in updates.items():
-        if hasattr(deadline, field):
-            old_val = getattr(deadline, field)
-            if old_val != value:
-                changes[field] = {
-                    "old": str(old_val) if old_val is not None else None,
-                    "new": str(value) if value is not None else None,
-                }
-                setattr(deadline, field, value)
+        if not hasattr(deadline, field):
+            continue
+        # reminder_config is NOT NULL in DB — reject explicit null
+        if field == "reminder_config" and value is None:
+            continue
+        old_val = getattr(deadline, field)
+        if old_val != value:
+            changes[field] = {
+                "old": str(old_val) if old_val is not None else None,
+                "new": str(value) if value is not None else None,
+            }
+            setattr(deadline, field, value)
 
     if changes:
         await db.flush()

@@ -14,7 +14,7 @@ import uuid
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.events import Event
@@ -87,15 +87,27 @@ async def list_events(
         next_day = date_to + timedelta(days=1)
         filters.append(Event.created_at < datetime(next_day.year, next_day.month, next_day.day))
 
-    # Cursor: resume after a specific created_at timestamp
+    # Cursor: resume after a specific (created_at, id) pair to avoid skipping
+    # events with identical timestamps. Format: "ISO_TIMESTAMP|UUID"
     if cursor is not None:
-        cursor_dt = datetime.fromisoformat(cursor)
-        filters.append(Event.created_at < cursor_dt)
+        parts = cursor.split("|", 1)
+        cursor_dt = datetime.fromisoformat(parts[0])
+        if len(parts) == 2:
+            cursor_id = uuid.UUID(parts[1])
+            # Events with same timestamp but earlier id, OR earlier timestamp
+            filters.append(
+                or_(
+                    Event.created_at < cursor_dt,
+                    (Event.created_at == cursor_dt) & (Event.id < cursor_id),
+                )
+            )
+        else:
+            filters.append(Event.created_at < cursor_dt)
 
     q = (
         select(Event)
         .where(*filters)
-        .order_by(Event.created_at.desc())
+        .order_by(Event.created_at.desc(), Event.id.desc())
         .limit(per_page + 1)  # fetch one extra to detect has_more
     )
     result = await db.execute(q)
@@ -106,7 +118,10 @@ async def list_events(
     if has_more:
         events = events[:per_page]
 
-    next_cursor = events[-1].created_at.isoformat() if has_more and events else None
+    next_cursor = None
+    if has_more and events:
+        last = events[-1]
+        next_cursor = f"{last.created_at.isoformat()}|{last.id}"
 
     # Batch-load actor names
     actor_ids = {e.actor_id for e in events if e.actor_id is not None}

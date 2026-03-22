@@ -11,11 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
-from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.core.security import require_firm_member, require_stakeholder
 from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
-from app.schemas.auth import CurrentUser
 from app.schemas.events import CursorMeta, EventListResponse, EventResponse
 from app.services import event_service
 
