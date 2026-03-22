@@ -40,11 +40,21 @@ from .deadlines import (
     TaskBrief,
 )
 from .documents import (
+    AssetBriefDoc,
+    BulkDownloadRequest,
+    BulkDownloadStatusResponse,
     DocumentConfirmType,
+    DocumentDetailResponse,
+    DocumentListResponse,
     DocumentRegister,
     DocumentRequestCreate,
     DocumentResponse,
+    DocumentUploadRequest,
     DocumentUploadURL,
+    DocumentVersionResponse,
+    DownloadURLResponse,
+    RegisterVersionRequest,
+    TaskBriefDoc,
 )
 from .entities import (
     AssetBrief,
@@ -135,11 +145,21 @@ __all__ = [
     "EntityResponse",
     "EntityUpdate",
     # Documents
+    "AssetBriefDoc",
+    "BulkDownloadRequest",
+    "BulkDownloadStatusResponse",
     "DocumentConfirmType",
+    "DocumentDetailResponse",
+    "DocumentListResponse",
     "DocumentRegister",
     "DocumentRequestCreate",
     "DocumentResponse",
+    "DocumentUploadRequest",
     "DocumentUploadURL",
+    "DocumentVersionResponse",
+    "DownloadURLResponse",
+    "RegisterVersionRequest",
+    "TaskBriefDoc",
     # Deadlines
     "CalendarDeadline",
     "CalendarMonth",
