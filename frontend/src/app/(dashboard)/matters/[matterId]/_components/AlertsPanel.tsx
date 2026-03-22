@@ -59,9 +59,9 @@ export function AlertsPanel({
   return (
     <Card className="border-warning/30 bg-warning-light/30">
       <CardContent className="py-3 space-y-1">
-        {alerts.map((alert, i) => (
+        {alerts.map((alert) => (
           <Link
-            key={i}
+            key={alert.href}
             href={alert.href}
             className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-warning-light/50"
           >
