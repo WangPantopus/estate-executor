@@ -1,4 +1,4 @@
-import type { EstateType, AssetType, OwnershipType, TransferMechanism, AssetStatus } from "./types";
+import type { EstateType, AssetType, OwnershipType, TransferMechanism, AssetStatus, EntityType, FundingStatus } from "./types";
 
 export const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -188,3 +188,20 @@ export const ASSET_STATUS_ORDER: AssetStatus[] = [
   "transferred",
   "distributed",
 ];
+
+export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
+  revocable_trust: "Revocable Trust",
+  irrevocable_trust: "Irrevocable Trust",
+  llc: "LLC",
+  flp: "Family Limited Partnership",
+  corporation: "Corporation",
+  foundation: "Foundation",
+  other: "Other",
+};
+
+export const FUNDING_STATUS_LABELS: Record<FundingStatus, string> = {
+  unknown: "Unknown",
+  fully_funded: "Fully Funded",
+  partially_funded: "Partially Funded",
+  unfunded: "Unfunded",
+};
