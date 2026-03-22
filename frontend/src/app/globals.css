@@ -251,3 +251,21 @@ body {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+/* ─── Print styles ─── */
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  main {
+    overflow: visible !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}

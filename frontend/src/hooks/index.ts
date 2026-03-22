@@ -3,6 +3,13 @@ export {
   queryKeys,
   // Auth
   useCurrentUser,
+  // Firms
+  useFirm,
+  useUpdateFirm,
+  useFirmMembers,
+  useInviteFirmMember,
+  useUpdateFirmMember,
+  useRemoveFirmMember,
   // Matters
   useMatters,
   useMatterDashboard,
@@ -41,6 +48,13 @@ export {
   // Communications
   useCommunications,
   useCreateCommunication,
+  useAcknowledgeCommunication,
+  useCreateDisputeFlag,
   // Events
   useEvents,
+  // Documents
+  useDocuments,
+  useDocument,
+  useConfirmDocType,
+  useRequestDocument,
 } from "./use-queries";

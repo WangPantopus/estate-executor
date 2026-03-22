@@ -44,6 +44,16 @@ import type {
   TaskFilters,
   TaskUpdate,
   UserProfile,
+  DocumentResponse,
+  DocumentDetail,
+  DocumentConfirmType,
+  DocumentRequestCreate,
+  DisputeFlagCreate,
+  Firm,
+  FirmUpdate,
+  FirmMember,
+  InviteMemberRequest,
+  UpdateMemberRoleRequest,
 } from "@/lib/types";
 
 // ─── Query key factories ────────────────────────────────────────────────────
@@ -90,6 +100,10 @@ export const queryKeys = {
     ] as const,
   events: (firmId: string, matterId: string, filters?: EventFilters) =>
     ["firms", firmId, "matters", matterId, "events", filters] as const,
+  documents: (firmId: string, matterId: string) =>
+    ["firms", firmId, "matters", matterId, "documents"] as const,
+  document: (firmId: string, matterId: string, docId: string) =>
+    ["firms", firmId, "matters", matterId, "documents", docId] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -102,6 +116,72 @@ export function useCurrentUser(
     queryKey: queryKeys.me,
     queryFn: () => api.getMe(),
     ...options,
+  });
+}
+
+// ─── Firms ──────────────────────────────────────────────────────────────────
+
+export function useFirm(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.firm(firmId),
+    queryFn: () => api.getFirm(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useUpdateFirm(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FirmUpdate) => api.updateFirm(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+      qc.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
+export function useFirmMembers(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.firmMembers(firmId),
+    queryFn: () => api.getFirmMembers(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useInviteFirmMember(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: InviteMemberRequest) => api.inviteFirmMember(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
+  });
+}
+
+export function useUpdateFirmMember(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, data }: { membershipId: string; data: UpdateMemberRoleRequest }) =>
+      api.updateFirmMember(firmId, membershipId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
+  });
+}
+
+export function useRemoveFirmMember(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (membershipId: string) => api.removeFirmMember(firmId, membershipId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
   });
 }
 
@@ -607,6 +687,34 @@ export function useCreateCommunication(firmId: string, matterId: string) {
   });
 }
 
+export function useAcknowledgeCommunication(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (commId: string) =>
+      api.acknowledgeCommunication(firmId, matterId, commId),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.communications(firmId, matterId),
+      });
+    },
+  });
+}
+
+export function useCreateDisputeFlag(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DisputeFlagCreate) =>
+      api.createDisputeFlag(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.communications(firmId, matterId),
+      });
+    },
+  });
+}
+
 // ─── Events ──────────────────────────────────────────────────────────────────
 
 export function useEvents(
@@ -619,5 +727,46 @@ export function useEvents(
     queryKey: queryKeys.events(firmId, matterId, filters),
     queryFn: () => api.getEvents(firmId, matterId, filters),
     enabled: !!firmId && !!matterId,
+  });
+}
+
+// ─── Documents ──────────────────────────────────────────────────────────────
+
+export function useDocuments(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.documents(firmId, matterId),
+    queryFn: () => api.getDocuments(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useDocument(firmId: string, matterId: string, docId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.document(firmId, matterId, docId),
+    queryFn: () => api.getDocument(firmId, matterId, docId),
+    enabled: !!firmId && !!matterId && !!docId,
+  });
+}
+
+export function useConfirmDocType(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ docId, data }: { docId: string; data: DocumentConfirmType }) =>
+      api.confirmDocType(firmId, matterId, docId, data),
+    onSuccess: (_, { docId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.document(firmId, matterId, docId) });
+      qc.invalidateQueries({ queryKey: queryKeys.documents(firmId, matterId) });
+    },
+  });
+}
+
+export function useRequestDocument(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data: DocumentRequestCreate) =>
+      api.requestDocument(firmId, matterId, data),
   });
 }

@@ -1,4 +1,4 @@
-import type { EstateType, AssetType } from "./types";
+import type { EstateType, AssetType, OwnershipType, TransferMechanism, AssetStatus, EntityType, FundingStatus } from "./types";
 
 export const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -108,4 +108,114 @@ export const PHASE_LABELS: Record<string, string> = {
   administration: "Administration",
   distribution: "Distribution",
   closing: "Closing",
+};
+
+export const TASK_PHASE_LABELS: Record<string, string> = {
+  immediate: "Immediate",
+  asset_inventory: "Asset Inventory",
+  notification: "Notification",
+  probate_filing: "Probate Filing",
+  tax: "Tax",
+  transfer_distribution: "Transfer & Distribution",
+  family_communication: "Family Communication",
+  closing: "Closing",
+  custom: "Custom",
+};
+
+export const TASK_PHASE_ORDER: string[] = [
+  "immediate",
+  "asset_inventory",
+  "notification",
+  "probate_filing",
+  "tax",
+  "transfer_distribution",
+  "family_communication",
+  "closing",
+  "custom",
+];
+
+export const TASK_STATUS_LABELS: Record<string, string> = {
+  not_started: "Not Started",
+  in_progress: "In Progress",
+  blocked: "Blocked",
+  complete: "Complete",
+  waived: "Waived",
+  cancelled: "Cancelled",
+};
+
+export const TASK_PRIORITY_LABELS: Record<string, string> = {
+  critical: "Critical",
+  normal: "Normal",
+  informational: "Informational",
+};
+
+export const STAKEHOLDER_ROLE_LABELS: Record<string, string> = {
+  matter_admin: "Matter Admin",
+  professional: "Professional",
+  executor_trustee: "Executor / Trustee",
+  beneficiary: "Beneficiary",
+  read_only: "Read Only",
+};
+
+export const OWNERSHIP_TYPE_LABELS: Record<OwnershipType, string> = {
+  in_trust: "In Trust",
+  joint_tenancy: "Joint Tenancy",
+  community_property: "Community Property",
+  pod_tod: "POD / TOD",
+  individual: "Individual",
+  business_owned: "Business Owned",
+  other: "Other",
+};
+
+export const TRANSFER_MECHANISM_LABELS: Record<TransferMechanism, string> = {
+  probate: "Probate",
+  trust_administration: "Trust Administration",
+  beneficiary_designation: "Beneficiary Designation",
+  joint_survivorship: "Joint Survivorship",
+  other: "Other",
+};
+
+export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
+  discovered: "Discovered",
+  valued: "Valued",
+  transferred: "Transferred",
+  distributed: "Distributed",
+};
+
+export const ASSET_STATUS_ORDER: AssetStatus[] = [
+  "discovered",
+  "valued",
+  "transferred",
+  "distributed",
+];
+
+export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
+  revocable_trust: "Revocable Trust",
+  irrevocable_trust: "Irrevocable Trust",
+  llc: "LLC",
+  flp: "Family Limited Partnership",
+  corporation: "Corporation",
+  foundation: "Foundation",
+  other: "Other",
+};
+
+export const FUNDING_STATUS_LABELS: Record<FundingStatus, string> = {
+  unknown: "Unknown",
+  fully_funded: "Fully Funded",
+  partially_funded: "Partially Funded",
+  unfunded: "Unfunded",
+};
+
+export const DOC_TYPE_LABELS: Record<string, string> = {
+  death_certificate: "Death Certificate",
+  will: "Will",
+  trust_document: "Trust Document",
+  deed: "Deed",
+  account_statement: "Account Statement",
+  insurance_policy: "Insurance Policy",
+  court_filing: "Court Filing",
+  tax_return: "Tax Return",
+  appraisal: "Appraisal",
+  correspondence: "Correspondence",
+  other: "Other",
 };
