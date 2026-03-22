@@ -36,6 +36,17 @@ class DocumentBrief(BaseModel):
     created_at: datetime
 
 
+class CommentBrief(BaseModel):
+    """Brief comment for task detail responses."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    author_id: UUID
+    body: str
+    created_at: datetime
+
+
 class TaskCreate(BaseModel):
     """Schema for creating a new task."""
 
@@ -188,13 +199,87 @@ class TaskResponse(BaseModel):
     updated_at: datetime
 
 
+class TaskListItem(BaseModel):
+    """Task item for list responses — includes document count and dependency IDs."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    matter_id: UUID
+    parent_task_id: UUID | None
+    template_key: str | None
+    title: str
+    description: str | None
+    instructions: str | None
+    phase: TaskPhase
+    status: TaskStatus
+    priority: TaskPriority
+    assigned_to: UUID | None
+    due_date: date | None
+    requires_document: bool
+    completed_at: datetime | None
+    completed_by: UUID | None
+    sort_order: int
+    metadata: dict | None
+    document_count: int
+    dependency_ids: list[UUID]
+    created_at: datetime
+    updated_at: datetime
+
+
+class TaskDetailResponse(BaseModel):
+    """Full task detail — includes documents, dependencies, dependents, and comments."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    matter_id: UUID
+    parent_task_id: UUID | None
+    template_key: str | None
+    title: str
+    description: str | None
+    instructions: str | None
+    phase: TaskPhase
+    status: TaskStatus
+    priority: TaskPriority
+    assigned_to: UUID | None
+    due_date: date | None
+    requires_document: bool
+    completed_at: datetime | None
+    completed_by: UUID | None
+    sort_order: int
+    metadata: dict | None
+    documents: list[DocumentBrief]
+    dependencies: list[UUID]
+    dependents: list[UUID]
+    comments: list[CommentBrief]
+    created_at: datetime
+    updated_at: datetime
+
+
 class TaskListResponse(BaseModel):
     """Paginated list of tasks."""
 
     model_config = ConfigDict(strict=True)
 
-    data: list[TaskResponse]
+    data: list[TaskListItem]
     meta: PaginationMeta
+
+
+class TaskAssign(BaseModel):
+    """Schema for assigning a task."""
+
+    model_config = ConfigDict(strict=True)
+
+    stakeholder_id: UUID
+
+
+class TaskLinkDocument(BaseModel):
+    """Schema for linking a document to a task."""
+
+    model_config = ConfigDict(strict=True)
+
+    document_id: UUID
 
 
 class TaskGenerateRequest(BaseModel):

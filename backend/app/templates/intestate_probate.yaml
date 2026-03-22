@@ -1,0 +1,186 @@
+# Intestate Probate — Probate administration WITHOUT a valid will
+# Similar to testate probate, but distribution follows state intestacy laws.
+
+- key: "determine_intestate_heirs"
+  title: "Determine Heirs Under Intestacy Laws"
+  description: "Identify legal heirs according to state intestacy statutes"
+  instructions: "Without a will, assets are distributed according to state intestacy laws. Research the applicable state's inheritance hierarchy (typically: surviving spouse, children, parents, siblings, etc.). Document all potential heirs and their relationships."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 21
+  dependencies: []
+  conditions: null
+  subtasks: []
+
+- key: "petition_for_administration"
+  title: "Petition for Administration"
+  description: "File a petition with the court to be appointed as administrator of the estate"
+  instructions: "File a petition for administration with the probate court. Without a will, the court appoints an administrator (rather than an executor). Priority is usually given to the surviving spouse, then adult children, then other relatives."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "obtain_death_certificates"
+    - "determine_intestate_heirs"
+  conditions: null
+  subtasks: []
+
+- key: "obtain_letters_of_administration"
+  title: "Obtain Letters of Administration"
+  description: "Receive letters of administration from the court"
+  instructions: "After the court approves your petition, obtain certified copies of the letters of administration. These serve the same function as letters testamentary — proving your authority to act for the estate. Order multiple copies."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "petition_for_administration"
+  conditions: null
+  subtasks: []
+
+- key: "obtain_administrator_bond"
+  title: "Obtain Administrator Bond"
+  description: "Obtain a surety bond as required by the court for administrators"
+  instructions: "Courts typically require intestate administrators to post a surety bond to protect heirs. The bond amount is usually set by the court based on the estate's value. Contact a surety bond company to obtain the required bond."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies:
+    - "petition_for_administration"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_publish_creditor_notice"
+  title: "Publish Creditor Notice in Newspaper"
+  description: "Publish a notice to creditors as required for intestate estates"
+  instructions: "Publish the creditor notice in a newspaper of general circulation. This is the same process as for testate probate. Keep proof of publication for the court file."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies:
+    - "petition_for_administration"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_notify_heirs"
+  title: "Notify All Intestate Heirs"
+  description: "Send formal notice to all identified intestate heirs"
+  instructions: "Send written notice to all identified heirs informing them of the administration proceedings. Include the case number, court information, and their potential interest under intestacy laws."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "determine_intestate_heirs"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_file_inventory"
+  title: "File Inventory with Probate Court"
+  description: "File a complete inventory of estate assets with the court"
+  instructions: "Prepare and file a detailed inventory of all probate assets with their date-of-death values. This may need to be done within a statutory deadline after appointment."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 120
+  dependencies:
+    - "obtain_letters_of_administration"
+    - "inventory_real_estate"
+    - "inventory_bank_investment_accounts"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_wait_creditor_period"
+  title: "Wait for Creditor Claim Period"
+  description: "Wait for the statutory creditor claim period to expire"
+  instructions: "Monitor the creditor claim period. No distributions can be made until this period expires."
+  phase: "notification"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule: null
+  dependencies:
+    - "intestate_publish_creditor_notice"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_resolve_claims"
+  title: "Resolve Creditor Claims"
+  description: "Review and resolve all creditor claims"
+  instructions: "Review each creditor claim for validity. Pay valid claims from estate assets. Reject invalid claims with proper notice."
+  phase: "notification"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule: null
+  dependencies:
+    - "intestate_wait_creditor_period"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_estate_accounting"
+  title: "Prepare Estate Accounting"
+  description: "Prepare a full accounting of all estate receipts and disbursements"
+  instructions: "Create a detailed accounting of all estate transactions for court approval."
+  phase: "closing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "intestate_resolve_claims"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_court_approval_distribution"
+  title: "Obtain Court Approval for Distribution"
+  description: "Petition the court for approval to distribute per intestacy laws"
+  instructions: "File a petition showing the proposed distribution according to state intestacy laws. The court must approve before you can distribute."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "intestate_estate_accounting"
+  conditions: null
+  subtasks: []
+
+- key: "intestate_execute_distributions"
+  title: "Execute Distributions Per Intestacy Laws"
+  description: "Distribute estate assets to heirs according to state intestacy statutes"
+  instructions: "Distribute assets according to the court-approved plan. Obtain signed receipts from each heir."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "intestate_court_approval_distribution"
+  conditions: null
+  subtasks: []

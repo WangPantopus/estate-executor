@@ -7,6 +7,17 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from .common import PaginationMeta
+
+
+class DocumentUploadRequest(BaseModel):
+    """Input for requesting a presigned upload URL."""
+
+    model_config = ConfigDict(strict=True)
+
+    filename: str
+    mime_type: str
+
 
 class DocumentRegister(BaseModel):
     """Schema for registering a document after upload."""
@@ -135,3 +146,104 @@ class DocumentRequestCreate(BaseModel):
     doc_type_needed: str
     task_id: UUID | None = None
     message: str | None = None
+
+
+class DocumentVersionResponse(BaseModel):
+    """Schema for a document version."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    document_id: UUID
+    version_number: int
+    storage_key: str
+    size_bytes: int
+    uploaded_by: UUID
+    created_at: datetime
+
+
+class TaskBriefDoc(BaseModel):
+    """Brief task info linked to a document."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    title: str
+
+
+class AssetBriefDoc(BaseModel):
+    """Brief asset info linked to a document."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    title: str
+
+
+class DocumentDetailResponse(BaseModel):
+    """Full document detail with versions, linked tasks, and linked assets."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    matter_id: UUID
+    uploaded_by: UUID
+    filename: str
+    storage_key: str
+    mime_type: str
+    size_bytes: int
+    doc_type: str | None
+    doc_type_confidence: float | None
+    doc_type_confirmed: bool
+    ai_extracted_data: dict | None
+    current_version: int
+    created_at: datetime
+    updated_at: datetime
+    versions: list[DocumentVersionResponse] = []
+    linked_tasks: list[TaskBriefDoc] = []
+    linked_assets: list[AssetBriefDoc] = []
+
+
+class DocumentListResponse(BaseModel):
+    """Paginated list of documents."""
+
+    model_config = ConfigDict(strict=True)
+
+    data: list[DocumentResponse]
+    meta: PaginationMeta
+
+
+class DownloadURLResponse(BaseModel):
+    """Presigned download URL."""
+
+    model_config = ConfigDict(strict=True)
+
+    download_url: str
+    expires_in: int
+
+
+class RegisterVersionRequest(BaseModel):
+    """Input for registering a new document version after upload."""
+
+    model_config = ConfigDict(strict=True)
+
+    storage_key: str
+    size_bytes: int
+
+
+class BulkDownloadRequest(BaseModel):
+    """Input for bulk download of documents."""
+
+    model_config = ConfigDict(strict=True)
+
+    document_ids: list[UUID]
+
+
+class BulkDownloadStatusResponse(BaseModel):
+    """Status of a bulk download job."""
+
+    model_config = ConfigDict(strict=True)
+
+    job_id: str
+    status: str
+    download_url: str | None = None

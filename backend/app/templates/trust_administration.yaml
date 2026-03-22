@@ -1,0 +1,191 @@
+# Trust Administration — Trust-based estate administration
+# These tasks supplement the base tasks for trust administration matters.
+
+- key: "notify_trust_beneficiaries"
+  title: "Notify Trust Beneficiaries Per Trust Terms"
+  description: "Send required statutory and trust-required notices to all beneficiaries"
+  instructions: "Review the trust document for notification requirements. Most states require the successor trustee to notify beneficiaries within 60 days. Include information about the trust, your role as trustee, and the beneficiaries' right to request a copy of the trust."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "review_trust_funding_status"
+  title: "Review Trust Funding Status"
+  description: "Determine which assets are currently titled in the trust and which are not"
+  instructions: "Compare the trust's schedule of assets against actual account titles. Assets titled in the trust pass under the trust terms. Assets not in the trust may need to go through probate (pour-over) or may pass by other mechanisms (beneficiary designation, joint ownership)."
+  phase: "asset_inventory"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "locate_original_will_trust"
+    - "inventory_bank_investment_accounts"
+  conditions: null
+  subtasks: []
+
+- key: "identify_pour_over_assets"
+  title: "Identify Pour-Over Assets"
+  description: "Identify assets not in the trust that need to be transferred via pour-over will"
+  instructions: "If there is a pour-over will, assets not titled in the trust at death will be directed into the trust through probate. Identify these assets and determine if a probate proceeding is needed to transfer them."
+  phase: "asset_inventory"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies:
+    - "review_trust_funding_status"
+  conditions: null
+  subtasks: []
+
+- key: "retitle_assets_successor_trustee"
+  title: "Re-Title Assets in Successor Trustee's Name"
+  description: "Update account titles and property deeds to reflect the successor trustee"
+  instructions: "Contact each institution holding trust assets to update the trustee designation. You'll need the death certificate, trust document (or certification of trust), and your ID. For real estate, a new deed or affidavit may be required."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "obtain_death_certificates"
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "review_distribution_provisions"
+  title: "Review Distribution Provisions"
+  description: "Analyze the trust's distribution terms and create a distribution plan"
+  instructions: "Carefully review the trust document's distribution provisions. Note any conditions on distributions (age, milestones), discretionary vs. mandatory distributions, and any special provisions (education, health, support). Create a clear distribution plan."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "identify_special_provisions"
+  title: "Identify Special Needs or Spendthrift Provisions"
+  description: "Identify any special needs trusts, spendthrift clauses, or other protective provisions"
+  instructions: "Review the trust for special needs provisions (which protect a beneficiary's eligibility for government benefits), spendthrift clauses (which protect assets from creditors), and any other protective provisions that affect how distributions are made."
+  phase: "transfer_distribution"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "prepare_trust_accounting"
+  title: "Prepare Trust Accounting"
+  description: "Prepare a complete trust accounting for beneficiaries"
+  instructions: "Create a detailed accounting of all trust assets, income, expenses, and proposed distributions since the date of the trustor's death. This accounting should be clear enough for beneficiaries to understand and should comply with state accounting requirements."
+  phase: "closing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "review_trust_funding_status"
+    - "identify_debts_liabilities"
+  conditions: null
+  subtasks: []
+
+- key: "execute_trust_distributions"
+  title: "Execute Distributions Per Trust Terms"
+  description: "Distribute trust assets according to the trust document's terms"
+  instructions: "After preparing the accounting and resolving any disputes, distribute assets according to the trust terms. Obtain signed receipts from each beneficiary. Ensure distributions comply with any special provisions identified earlier."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "prepare_trust_accounting"
+    - "review_distribution_provisions"
+  conditions: null
+  subtasks: []
+
+- key: "send_crummey_notices"
+  title: "Send Crummey Notices If Applicable"
+  description: "Send required Crummey withdrawal notices for irrevocable life insurance trusts"
+  instructions: "If the trust is an irrevocable life insurance trust (ILIT) that received gifts, Crummey notices must be sent to beneficiaries for each contribution. Review the trust history and ensure all required notices have been sent."
+  phase: "notification"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule: null
+  dependencies:
+    - "locate_original_will_trust"
+  conditions:
+    flags:
+      - "has_ilit"
+  subtasks: []
+
+- key: "file_trust_income_tax_1041"
+  title: "File Trust Income Tax Return (Form 1041)"
+  description: "File Form 1041 for trust income earned after the trustor's death"
+  instructions: "If the trust earned more than $600 in income, file Form 1041. The trust becomes a separate taxpayer after the trustor's death. Depending on the trust type, income may be taxed to the trust or passed through to beneficiaries on Schedule K-1."
+  phase: "tax"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 12
+  dependencies:
+    - "apply_for_ein"
+  conditions: null
+  subtasks: []
+
+- key: "prepare_final_trust_accounting"
+  title: "Prepare Final Trust Accounting for Beneficiaries"
+  description: "Prepare and distribute the final trust accounting showing all transactions"
+  instructions: "After all distributions are complete, prepare a final accounting for all beneficiaries. This should show all assets received, income earned, expenses paid, and distributions made. Request written approval from beneficiaries to obtain a release of liability."
+  phase: "closing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "execute_trust_distributions"
+  conditions: null
+  subtasks: []
+
+- key: "terminate_trust"
+  title: "Terminate Trust Per Terms"
+  description: "Formally terminate the trust after all distributions are complete"
+  instructions: "Once all assets have been distributed and all obligations met, formally terminate the trust. Close trust bank accounts, file final tax returns, and notify beneficiaries that the trust administration is complete. Keep records for the applicable statute of limitations period."
+  phase: "closing"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule: null
+  dependencies:
+    - "prepare_final_trust_accounting"
+    - "file_trust_income_tax_1041"
+  conditions: null
+  subtasks: []

@@ -12,10 +12,14 @@ from .ai import (
 )
 from .assets import (
     AssetCreate,
+    AssetDetailResponse,
+    AssetLinkDocument,
+    AssetListItem,
     AssetListResponse,
-    AssetResponse,
     AssetUpdate,
+    AssetValuation,
     EntityBrief,
+    ValuationEntry,
 )
 from .auth import CurrentUser, FirmMembershipBrief, TokenPayload
 from .common import APIResponse, ErrorDetail, PaginationMeta, PaginationParams
@@ -26,17 +30,31 @@ from .communications import (
     DisputeFlagCreate,
 )
 from .deadlines import (
+    CalendarDeadline,
+    CalendarMonth,
+    CalendarResponse,
     DeadlineCreate,
     DeadlineListResponse,
     DeadlineResponse,
     DeadlineUpdate,
+    TaskBrief,
 )
 from .documents import (
+    AssetBriefDoc,
+    BulkDownloadRequest,
+    BulkDownloadStatusResponse,
     DocumentConfirmType,
+    DocumentDetailResponse,
+    DocumentListResponse,
     DocumentRegister,
     DocumentRequestCreate,
     DocumentResponse,
+    DocumentUploadRequest,
     DocumentUploadURL,
+    DocumentVersionResponse,
+    DownloadURLResponse,
+    RegisterVersionRequest,
+    TaskBriefDoc,
 )
 from .entities import (
     AssetBrief,
@@ -45,7 +63,7 @@ from .entities import (
     EntityResponse,
     EntityUpdate,
 )
-from .events import EventListResponse, EventResponse
+from .events import CursorMeta, EventListResponse, EventResponse
 from .firms import FirmCreate, FirmListResponse, FirmResponse, FirmUpdate
 from .matters import (
     AssetSummary,
@@ -112,10 +130,14 @@ __all__ = [
     "TaskWaive",
     # Assets
     "AssetCreate",
+    "AssetDetailResponse",
+    "AssetLinkDocument",
+    "AssetListItem",
     "AssetListResponse",
-    "AssetResponse",
     "AssetUpdate",
+    "AssetValuation",
     "EntityBrief",
+    "ValuationEntry",
     # Entities
     "AssetBrief",
     "EntityCreate",
@@ -123,22 +145,37 @@ __all__ = [
     "EntityResponse",
     "EntityUpdate",
     # Documents
+    "AssetBriefDoc",
+    "BulkDownloadRequest",
+    "BulkDownloadStatusResponse",
     "DocumentConfirmType",
+    "DocumentDetailResponse",
+    "DocumentListResponse",
     "DocumentRegister",
     "DocumentRequestCreate",
     "DocumentResponse",
+    "DocumentUploadRequest",
     "DocumentUploadURL",
+    "DocumentVersionResponse",
+    "DownloadURLResponse",
+    "RegisterVersionRequest",
+    "TaskBriefDoc",
     # Deadlines
+    "CalendarDeadline",
+    "CalendarMonth",
+    "CalendarResponse",
     "DeadlineCreate",
     "DeadlineListResponse",
     "DeadlineResponse",
     "DeadlineUpdate",
+    "TaskBrief",
     # Communications
     "CommunicationCreate",
     "CommunicationListResponse",
     "CommunicationResponse",
     "DisputeFlagCreate",
     # Events
+    "CursorMeta",
     "EventListResponse",
     "EventResponse",
     # AI

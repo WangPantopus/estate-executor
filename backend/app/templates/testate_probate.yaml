@@ -1,0 +1,239 @@
+# Testate Probate — Probate administration WITH a valid will
+# These tasks supplement the base tasks for testate probate matters.
+
+- key: "file_will_with_court"
+  title: "File Will with Probate Court"
+  description: "File the original will with the appropriate probate court"
+  instructions: "Take the original signed will to the probate court in the county where the decedent lived. Most states require the will to be filed within a specified period after death. Obtain a file-stamped copy for your records."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "petition_for_probate"
+  title: "Petition for Probate"
+  description: "File a petition with the court to open probate proceedings and be appointed as executor"
+  instructions: "Prepare and file a petition for probate with the court. This formally asks the court to validate the will and appoint you as executor. You'll need the original will, death certificate, and a list of heirs/beneficiaries."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "file_will_with_court"
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "publish_creditor_notice"
+  title: "Publish Creditor Notice in Newspaper"
+  description: "Publish a notice to creditors in a local newspaper as required by state law"
+  instructions: "After probate is opened, publish a notice to creditors in a newspaper of general circulation in the county. This starts the creditor claim period. Keep proof of publication — you'll need it for the court."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 45
+  dependencies:
+    - "petition_for_probate"
+  conditions: null
+  subtasks: []
+
+- key: "obtain_letters_testamentary"
+  title: "Obtain Letters Testamentary"
+  description: "Receive letters testamentary from the court confirming your authority as executor"
+  instructions: "After the court approves the probate petition, request certified copies of the letters testamentary. These letters prove your legal authority to act on behalf of the estate. Order multiple certified copies — institutions will require them."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "petition_for_probate"
+  conditions: null
+  subtasks: []
+
+- key: "file_inventory_with_court"
+  title: "File Inventory with Probate Court"
+  description: "File a complete inventory of estate assets with the probate court"
+  instructions: "Prepare a detailed inventory listing all probate assets and their values as of the date of death. This is a legal requirement in most jurisdictions. Include real estate, financial accounts, vehicles, personal property, and any other assets subject to probate."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 120
+  dependencies:
+    - "obtain_letters_testamentary"
+    - "inventory_real_estate"
+    - "inventory_bank_investment_accounts"
+  conditions: null
+  subtasks: []
+
+- key: "notify_named_beneficiaries"
+  title: "Notify Named Beneficiaries"
+  description: "Send formal notice to all beneficiaries named in the will"
+  instructions: "Send written notice to each beneficiary named in the will, informing them of the probate proceedings. Include information about the probate case number, court, and their interest under the will. Keep proof of mailing."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "wait_creditor_claim_period"
+  title: "Wait for Creditor Claim Period to Expire"
+  description: "Monitor the statutory creditor claim period before making distributions"
+  instructions: "After publishing the creditor notice, you must wait for the statutory claim period to expire before distributing assets. This period varies by state (typically 2-12 months). Track the expiration date carefully."
+  phase: "notification"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule: null
+  dependencies:
+    - "publish_creditor_notice"
+  conditions: null
+  subtasks: []
+
+- key: "resolve_creditor_claims"
+  title: "Resolve Creditor Claims"
+  description: "Review, accept, reject, or negotiate all creditor claims filed against the estate"
+  instructions: "Review each creditor claim for validity. Valid claims should be paid from estate assets. Invalid or questionable claims can be rejected — the creditor may then petition the court. Keep detailed records of all claims and their resolution."
+  phase: "notification"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule: null
+  dependencies:
+    - "wait_creditor_claim_period"
+  conditions: null
+  subtasks: []
+
+- key: "prepare_estate_accounting"
+  title: "Prepare Estate Accounting"
+  description: "Prepare a full accounting of all estate receipts and disbursements"
+  instructions: "Create a detailed accounting showing all income received, debts paid, expenses incurred, and proposed distributions. This accounting must be transparent and may need court approval. Use the estate bank account records as your primary source."
+  phase: "closing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "resolve_creditor_claims"
+  conditions: null
+  subtasks: []
+
+- key: "file_estate_income_tax_1041"
+  title: "File Estate Income Tax Return (Form 1041)"
+  description: "File Form 1041 for any income earned by the estate after date of death"
+  instructions: "If the estate earned more than $600 in income after the date of death, you must file Form 1041. This is separate from the decedent's final Form 1040. The estate's tax year begins on the date of death."
+  phase: "tax"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 12
+  dependencies:
+    - "apply_for_ein"
+    - "open_estate_bank_account"
+  conditions: null
+  subtasks: []
+
+- key: "file_federal_estate_tax_706"
+  title: "File Federal Estate Tax Return (Form 706)"
+  description: "File Form 706 if the gross estate exceeds the federal exemption threshold"
+  instructions: "If the gross estate (including life insurance, retirement accounts, and trust assets) exceeds the federal estate tax exemption, Form 706 must be filed within 9 months of death (with a 6-month extension available). Even if no tax is owed, Form 706 may be needed for portability of the unused exemption."
+  phase: "tax"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 9
+  dependencies:
+    - "inventory_bank_investment_accounts"
+    - "inventory_real_estate"
+    - "inventory_retirement_accounts"
+  conditions:
+    flags:
+      - "high_value_estate"
+  subtasks: []
+
+- key: "file_state_estate_tax"
+  title: "File State Estate/Inheritance Tax Return"
+  description: "File state estate or inheritance tax return if required by the jurisdiction"
+  instructions: "Check whether the decedent's state of residence or states where property is located impose an estate or inheritance tax. State exemption thresholds are often lower than the federal threshold. Deadlines vary by state but 9 months from date of death is the most common default."
+  phase: "tax"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "date_of_death"
+    offset_months: 9
+  dependencies:
+    - "inventory_bank_investment_accounts"
+  conditions: null
+  subtasks: []
+
+- key: "obtain_court_approval_distribution"
+  title: "Obtain Court Approval for Distribution"
+  description: "Petition the court for approval to distribute estate assets to beneficiaries"
+  instructions: "File a petition with the probate court requesting approval of the proposed distribution plan. Include the estate accounting and proposed distribution schedule. After court approval, you are authorized to distribute assets."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "prepare_estate_accounting"
+    - "resolve_creditor_claims"
+  conditions: null
+  subtasks: []
+
+- key: "execute_distributions_per_will"
+  title: "Execute Distributions Per Will"
+  description: "Distribute estate assets to beneficiaries according to the will's terms"
+  instructions: "After receiving court approval, distribute assets as directed by the will. Obtain signed receipts from each beneficiary confirming what they received. Transfer title to real estate, re-register financial accounts, and deliver personal property."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "obtain_court_approval_distribution"
+  conditions: null
+  subtasks: []
+
+- key: "file_final_accounting_with_court"
+  title: "File Final Accounting with Court"
+  description: "File the final estate accounting and petition to close the estate"
+  instructions: "Prepare and file the final accounting with the probate court, showing all receipts, disbursements, and distributions. Petition the court to close the estate and discharge you as executor. Once approved, you are released from further liability."
+  phase: "closing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "execute_distributions_per_will"
+  conditions: null
+  subtasks: []

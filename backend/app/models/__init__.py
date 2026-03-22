@@ -36,6 +36,7 @@ from app.models.firm_memberships import FirmMembership
 from app.models.firms import Firm
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
+from app.models.task_comments import TaskComment
 from app.models.task_dependencies import TaskDependency
 from app.models.task_documents import task_documents
 from app.models.tasks import Task
@@ -74,6 +75,7 @@ __all__ = [
     "Matter",
     "Stakeholder",
     "Task",
+    "TaskComment",
     "TaskDependency",
     "Asset",
     "Entity",

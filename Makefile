@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-services dev-backend dev-frontend migrate test lint clean
+.PHONY: setup dev dev-services dev-backend dev-frontend migrate test lint clean worker beat
 
 # Install all dependencies
 setup:
@@ -35,6 +35,14 @@ test:
 lint:
 	cd backend && ruff check . && ruff format --check . && mypy app
 	cd frontend && npm run lint && npx tsc --noEmit
+
+# Start Celery worker (all queues)
+worker:
+	cd backend && celery -A app.workers.celery_app worker --loglevel=info --queues=default,ai,notifications,documents
+
+# Start Celery beat scheduler
+beat:
+	cd backend && celery -A app.workers.celery_app beat --loglevel=info
 
 # Stop and clean up docker services
 clean:

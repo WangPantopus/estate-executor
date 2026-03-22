@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.documents import Document
     from app.models.matters import Matter
     from app.models.stakeholders import Stakeholder
+    from app.models.task_comments import TaskComment
     from app.models.task_dependencies import TaskDependency
 
 
@@ -88,4 +89,7 @@ class Task(BaseModel):
     )
     documents: Mapped[list[Document]] = relationship(
         secondary="task_documents", back_populates="tasks"
+    )
+    comments: Mapped[list[TaskComment]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
     )

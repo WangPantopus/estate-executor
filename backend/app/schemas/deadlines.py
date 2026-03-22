@@ -12,6 +12,16 @@ from app.models.enums import DeadlineSource, DeadlineStatus
 from .common import PaginationMeta
 
 
+class TaskBrief(BaseModel):
+    """Brief task reference included in deadline responses."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    title: str
+    status: str
+
+
 class DeadlineCreate(BaseModel):
     """Schema for creating a new deadline."""
 
@@ -63,32 +73,9 @@ class DeadlineUpdate(BaseModel):
 
 
 class DeadlineResponse(BaseModel):
-    """Schema for deadline response."""
+    """Schema for deadline response with optional task brief and assignee name."""
 
-    model_config = ConfigDict(
-        strict=True,
-        from_attributes=True,
-        json_schema_extra={
-            "examples": [
-                {
-                    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                    "matter_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                    "task_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-                    "title": "File Probate Petition",
-                    "description": "File initial petition with the court",
-                    "due_date": "2025-03-15",
-                    "source": "manual",
-                    "rule": None,
-                    "status": "upcoming",
-                    "assigned_to": None,
-                    "reminder_config": {"days_before": [30, 7, 1]},
-                    "last_reminder_sent": None,
-                    "created_at": "2025-01-15T10:30:00Z",
-                    "updated_at": "2025-01-15T10:30:00Z",
-                }
-            ]
-        },
-    )
+    model_config = ConfigDict(strict=True, from_attributes=True)
 
     id: UUID
     matter_id: UUID
@@ -100,6 +87,8 @@ class DeadlineResponse(BaseModel):
     rule: dict | None
     status: DeadlineStatus
     assigned_to: UUID | None
+    assignee_name: str | None = None
+    task: TaskBrief | None = None
     reminder_config: dict | None
     last_reminder_sent: datetime | None
     created_at: datetime
@@ -113,3 +102,37 @@ class DeadlineListResponse(BaseModel):
 
     data: list[DeadlineResponse]
     meta: PaginationMeta
+
+
+class CalendarDeadline(BaseModel):
+    """A single deadline entry in the calendar view."""
+
+    model_config = ConfigDict(strict=True)
+
+    id: UUID
+    title: str
+    description: str | None
+    due_date: date
+    status: str
+    source: str
+    task_id: UUID | None
+    task_title: str | None
+    assigned_to: UUID | None
+    assignee_name: str | None
+
+
+class CalendarMonth(BaseModel):
+    """Deadlines grouped by month."""
+
+    model_config = ConfigDict(strict=True)
+
+    month: str
+    deadlines: list[CalendarDeadline]
+
+
+class CalendarResponse(BaseModel):
+    """Calendar view of deadlines grouped by month."""
+
+    model_config = ConfigDict(strict=True)
+
+    data: list[CalendarMonth]

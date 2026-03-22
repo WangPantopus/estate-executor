@@ -1,0 +1,112 @@
+# New York — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ny_file_probate_surrogate_court"
+    title: "File Probate Petition with Surrogate's Court"
+    description: "File probate petition with the Surrogate's Court in the appropriate county"
+    instructions: "File the probate petition with the Surrogate's Court in the county where the decedent was domiciled at death. Include the original will, death certificate, and all required supporting documents. New York's probate process involves a citation being issued to all interested parties."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ny_obtain_citation"
+    title: "Obtain and Serve Citation (New York)"
+    description: "Obtain citation from the court and serve it on all interested parties"
+    instructions: "The Surrogate's Court will issue a citation that must be served on all distributees, beneficiaries, and other interested parties. Service must comply with New York SCPA requirements. Allow time for the return date."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "ny_file_probate_surrogate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ny_file_estate_tax_return"
+    title: "File New York Estate Tax Return"
+    description: "File Form ET-706 if estate exceeds New York's exemption threshold"
+    instructions: "New York has its own estate tax with a lower exemption than the federal level (approximately $6.94 million). If the estate exceeds this threshold, file Form ET-706 within 9 months of death. New York's estate tax has a 'cliff' — if the estate exceeds 105% of the exemption, the entire estate is taxed."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ny_small_estate_proceeding"
+    title: "Consider Small Estate Proceeding (Under $50,000)"
+    description: "Determine if estate qualifies for simplified voluntary administration"
+    instructions: "New York allows a small estate proceeding (voluntary administration) for estates with personal property of $50,000 or less (excluding real property). This is much simpler and faster than full probate."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ny_notify_creditors"
+    title: "Publish Notice to Creditors (New York)"
+    description: "Publish notice to creditors as required by New York law"
+    instructions: "Publish notice in a newspaper designated by the Surrogate's Court. Individual notice must be sent to known creditors. The creditor claim period in New York is 7 months from letters being issued."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "ny_file_probate_surrogate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ny_creditor_claim_period"
+    title: "New York Creditor Claim Period (7 Months)"
+    description: "Creditors have 7 months from the issuance of letters to file claims"
+    relative_to: "matter_created"
+    offset_months: 7
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ny_estate_tax_deadline"
+    title: "New York Estate Tax Return Deadline"
+    description: "Form ET-706 due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ny_inventory_deadline"
+    title: "New York Inventory Deadline (6 Months)"
+    description: "Estate inventory should be filed within 6 months of appointment"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -1,0 +1,125 @@
+# Mixed Probate + Trust — Estates with both probate and trust components
+# Includes tasks for coordinating between the two processes.
+
+- key: "mixed_assess_probate_trust_split"
+  title: "Assess Probate vs. Trust Asset Split"
+  description: "Determine which assets are in the trust and which require probate"
+  instructions: "Create a comprehensive list separating assets into: (1) trust assets, (2) probate assets, (3) assets passing by beneficiary designation, and (4) joint tenancy assets. This determines the scope of both the probate and trust administration."
+  phase: "immediate"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 21
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_file_pour_over_will"
+  title: "File Pour-Over Will with Court"
+  description: "File the pour-over will to transfer non-trust assets into the trust"
+  instructions: "If a pour-over will exists, file it with the probate court. This will directs that probate assets be transferred into the trust, where they are then distributed per trust terms."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "mixed_assess_probate_trust_split"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_petition_probate"
+  title: "Petition for Probate (Pour-Over)"
+  description: "Open probate for assets not in the trust"
+  instructions: "If there are significant assets outside the trust, open a probate proceeding to transfer them into the trust via the pour-over will. Small estates may qualify for simplified procedures."
+  phase: "probate_filing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 30
+  dependencies:
+    - "mixed_file_pour_over_will"
+    - "obtain_death_certificates"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_coordinate_dual_administration"
+  title: "Coordinate Dual Administration Timeline"
+  description: "Create a coordinated timeline for probate and trust administration"
+  instructions: "Map out the parallel timelines for probate and trust proceedings. Identify dependencies between the two processes and ensure nothing falls through the cracks. The trust administration can proceed independently for funded trust assets."
+  phase: "immediate"
+  priority: "normal"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 14
+  dependencies:
+    - "mixed_assess_probate_trust_split"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_transfer_probate_to_trust"
+  title: "Transfer Probate Assets into Trust"
+  description: "After probate closes, transfer assets into the trust per the pour-over will"
+  instructions: "Once probate is complete, re-title probate assets into the trust. This may involve new deeds for real estate and account transfers for financial assets."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "mixed_petition_probate"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_trust_beneficiary_notice"
+  title: "Notify Trust Beneficiaries"
+  description: "Send required notices to trust beneficiaries"
+  instructions: "Send statutory notices to trust beneficiaries as required by state law. This runs parallel to the probate process."
+  phase: "notification"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: false
+  due_date_rule:
+    relative_to: "matter_created"
+    offset_days: 60
+  dependencies:
+    - "locate_original_will_trust"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_unified_accounting"
+  title: "Prepare Unified Accounting"
+  description: "Prepare a combined accounting covering both probate and trust assets"
+  instructions: "Create a comprehensive accounting that covers both the probate estate and the trust administration. Beneficiaries should be able to see the full picture of all assets and transactions."
+  phase: "closing"
+  priority: "critical"
+  default_assignee_role: "professional"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "mixed_transfer_probate_to_trust"
+  conditions: null
+  subtasks: []
+
+- key: "mixed_execute_distributions"
+  title: "Execute Final Distributions"
+  description: "Distribute all assets per trust terms (after probate assets have been poured over)"
+  instructions: "Once all probate assets are in the trust, distribute all assets according to the trust terms. Obtain signed receipts from each beneficiary."
+  phase: "transfer_distribution"
+  priority: "critical"
+  default_assignee_role: "executor_trustee"
+  requires_document: true
+  due_date_rule: null
+  dependencies:
+    - "mixed_unified_accounting"
+  conditions: null
+  subtasks: []

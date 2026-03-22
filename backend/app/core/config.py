@@ -33,11 +33,12 @@ class Settings(BaseSettings):
     # Anthropic
     anthropic_api_key: str = ""
 
-    # AWS S3
+    # AWS S3 / MinIO
     aws_s3_bucket: str = "estate-executor-documents"
     aws_region: str = "us-east-1"
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
+    s3_endpoint_url: str = ""  # Set to "http://localhost:9000" for MinIO
 
     # Stripe
     stripe_secret_key: str = ""
