@@ -1,8 +1,8 @@
 """Middleware for tenant isolation, request logging, etc."""
 
+import logging
 import time
 import uuid
-import logging
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
