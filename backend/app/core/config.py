@@ -9,12 +9,8 @@ class Settings(BaseSettings):
     app_secret_key: str = "change-me-to-a-random-secret"
 
     # Database
-    database_url: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/estate_executor"
-    )
-    database_url_sync: str = (
-        "postgresql://postgres:postgres@localhost:5432/estate_executor"
-    )
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/estate_executor"
+    database_url_sync: str = "postgresql://postgres:postgres@localhost:5432/estate_executor"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
