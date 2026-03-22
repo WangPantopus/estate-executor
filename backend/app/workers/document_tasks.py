@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
-import uuid
 import zipfile
 
 from app.workers.celery_app import celery_app

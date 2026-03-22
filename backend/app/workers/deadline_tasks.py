@@ -89,7 +89,6 @@ def check_overdue_tasks(self):
 
 async def _check_overdue_tasks_async() -> dict[str, int]:
     from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
 
     from app.core.database import async_session_factory
     from app.models.enums import MatterStatus, StakeholderRole, TaskStatus

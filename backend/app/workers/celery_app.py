@@ -8,7 +8,6 @@ Time limits: soft=300s, hard=600s (overridable per task)
 """
 
 from celery import Celery
-from celery.schedules import crontab
 
 from app.core.config import settings
 
@@ -33,11 +32,12 @@ celery_app.conf.update(
     },
     task_default_queue="default",
     # Default retry policy — exponential backoff
+    # NOTE: autoretry_for is NOT set globally because all tasks use explicit
+    # self.retry() calls. Setting both would cause double-retries.
     task_default_retry_delay=60,
     task_annotations={
         "*": {
             "max_retries": 3,
-            "autoretry_for": (Exception,),
             "retry_backoff": True,
             "retry_backoff_max": 900,
             "retry_jitter": True,

@@ -197,7 +197,96 @@ async def list_documents(
 
 
 # ---------------------------------------------------------------------------
+# POST .../documents/request — Request document from stakeholder
+# (must be before /{doc_id} routes to avoid path conflict)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/request", status_code=201)
+async def request_document(
+    firm_id: UUID,
+    matter_id: UUID,
+    body: DocumentRequestCreate,
+    _membership: FirmMembership = Depends(require_firm_member),
+    stakeholder: Stakeholder = Depends(require_stakeholder),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Request a document from a stakeholder. Sends email with upload link."""
+    comm = await document_service.request_document(
+        db,
+        matter_id=matter_id,
+        sender=stakeholder,
+        target_stakeholder_id=body.target_stakeholder_id,
+        doc_type_needed=body.doc_type_needed,
+        task_id=body.task_id,
+        message=body.message,
+        current_user=current_user,
+    )
+    return {"id": str(comm.id), "status": "sent"}
+
+
+# ---------------------------------------------------------------------------
+# POST .../documents/bulk-download — Enqueue bulk download
+# (must be before /{doc_id} routes to avoid path conflict)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/bulk-download", response_model=BulkDownloadStatusResponse, status_code=202)
+async def bulk_download(
+    firm_id: UUID,
+    matter_id: UUID,
+    body: BulkDownloadRequest,
+    _membership: FirmMembership = Depends(require_firm_member),
+    _stakeholder: Stakeholder = Depends(require_stakeholder),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> BulkDownloadStatusResponse:
+    """Enqueue async ZIP generation for bulk document download."""
+    job_id = await document_service.enqueue_bulk_download(
+        db,
+        matter_id=matter_id,
+        document_ids=body.document_ids,
+        current_user=current_user,
+    )
+    return BulkDownloadStatusResponse(job_id=job_id, status="processing")
+
+
+# ---------------------------------------------------------------------------
+# GET .../documents/bulk-download/{job_id} — Check bulk download status
+# (must be before /{doc_id} routes to avoid path conflict)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/bulk-download/{job_id}", response_model=BulkDownloadStatusResponse)
+async def bulk_download_status(
+    firm_id: UUID,
+    matter_id: UUID,
+    job_id: str,
+    _membership: FirmMembership = Depends(require_firm_member),
+    _stakeholder: Stakeholder = Depends(require_stakeholder),
+) -> BulkDownloadStatusResponse:
+    """Check status of a bulk download ZIP generation job."""
+    from app.workers.celery_app import celery_app
+
+    result = celery_app.AsyncResult(job_id)
+
+    if result.ready():
+        if result.successful():
+            data = result.result
+            return BulkDownloadStatusResponse(
+                job_id=job_id,
+                status="completed",
+                download_url=data.get("download_url") if isinstance(data, dict) else None,
+            )
+        return BulkDownloadStatusResponse(job_id=job_id, status="failed")
+
+    return BulkDownloadStatusResponse(job_id=job_id, status="processing")
+
+
+# ---------------------------------------------------------------------------
 # GET .../documents/{doc_id} — Document detail
+# (parameterized routes MUST come after all fixed-path routes)
 # ---------------------------------------------------------------------------
 
 
@@ -320,88 +409,3 @@ async def register_version(
         current_user=current_user,
     )
     return _doc_to_detail(doc)
-
-
-# ---------------------------------------------------------------------------
-# POST .../documents/request — Request document from stakeholder
-# ---------------------------------------------------------------------------
-
-
-@router.post("/request", status_code=201)
-async def request_document(
-    firm_id: UUID,
-    matter_id: UUID,
-    body: DocumentRequestCreate,
-    _membership: FirmMembership = Depends(require_firm_member),
-    stakeholder: Stakeholder = Depends(require_stakeholder),
-    current_user: CurrentUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    """Request a document from a stakeholder. Sends email with upload link."""
-    comm = await document_service.request_document(
-        db,
-        matter_id=matter_id,
-        sender=stakeholder,
-        target_stakeholder_id=body.target_stakeholder_id,
-        doc_type_needed=body.doc_type_needed,
-        task_id=body.task_id,
-        message=body.message,
-        current_user=current_user,
-    )
-    return {"id": str(comm.id), "status": "sent"}
-
-
-# ---------------------------------------------------------------------------
-# POST .../documents/bulk-download — Enqueue bulk download
-# ---------------------------------------------------------------------------
-
-
-@router.post("/bulk-download", response_model=BulkDownloadStatusResponse, status_code=202)
-async def bulk_download(
-    firm_id: UUID,
-    matter_id: UUID,
-    body: BulkDownloadRequest,
-    _membership: FirmMembership = Depends(require_firm_member),
-    _stakeholder: Stakeholder = Depends(require_stakeholder),
-    current_user: CurrentUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> BulkDownloadStatusResponse:
-    """Enqueue async ZIP generation for bulk document download."""
-    job_id = await document_service.enqueue_bulk_download(
-        db,
-        matter_id=matter_id,
-        document_ids=body.document_ids,
-        current_user=current_user,
-    )
-    return BulkDownloadStatusResponse(job_id=job_id, status="processing")
-
-
-# ---------------------------------------------------------------------------
-# GET .../documents/bulk-download/{job_id} — Check bulk download status
-# ---------------------------------------------------------------------------
-
-
-@router.get("/bulk-download/{job_id}", response_model=BulkDownloadStatusResponse)
-async def bulk_download_status(
-    firm_id: UUID,
-    matter_id: UUID,
-    job_id: str,
-    _membership: FirmMembership = Depends(require_firm_member),
-    _stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> BulkDownloadStatusResponse:
-    """Check status of a bulk download ZIP generation job."""
-    from app.workers.celery_app import celery_app
-
-    result = celery_app.AsyncResult(job_id)
-
-    if result.ready():
-        if result.successful():
-            data = result.result
-            return BulkDownloadStatusResponse(
-                job_id=job_id,
-                status="completed",
-                download_url=data.get("download_url") if isinstance(data, dict) else None,
-            )
-        return BulkDownloadStatusResponse(job_id=job_id, status="failed")
-
-    return BulkDownloadStatusResponse(job_id=job_id, status="processing")
