@@ -3,7 +3,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Estate Executor OS: Luxury Design System ─── */
+
 @theme inline {
+  /* Color palette */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -12,6 +15,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-light: var(--primary-light);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -23,6 +27,20 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+
+  /* Sidebar */
   --color-sidebar-background: var(--sidebar-background);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -31,75 +49,205 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-muted: var(--sidebar-muted);
+
+  /* Radii */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Typography — Inter & Crimson Pro loaded via CDN link in layout, with robust fallbacks */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Crimson Pro", "Georgia", "Cambria", "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Shadows — warm-toned, subtle */
+  --shadow-xs: 0 1px 2px rgba(26, 26, 26, 0.03);
+  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.04), 0 1px 2px rgba(26, 26, 26, 0.02);
+  --shadow-md: 0 4px 6px rgba(26, 26, 26, 0.05), 0 2px 4px rgba(26, 26, 26, 0.03);
+  --shadow-lg: 0 10px 15px rgba(26, 26, 26, 0.06), 0 4px 6px rgba(26, 26, 26, 0.03);
+  --shadow-xl: 0 20px 25px rgba(26, 26, 26, 0.07), 0 8px 10px rgba(26, 26, 26, 0.03);
+
+  /* Animations */
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-slide-in: slide-in 200ms ease-out;
+  --animate-slide-in-right: slide-in-right 200ms ease-out;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --sidebar-background: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+
+  /* Primary: Deep navy — authority, trust */
+  --primary: #0B1D3A;
+  --primary-light: #1A3A5C;
+  --primary-foreground: #FFFFFF;
+
+  /* Accent: Warm gold — wealth, premium */
+  --gold: #C9A962;
+  --gold-light: #D4BC82;
+
+  /* Background & surfaces */
+  --background: #FAFAF8;
+  --foreground: #1A1A1A;
+  --surface: #FFFFFF;
+  --surface-elevated: #F5F4F0;
+
+  /* Card */
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+
+  /* Popover */
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
+
+  /* Secondary */
+  --secondary: #F5F4F0;
+  --secondary-foreground: #0B1D3A;
+
+  /* Muted */
+  --muted: #F5F4F0;
+  --muted-foreground: #6B7280;
+
+  /* Accent mapped to gold for shadcn compatibility */
+  --accent: #F9F6EF;
+  --accent-foreground: #0B1D3A;
+
+  /* Destructive */
+  --destructive: #9B2C2C;
+  --destructive-foreground: #FFFFFF;
+
+  /* Borders & inputs */
+  --border: #E8E6E1;
+  --input: #E8E6E1;
+  --ring: #C9A962;
+
+  /* Status colors */
+  --success: #2D6A4F;
+  --success-light: #E8F5EE;
+  --warning: #D4A843;
+  --warning-light: #FDF6E3;
+  --danger: #9B2C2C;
+  --danger-light: #FDE8E8;
+  --info: #4A6FA5;
+  --info-light: #EBF0F7;
+
+  /* Sidebar: Dark navy */
+  --sidebar-background: #0B1D3A;
+  --sidebar-foreground: #E2E8F0;
+  --sidebar-primary: #C9A962;
+  --sidebar-primary-foreground: #0B1D3A;
+  --sidebar-accent: #1A3A5C;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #1A3A5C;
+  --sidebar-ring: #C9A962;
+  --sidebar-muted: #94A3B8;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --sidebar-background: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+/* ─── Base styles ─── */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+/* Selection color: gold accent */
+::selection {
+  background-color: rgba(201, 169, 98, 0.2);
+  color: #0B1D3A;
+}
+
+/* Focus visible: gold ring */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling: thin, warm gray */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #D1D0CB;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #B0AFA9;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D0CB transparent;
+}
+
+/* ─── Keyframes ─── */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ─── Skeleton shimmer ─── */
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-elevated) 25%,
+    #EEEEE8 50%,
+    var(--surface-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
