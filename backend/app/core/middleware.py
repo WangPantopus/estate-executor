@@ -22,7 +22,12 @@ _FIRM_ID_PATTERN = re.compile(r"/firms/([0-9a-f\-]{36})")
 
 
 class TenantIsolationMiddleware(BaseHTTPMiddleware):
-    """Extract firm_id from URL and set PostgreSQL session variable for RLS."""
+    """Extract firm_id from URL path and store it in request state.
+
+    The actual PostgreSQL SET LOCAL for RLS is executed in the get_db
+    dependency (see dependencies.py) because the DB session isn't available
+    at middleware level — it's created later via dependency injection.
+    """
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
         match = _FIRM_ID_PATTERN.search(request.url.path)

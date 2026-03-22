@@ -1,6 +1,7 @@
 "use client";
 
 import { getAccessToken } from "@auth0/nextjs-auth0";
+import type { PaginationMeta } from "./types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -9,13 +10,6 @@ export interface ApiResponse<T> {
   data: T;
   meta?: PaginationMeta;
   errors?: ErrorDetail[];
-}
-
-export interface PaginationMeta {
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
 }
 
 export interface ErrorDetail {

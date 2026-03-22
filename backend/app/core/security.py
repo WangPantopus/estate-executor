@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
@@ -95,11 +96,19 @@ async def verify_jwt(token: str) -> TokenPayload:
 from app.core.database import async_session_factory  # noqa: E402
 
 
-async def _get_db_session() -> AsyncSession:
-    """Provide an async session for auth dependencies."""
+async def _get_db_session() -> AsyncGenerator[AsyncSession]:
+    """Provide an async session for auth dependencies.
+
+    Separate from get_db in dependencies.py to avoid circular imports.
+    Does not set RLS variables (auth runs before tenant context is known).
+    """
     async with async_session_factory() as session:
-        yield session  # type: ignore[misc]
-        await session.commit()
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 async def get_current_user(
