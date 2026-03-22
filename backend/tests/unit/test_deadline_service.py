@@ -204,4 +204,4 @@ class TestCeleryBeatConfig:
         from app.workers.celery_app import celery_app
 
         config = celery_app.conf.beat_schedule["check-deadlines-hourly"]
-        assert config["task"] == "app.workers.tasks.check_deadlines"
+        assert config["task"] == "app.workers.deadline_tasks.check_deadlines"

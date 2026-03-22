@@ -141,7 +141,7 @@ async def register_document(
     )
 
     # Enqueue AI classification (Celery task — import at call site to avoid circular)
-    from app.workers.tasks import classify_document
+    from app.workers.ai_tasks import classify_document
 
     classify_document.delay(str(doc.id), str(matter_id))
 
@@ -445,13 +445,14 @@ async def enqueue_bulk_download(
     current_user: CurrentUser,
 ) -> str:
     """Enqueue async ZIP generation job. Returns job_id."""
-    from app.workers.tasks import generate_bulk_zip
+    from app.workers.document_tasks import generate_bulk_download
 
     job_id = str(uuid.uuid4())
-    generate_bulk_zip.delay(
+    generate_bulk_download.delay(
         job_id,
         str(matter_id),
         [str(d) for d in document_ids],
+        "",  # requester_stakeholder_id — populated by caller if needed
     )
 
     logger.info(

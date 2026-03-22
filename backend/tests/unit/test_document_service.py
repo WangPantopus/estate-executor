@@ -309,24 +309,31 @@ class TestCeleryDocumentTasks:
     """Verify Celery tasks for document processing exist."""
 
     def test_classify_document_task_exists(self):
-        from app.workers.tasks import classify_document
+        from app.workers.ai_tasks import classify_document
 
         assert callable(classify_document)
 
-    def test_generate_bulk_zip_task_exists(self):
-        from app.workers.tasks import generate_bulk_zip
+    def test_generate_bulk_download_task_exists(self):
+        from app.workers.document_tasks import generate_bulk_download
 
-        assert callable(generate_bulk_zip)
+        assert callable(generate_bulk_download)
 
     def test_classify_document_task_name(self):
-        from app.workers.tasks import classify_document
+        from app.workers.ai_tasks import classify_document
 
-        assert classify_document.name == "app.workers.tasks.classify_document"
+        assert classify_document.name == "app.workers.ai_tasks.classify_document"
 
-    def test_generate_bulk_zip_task_name(self):
-        from app.workers.tasks import generate_bulk_zip
+    def test_generate_bulk_download_task_name(self):
+        from app.workers.document_tasks import generate_bulk_download
 
-        assert generate_bulk_zip.name == "app.workers.tasks.generate_bulk_zip"
+        assert generate_bulk_download.name == "app.workers.document_tasks.generate_bulk_download"
+
+    def test_backward_compat_imports(self):
+        """Old import paths should still work."""
+        from app.workers.tasks import classify_document, generate_bulk_zip
+
+        assert callable(classify_document)
+        assert callable(generate_bulk_zip)
 
 
 class TestDocumentRequestCreatesCorrectComm:
