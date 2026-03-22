@@ -18,6 +18,7 @@ from app.models.stakeholders import Stakeholder
 from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.tasks import (
+    CommentBrief,
     DocumentBrief,
     TaskAssign,
     TaskComplete,
@@ -230,7 +231,7 @@ async def get_task_detail(
     stakeholder: Stakeholder = Depends(require_stakeholder),
     db: AsyncSession = Depends(get_db),
 ) -> TaskDetailResponse:
-    """Get full task detail with documents, dependencies, and dependents."""
+    """Get full task detail with documents, dependencies, dependents, and comments."""
     detail = await task_service.get_task_detail(db, task_id=task_id, matter_id=matter_id)
     return TaskDetailResponse(
         id=detail["id"],
@@ -253,6 +254,7 @@ async def get_task_detail(
         documents=[DocumentBrief(**d) for d in detail["documents"]],
         dependencies=detail["dependencies"],
         dependents=detail["dependents"],
+        comments=[CommentBrief(**c) for c in detail["comments"]],
         created_at=detail["created_at"],
         updated_at=detail["updated_at"],
     )

@@ -268,13 +268,14 @@ async def get_task_detail(
     task_id: uuid.UUID,
     matter_id: uuid.UUID,
 ) -> dict[str, Any]:
-    """Get full task detail including documents, dependencies, and dependents."""
+    """Get full task detail including documents, dependencies, dependents, and comments."""
     result = await db.execute(
         select(Task)
         .options(
             selectinload(Task.documents),
             selectinload(Task.dependencies),
             selectinload(Task.dependents),
+            selectinload(Task.comments),
         )
         .where(Task.id == task_id, Task.matter_id == matter_id)
     )
@@ -311,6 +312,15 @@ async def get_task_detail(
         ],
         "dependencies": [dep.depends_on_task_id for dep in task.dependencies],
         "dependents": [dep.task_id for dep in task.dependents],
+        "comments": [
+            {
+                "id": c.id,
+                "author_id": c.author_id,
+                "body": c.body,
+                "created_at": c.created_at,
+            }
+            for c in task.comments
+        ],
         "created_at": task.created_at,
         "updated_at": task.updated_at,
     }

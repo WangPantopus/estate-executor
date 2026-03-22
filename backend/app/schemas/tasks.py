@@ -36,6 +36,17 @@ class DocumentBrief(BaseModel):
     created_at: datetime
 
 
+class CommentBrief(BaseModel):
+    """Brief comment for task detail responses."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    author_id: UUID
+    body: str
+    created_at: datetime
+
+
 class TaskCreate(BaseModel):
     """Schema for creating a new task."""
 
@@ -217,7 +228,7 @@ class TaskListItem(BaseModel):
 
 
 class TaskDetailResponse(BaseModel):
-    """Full task detail — includes documents, dependencies, and dependents."""
+    """Full task detail — includes documents, dependencies, dependents, and comments."""
 
     model_config = ConfigDict(strict=True, from_attributes=True)
 
@@ -241,6 +252,7 @@ class TaskDetailResponse(BaseModel):
     documents: list[DocumentBrief]
     dependencies: list[UUID]
     dependents: list[UUID]
+    comments: list[CommentBrief]
     created_at: datetime
     updated_at: datetime
 
