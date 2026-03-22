@@ -8,7 +8,6 @@ import {
   Link2,
   CheckCircle2,
   Sparkles,
-  Check,
   Pencil,
   Trash2,
   Loader2,
@@ -174,15 +173,9 @@ function AIExtractedDataCard({
               </span>{" "}
               <span className="text-foreground">{String(value)}</span>
             </div>
-            <div className="flex items-center gap-1 shrink-0 ml-2">
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-success">
-                <Check className="size-3 mr-0.5" />
-                Confirm
-              </Button>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground">
-                Dismiss
-              </Button>
-            </div>
+            <Badge variant="info" className="text-[10px] shrink-0 ml-2">
+              AI Suggested
+            </Badge>
           </div>
         ))}
       </div>

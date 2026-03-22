@@ -33,7 +33,7 @@ export function DeadlineSummaryBar({
     (d) => d.status === "upcoming" && daysUntil(d.due_date) >= 0 && daysUntil(d.due_date) <= 7,
   ).length;
   const dueThisMonth = deadlines.filter(
-    (d) => d.status === "upcoming" && daysUntil(d.due_date) >= 0 && daysUntil(d.due_date) <= 30,
+    (d) => d.status === "upcoming" && daysUntil(d.due_date) > 7 && daysUntil(d.due_date) <= 30,
   ).length;
   const completed = deadlines.filter(
     (d) => d.status === "completed",

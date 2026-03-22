@@ -140,10 +140,6 @@ export function DocumentUploadZone({
     setUploads((prev) => prev.filter((u) => u.id !== id));
   };
 
-  const activeUploads = uploads.filter(
-    (u) => u.status !== "done" || Date.now() - 5000 < 0,
-  );
-
   return (
     <div className="space-y-3">
       {/* Drop zone */}

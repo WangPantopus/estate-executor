@@ -80,7 +80,7 @@ export default function DeadlinesPage({
         return allDeadlines.filter(
           (d) =>
             d.status === "upcoming" &&
-            daysUntil(d.due_date) >= 0 &&
+            daysUntil(d.due_date) > 7 &&
             daysUntil(d.due_date) <= 30,
         );
       case "completed":

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +102,10 @@ interface TaskFilterPanelProps {
 
 export function TaskFilterPanel({ filters, onChange, stakeholders }: TaskFilterPanelProps) {
   const [searchInput, setSearchInput] = useState(filters.search);
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
 
   const update = useCallback(
     (patch: Partial<TaskFilterState>) => {

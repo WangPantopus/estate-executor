@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -30,6 +30,10 @@ export function WaiveTaskDialog({
   onConfirm,
 }: WaiveTaskDialogProps) {
   const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!open) setReason("");
+  }, [open]);
 
   const handleConfirm = () => {
     if (reason.trim()) {

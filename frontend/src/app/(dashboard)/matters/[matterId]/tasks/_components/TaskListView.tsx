@@ -285,13 +285,7 @@ function TaskRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-
-          {/* Assign submenu - flat list */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <DropdownMenuItem>Assign to...</DropdownMenuItem>
-            </DropdownMenuTrigger>
-          </DropdownMenu>
+          <DropdownMenuItem onClick={onEdit}>Assign to...</DropdownMenuItem>
 
           {!terminal && (
             <>

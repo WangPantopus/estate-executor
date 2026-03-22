@@ -136,7 +136,6 @@ export function TaskDetailPanel({
     );
   }
 
-  const detail = taskDetail as TaskDetail | undefined;
   const overdue = isOverdue(task);
   const terminal = isTerminal(task);
 
@@ -147,8 +146,8 @@ export function TaskDetailPanel({
 
   // Find dependency and dependent tasks
   const dependencyTasks = tasks.filter((t) => task.dependencies.includes(t.id));
-  const dependentTasks = detail?.dependents
-    ? tasks.filter((t) => detail.dependents.includes(t.id))
+  const dependentTasks = taskDetail?.dependents
+    ? tasks.filter((t) => taskDetail.dependents.includes(t.id))
     : [];
 
   const handleAssign = (stakeholderId: string) => {
@@ -357,15 +356,15 @@ export function TaskDetailPanel({
           <Separator />
 
           {/* Comments */}
-          {detail?.comments && (
+          {taskDetail?.comments && (
             <div>
               <h3 className="text-xs font-medium text-muted-foreground mb-2">
                 <MessageSquare className="size-3.5 inline mr-1" />
-                Comments ({detail.comments.length})
+                Comments ({taskDetail.comments.length})
               </h3>
-              {detail.comments.length > 0 ? (
+              {taskDetail.comments.length > 0 ? (
                 <div className="space-y-3">
-                  {detail.comments.map((comment) => (
+                  {taskDetail.comments.map((comment) => (
                     <div key={comment.id} className="text-sm">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-medium text-foreground">

@@ -95,9 +95,10 @@ export function DeadlineDetailPanel({
   const isOverdue = deadline.status === "upcoming" && days < 0;
   const isCompleted = deadline.status === "completed";
 
-  // Parse current reminder config
+  // Parse current reminder config safely
+  const rawDaysBefore = deadline.reminder_config?.days_before;
   const currentReminders: number[] =
-    (deadline.reminder_config as { days_before?: number[] } | null)?.days_before ?? [30, 7, 1];
+    Array.isArray(rawDaysBefore) ? rawDaysBefore : [30, 7, 1];
 
   const deadlineEvents = (eventsData?.data ?? []).filter(
     (e: EventResponse) => e.entity_id === deadline.id,

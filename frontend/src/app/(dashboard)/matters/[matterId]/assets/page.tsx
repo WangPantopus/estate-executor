@@ -224,7 +224,6 @@ export default function AssetsPage({
         onOpenChange={setAddDialogOpen}
         firmId={FIRM_ID}
         matterId={matterId}
-        entities={entities}
       />
     </div>
   );

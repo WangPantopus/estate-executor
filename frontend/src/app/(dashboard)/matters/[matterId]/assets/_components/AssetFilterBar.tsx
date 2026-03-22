@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +98,10 @@ interface AssetFilterBarProps {
 
 export function AssetFilterBar({ filters, onChange }: AssetFilterBarProps) {
   const [searchInput, setSearchInput] = useState(filters.search);
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
 
   const update = (patch: Partial<AssetFilterState>) => {
     onChange({ ...filters, ...patch });

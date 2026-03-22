@@ -235,7 +235,7 @@ export function BulkDownloadDialog({
       // Timeout after 60s
       setTimeout(() => {
         clearInterval(pollInterval);
-        if (status === "generating") setStatus("error");
+        setStatus((curr) => (curr === "generating" ? "error" : curr));
       }, 60000);
     } catch {
       setStatus("error");

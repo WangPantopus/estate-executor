@@ -80,14 +80,19 @@ function DayPopover({
   deadlines,
   onDeadlineClick,
   onClose,
+  alignRight,
 }: {
   deadlines: DeadlineResponse[];
   onDeadlineClick: (id: string) => void;
   onClose: () => void;
+  alignRight?: boolean;
 }) {
   return (
     <div
-      className="absolute z-20 top-full left-0 mt-1 w-56 rounded-lg border border-border bg-card shadow-lg p-2 space-y-1"
+      className={cn(
+        "absolute z-20 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg p-2 space-y-1",
+        alignRight ? "right-0" : "left-0",
+      )}
       onClick={(e) => e.stopPropagation()}
     >
       {deadlines.map((d) => (
@@ -263,6 +268,7 @@ export function CalendarView({ deadlines, onDeadlineClick }: CalendarViewProps) 
                   deadlines={dayDeadlines}
                   onDeadlineClick={onDeadlineClick}
                   onClose={() => setPopoverDate(null)}
+                  alignRight={idx % 7 >= 4}
                 />
               )}
             </div>

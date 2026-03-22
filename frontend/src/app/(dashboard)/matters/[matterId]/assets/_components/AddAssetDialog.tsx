@@ -30,7 +30,7 @@ import {
   TRANSFER_MECHANISM_LABELS,
 } from "@/lib/constants";
 import { useCreateAsset } from "@/hooks";
-import type { AssetCreate, AssetType, Entity } from "@/lib/types";
+import type { AssetCreate, AssetType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ASSET_TYPE_ICONS, ASSET_TYPE_COLORS } from "./AssetCard";
 
@@ -65,7 +65,6 @@ const assetSchema = z.object({
   ownership_type: z.string().optional(),
   transfer_mechanism: z.string().optional(),
   current_estimated_value: z.number().nullable().optional(),
-  entity_id: z.string().optional(),
 });
 
 type AssetFormData = z.infer<typeof assetSchema>;
@@ -77,7 +76,6 @@ interface AddAssetDialogProps {
   onOpenChange: (open: boolean) => void;
   firmId: string;
   matterId: string;
-  entities: Entity[];
 }
 
 export function AddAssetDialog({
@@ -85,7 +83,6 @@ export function AddAssetDialog({
   onOpenChange,
   firmId,
   matterId,
-  entities,
 }: AddAssetDialogProps) {
   const createAsset = useCreateAsset(firmId, matterId);
 
@@ -107,7 +104,6 @@ export function AddAssetDialog({
       ownership_type: "",
       transfer_mechanism: "",
       current_estimated_value: null,
-      entity_id: "",
     },
   });
 
@@ -322,31 +318,6 @@ export function AddAssetDialog({
               />
             </div>
           </div>
-
-          {/* Entity assignment */}
-          {entities.length > 0 && (
-            <div>
-              <Label>Entity Assignment</Label>
-              <Select
-                value={watch("entity_id") || "__none__"}
-                onValueChange={(val) =>
-                  setValue("entity_id", val === "__none__" ? "" : val)
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="None" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {entities.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.name} ({e.entity_type.replace(/_/g, " ")})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* Description */}
           <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, UserCircle, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/layout/StatusBadge";
@@ -55,16 +55,19 @@ export function TimelineView({ deadlines, onDeadlineClick }: TimelineViewProps) 
   const [showPast, setShowPast] = useState(false);
 
   // Sort chronologically
-  const sorted = [...deadlines].sort(
-    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
-  );
-
-  const pastDeadlines = sorted.filter(
-    (d) => (d.status === "completed" || d.status === "missed") && daysUntil(d.due_date) < 0,
-  );
-  const activeDeadlines = sorted.filter(
-    (d) => !((d.status === "completed" || d.status === "missed") && daysUntil(d.due_date) < 0),
-  );
+  const { pastDeadlines, activeDeadlines } = useMemo(() => {
+    const sorted = [...deadlines].sort(
+      (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+    );
+    return {
+      pastDeadlines: sorted.filter(
+        (d) => (d.status === "completed" || d.status === "missed") && daysUntil(d.due_date) < 0,
+      ),
+      activeDeadlines: sorted.filter(
+        (d) => !((d.status === "completed" || d.status === "missed") && daysUntil(d.due_date) < 0),
+      ),
+    };
+  }, [deadlines]);
 
   if (deadlines.length === 0) {
     return (

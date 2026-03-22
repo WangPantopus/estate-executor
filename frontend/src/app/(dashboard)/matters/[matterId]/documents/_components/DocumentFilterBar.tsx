@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,10 @@ interface DocumentFilterBarProps {
 
 export function DocumentFilterBar({ filters, onChange }: DocumentFilterBarProps) {
   const [searchInput, setSearchInput] = useState(filters.search);
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
 
   const update = (patch: Partial<DocFilterState>) => {
     onChange({ ...filters, ...patch });
