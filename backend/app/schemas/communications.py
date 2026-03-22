@@ -63,7 +63,7 @@ class CommunicationResponse(BaseModel):
     id: UUID
     matter_id: UUID
     sender_id: UUID
-    sender_name: str
+    sender_name: str = ""  # Populated by service layer from sender relationship
     type: CommunicationType
     subject: str | None
     body: str

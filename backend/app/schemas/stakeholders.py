@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import InviteStatus, StakeholderRole
 
@@ -62,6 +62,7 @@ class StakeholderResponse(BaseModel):
     model_config = ConfigDict(
         strict=True,
         from_attributes=True,
+        populate_by_name=True,
         json_schema_extra={
             "examples": [
                 {
@@ -85,7 +86,7 @@ class StakeholderResponse(BaseModel):
     email: str
     full_name: str
     role: StakeholderRole
-    relationship: str | None
+    relationship: str | None = Field(None, validation_alias="relationship_label")
     invite_status: InviteStatus
     created_at: datetime
 
