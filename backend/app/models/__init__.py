@@ -1,3 +1,4 @@
+from app.models.ai_usage_logs import AIUsageLog
 from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
 from app.models.base import BaseModel
@@ -89,4 +90,5 @@ __all__ = [
     "Communication",
     "Event",
     "EmailLog",
+    "AIUsageLog",
 ]
