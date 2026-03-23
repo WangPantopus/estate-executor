@@ -169,7 +169,7 @@ def _call_claude(user_prompt: str) -> tuple[dict[str, Any], int, int]:
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     tool = _build_tool_schema()
 
-    response = client.messages.create(
+    response = client.messages.create(  # type: ignore[call-overload]
         model=_MODEL,
         max_tokens=4096,
         system=_SYSTEM_PROMPT,

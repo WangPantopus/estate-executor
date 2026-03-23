@@ -80,12 +80,12 @@ def _check_and_increment(key: str, limit: int) -> int:
     window_start = now - _WINDOW_SECONDS
     ttl = _WINDOW_SECONDS + 60  # TTL slightly longer than window
 
-    result = r.eval(_RATE_LIMIT_SCRIPT, 1, key, limit, now, window_start, ttl)
+    result = r.eval(_RATE_LIMIT_SCRIPT, 1, key, str(limit), str(now), str(window_start), str(ttl))
 
-    if result == -1:
+    if int(result) == -1:  # type: ignore[arg-type]
         raise RateLimitExceededError(scope=key, limit=limit)
 
-    return int(result)
+    return int(result)  # type: ignore[arg-type]
 
 
 _CHECK_BOTH_SCRIPT = """
@@ -140,16 +140,17 @@ def check_rate_limit(*, firm_id: UUID, matter_id: UUID) -> None:
             2,
             firm_key,
             matter_key,
-            FIRM_LIMIT_PER_HOUR,
-            MATTER_LIMIT_PER_HOUR,
-            now,
-            window_start,
-            ttl,
+            str(FIRM_LIMIT_PER_HOUR),
+            str(MATTER_LIMIT_PER_HOUR),
+            str(now),
+            str(window_start),
+            str(ttl),
         )
 
-        if result == -1:
+        result_int = int(result)  # type: ignore[arg-type]
+        if result_int == -1:
             raise RateLimitExceededError(scope=firm_key, limit=FIRM_LIMIT_PER_HOUR)
-        if result == -2:
+        if result_int == -2:
             raise RateLimitExceededError(scope=matter_key, limit=MATTER_LIMIT_PER_HOUR)
     except RateLimitExceededError:
         raise
@@ -169,12 +170,12 @@ def get_usage(*, firm_id: UUID | None = None, matter_id: UUID | None = None) -> 
         if firm_id:
             key = f"{_FIRM_KEY_PREFIX}{firm_id}"
             r.zremrangebyscore(key, 0, window_start)
-            result["firm_calls_this_hour"] = r.zcard(key)
+            result["firm_calls_this_hour"] = int(r.zcard(key))
 
         if matter_id:
             key = f"{_MATTER_KEY_PREFIX}{matter_id}"
             r.zremrangebyscore(key, 0, window_start)
-            result["matter_calls_this_hour"] = r.zcard(key)
+            result["matter_calls_this_hour"] = int(r.zcard(key))
     except Exception:
         logger.warning("ai_rate_limit_get_usage_failed", exc_info=True)
 

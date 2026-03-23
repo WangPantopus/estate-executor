@@ -60,7 +60,7 @@ def _call_claude(
 
     tool = _build_tool_schema()
 
-    response = client.messages.create(
+    response = client.messages.create(  # type: ignore[call-overload]
         model=_MODEL,
         max_tokens=1024,
         system=_SYSTEM_PROMPT,
