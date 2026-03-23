@@ -759,3 +759,47 @@ export function useRequestDocument(firmId: string, matterId: string) {
       api.requestDocument(firmId, matterId, data),
   });
 }
+
+export function useExtractData(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (docId: string) => api.extractData(firmId, matterId, docId),
+    onSuccess: (_, docId) => {
+      qc.invalidateQueries({ queryKey: queryKeys.document(firmId, matterId, docId) });
+      qc.invalidateQueries({ queryKey: queryKeys.documents(firmId, matterId) });
+    },
+  });
+}
+
+export function useDraftLetter(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data: { asset_id: string; letter_type: string }) =>
+      api.draftLetter(firmId, matterId, data),
+  });
+}
+
+export function useSuggestTasks(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.suggestTasks(firmId, matterId),
+  });
+}
+
+export function useDetectAnomalies(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.detectAnomalies(firmId, matterId),
+  });
+}
+
+export function useAIUsageStats(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "ai-usage-stats"] as const,
+    queryFn: () => api.getAIUsageStats(firmId, matterId),
+    staleTime: 60_000, // Cache for 1 minute
+    enabled: !!firmId && !!matterId,
+  });
+}

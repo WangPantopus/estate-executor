@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITY_TYPE_LABELS, FUNDING_STATUS_LABELS } from "@/lib/constants";
-import type { Entity, AssetBrief, AssetType, EntityType, FundingStatus } from "@/lib/types";
+import type { Entity, AssetBrief, AssetType, EntityType, FundingStatus, FundingDetail } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -310,12 +310,157 @@ function PourOverIndicator({ count }: { count: number }) {
   );
 }
 
+// ─── Funding Status Dashboard ─────────────────────────────────────────────────
+
+function FundingDashboard({
+  fundingSummary,
+  unassignedCount,
+  onEntityClick,
+}: {
+  fundingSummary: FundingDetail[];
+  unassignedCount: number;
+  onEntityClick: (entityId: string) => void;
+}) {
+  if (fundingSummary.length === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 mb-4">
+      <h3 className="text-xs font-medium text-muted-foreground mb-3">Funding Status</h3>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {fundingSummary.map((f) => (
+          <button
+            key={f.entity_id}
+            type="button"
+            onClick={() => onEntityClick(f.entity_id)}
+            className="flex items-center justify-between rounded-md border border-border p-2.5 text-left hover:border-primary/40 transition-colors"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground truncate">{f.entity_name}</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Badge variant={FUNDING_VARIANT[f.funding_status]} className="text-[10px]">
+                  {FUNDING_STATUS_LABELS[f.funding_status]}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground">
+                  {f.funded_count} asset{f.funded_count !== 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+            {f.total_value !== null && f.total_value > 0 && (
+              <span className="text-xs font-medium text-foreground tabular-nums ml-2">
+                {formatCurrency(f.total_value)}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {unassignedCount > 0 && (
+        <p className="text-[10px] text-warning mt-2">
+          {unassignedCount} asset{unassignedCount !== 1 ? "s" : ""} not linked to any entity
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Distribution Waterfall ──────────────────────────────────────────────────
+
+function DistributionWaterfall({
+  entities,
+  onEntityClick,
+}: {
+  entities: Entity[];
+  onEntityClick: (entityId: string) => void;
+}) {
+  const entitiesWithRules = entities.filter(
+    (e) => e.distribution_rules && Object.keys(e.distribution_rules).length > 0,
+  );
+  if (entitiesWithRules.length === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 mt-4">
+      <h3 className="text-xs font-medium text-muted-foreground mb-3">Distribution Waterfall</h3>
+      <div className="space-y-3">
+        {entitiesWithRules.map((entity) => {
+          const rules = entity.distribution_rules || {};
+          const provisions = (rules.provisions || rules.distribution_provisions) as string | undefined;
+          const specialProvisions = (rules.special_provisions || []) as string[];
+          const spendthrift = rules.spendthrift_clause as boolean | undefined;
+          const specialNeeds = rules.special_needs_provisions as boolean | undefined;
+
+          return (
+            <div key={entity.id} className="space-y-2">
+              <button
+                type="button"
+                onClick={() => onEntityClick(entity.id)}
+                className={cn(
+                  "w-full text-left rounded-md border-2 p-2.5 hover:opacity-90 transition-opacity",
+                  ENTITY_COLORS[entity.entity_type],
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground shrink-0">
+                    {ENTITY_ICONS[entity.entity_type]}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground truncate">{entity.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ENTITY_TYPE_LABELS[entity.entity_type]}
+                      {entity.trustee && ` · Trustee: ${entity.trustee}`}
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Distribution arrow */}
+              <div className="flex justify-center">
+                <svg width="20" height="20" viewBox="0 0 20 20" className="text-muted-foreground">
+                  <line x1="10" y1="0" x2="10" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                  <polygon points="5,14 10,20 15,14" fill="currentColor" />
+                </svg>
+              </div>
+
+              {/* Distribution details */}
+              <div className="rounded-md border border-border bg-surface-elevated/50 p-2.5 space-y-1.5">
+                {provisions && (
+                  <p className="text-xs text-foreground">{provisions}</p>
+                )}
+                {specialProvisions.length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-muted-foreground font-medium">Special Provisions:</p>
+                    <ul className="text-xs text-foreground list-disc list-inside">
+                      {specialProvisions.map((p: string, i: number) => (
+                        <li key={i}>{p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="flex gap-2 flex-wrap">
+                  {spendthrift && (
+                    <Badge variant="info" className="text-[10px]">Spendthrift Clause</Badge>
+                  )}
+                  {specialNeeds && (
+                    <Badge variant="info" className="text-[10px]">Special Needs</Badge>
+                  )}
+                </div>
+                {!provisions && specialProvisions.length === 0 && !spendthrift && !specialNeeds && (
+                  <p className="text-xs text-muted-foreground italic">Distribution rules defined but no details extracted</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Entity Map View ──────────────────────────────────────────────────────────
 
 interface EntityMapViewProps {
   entities: Entity[];
   unassignedAssets: AssetBrief[];
   pourOverCandidates: AssetBrief[];
+  fundingSummary?: FundingDetail[];
   onEntityClick: (entityId: string) => void;
   onAssetClick: (assetId: string) => void;
 }
@@ -324,6 +469,7 @@ export function EntityMapView({
   entities,
   unassignedAssets,
   pourOverCandidates,
+  fundingSummary,
   onEntityClick,
   onAssetClick,
 }: EntityMapViewProps) {
@@ -376,6 +522,15 @@ export function EntityMapView({
   }
 
   return (
+    <div className="space-y-0">
+    {/* Funding Status Dashboard */}
+    {fundingSummary && fundingSummary.length > 0 && (
+      <FundingDashboard
+        fundingSummary={fundingSummary}
+        unassignedCount={unassignedAssets.length}
+        onEntityClick={onEntityClick}
+      />
+    )}
     <div className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-surface-elevated/30">
@@ -465,6 +620,10 @@ export function EntityMapView({
           Unassigned
         </span>
       </div>
+    </div>
+
+    {/* Distribution Waterfall */}
+    <DistributionWaterfall entities={entities} onEntityClick={onEntityClick} />
     </div>
   );
 }

@@ -132,6 +132,18 @@ class EntityResponse(BaseModel):
     updated_at: datetime
 
 
+class FundingDetail(BaseModel):
+    """Funding status detail for an entity."""
+
+    model_config = ConfigDict(strict=True)
+
+    entity_id: UUID
+    entity_name: str
+    funding_status: FundingStatus
+    funded_count: int
+    total_value: float | None = None
+
+
 class EntityMapResponse(BaseModel):
     """Entity map showing entities and their asset relationships."""
 
@@ -143,6 +155,7 @@ class EntityMapResponse(BaseModel):
                     "entities": [],
                     "unassigned_assets": [],
                     "pour_over_candidates": [],
+                    "funding_summary": [],
                 }
             ]
         },
@@ -151,3 +164,4 @@ class EntityMapResponse(BaseModel):
     entities: list[EntityResponse]
     unassigned_assets: list[AssetBrief]
     pour_over_candidates: list[AssetBrief]
+    funding_summary: list[FundingDetail]

@@ -85,6 +85,7 @@ export default function EntitiesPage({
   const mapEntities = entityMap?.entities ?? [];
   const unassignedAssets = entityMap?.unassigned_assets ?? [];
   const pourOverCandidates = entityMap?.pour_over_candidates ?? [];
+  const fundingSummary = entityMap?.funding_summary ?? [];
   const allEntities = entities ?? [];
 
   return (
@@ -106,6 +107,7 @@ export default function EntitiesPage({
         entities={mapEntities}
         unassignedAssets={unassignedAssets}
         pourOverCandidates={pourOverCandidates}
+        fundingSummary={fundingSummary}
         onEntityClick={handleEntityClick}
         onAssetClick={handleAssetClick}
       />

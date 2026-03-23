@@ -58,6 +58,11 @@ export {
   useDocument,
   useConfirmDocType,
   useRequestDocument,
+  useExtractData,
+  useDraftLetter,
+  useSuggestTasks,
+  useDetectAnomalies,
+  useAIUsageStats,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

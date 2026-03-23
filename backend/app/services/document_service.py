@@ -252,6 +252,7 @@ async def confirm_doc_type(
     doc = await _get_document_or_404(db, doc_id=doc_id, matter_id=matter_id)
 
     old_type = doc.doc_type
+    old_confidence = doc.doc_type_confidence
     doc.doc_type = doc_type
     doc.doc_type_confirmed = True
     await db.flush()
@@ -266,6 +267,27 @@ async def confirm_doc_type(
         action="type_confirmed",
         changes={"doc_type": {"old": old_type, "new": doc_type}},
     )
+
+    # Log AI feedback for classification correction/confirmation
+    try:
+        from app.models.matters import Matter
+        from app.services.ai_feedback_service import log_classification_correction
+
+        matter_result = await db.execute(select(Matter.firm_id).where(Matter.id == matter_id))
+        firm_id_row = matter_result.scalar_one_or_none()
+        if firm_id_row:
+            await log_classification_correction(
+                db,
+                firm_id=firm_id_row,
+                matter_id=matter_id,
+                document_id=doc.id,
+                original_doc_type=old_type,
+                original_confidence=old_confidence,
+                corrected_doc_type=doc_type,
+                corrected_by=current_user.user_id,
+            )
+    except Exception:
+        logger.warning("Failed to log AI feedback for classification", exc_info=True)
 
     return doc
 

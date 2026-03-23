@@ -22,6 +22,7 @@ from app.schemas.entities import (
     EntityMapResponse,
     EntityResponse,
     EntityUpdate,
+    FundingDetail,
 )
 from app.services import entity_service
 
@@ -225,8 +226,26 @@ async def get_entity_map(
     Returns all entities with assets, unassigned assets, and pour-over candidates.
     """
     result = await entity_service.get_entity_map(db, matter_id=matter_id)
+
+    # Build funding summary
+    funding_summary: list[FundingDetail] = []
+    for entity in result["entities"]:
+        total_value = sum(
+            float(a.current_estimated_value) for a in entity.assets if a.current_estimated_value
+        )
+        funding_summary.append(
+            FundingDetail(
+                entity_id=entity.id,
+                entity_name=entity.name,
+                funding_status=entity.funding_status,
+                funded_count=len(entity.assets),
+                total_value=total_value if total_value > 0 else None,
+            )
+        )
+
     return EntityMapResponse(
         entities=[_entity_to_response(e) for e in result["entities"]],
         unassigned_assets=[_asset_to_brief(a) for a in result["unassigned_assets"]],
         pour_over_candidates=[_asset_to_brief(a) for a in result["pour_over_candidates"]],
+        funding_summary=funding_summary,
     )
