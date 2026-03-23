@@ -259,7 +259,12 @@ APP_BASE_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
-> **Auth0 Setup:** You need an Auth0 account and application configured. Create a "Regular Web Application" in Auth0 Dashboard, set the callback URL to `http://localhost:3000/api/auth/callback`, and the logout URL to `http://localhost:3000`. Under "Allowed Web Origins" add `http://localhost:3000`.
+> **Auth0 Setup:** You need an Auth0 account and application configured. Create a "Regular Web Application" in Auth0 Dashboard and configure:
+> - **Allowed Callback URLs:** `http://localhost:3000/auth/callback`
+> - **Allowed Logout URLs:** `http://localhost:3000`
+> - **Allowed Web Origins:** `http://localhost:3000`
+>
+> Note: The Auth0 Next.js SDK v4 uses `/auth/callback` (not `/api/auth/callback`).
 
 ---
 
@@ -654,7 +659,7 @@ npm install
 ### Auth0 not working
 
 - Ensure your Auth0 application type is set to "Regular Web Application"
-- Callback URL must be: `http://localhost:3000/api/auth/callback`
+- Callback URL must be: `http://localhost:3000/auth/callback`
 - Logout URL must include: `http://localhost:3000`
 - Allowed Web Origins: `http://localhost:3000`
 - Make sure `AUTH0_SECRET` is set (generate with `openssl rand -hex 32`)
