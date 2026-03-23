@@ -170,12 +170,12 @@ def get_usage(*, firm_id: UUID | None = None, matter_id: UUID | None = None) -> 
         if firm_id:
             key = f"{_FIRM_KEY_PREFIX}{firm_id}"
             r.zremrangebyscore(key, 0, window_start)
-            result["firm_calls_this_hour"] = int(r.zcard(key))
+            result["firm_calls_this_hour"] = int(r.zcard(key))  # type: ignore[arg-type]
 
         if matter_id:
             key = f"{_MATTER_KEY_PREFIX}{matter_id}"
             r.zremrangebyscore(key, 0, window_start)
-            result["matter_calls_this_hour"] = int(r.zcard(key))
+            result["matter_calls_this_hour"] = int(r.zcard(key))  # type: ignore[arg-type]
     except Exception:
         logger.warning("ai_rate_limit_get_usage_failed", exc_info=True)
 
