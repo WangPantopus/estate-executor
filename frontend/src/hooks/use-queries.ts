@@ -759,3 +759,15 @@ export function useRequestDocument(firmId: string, matterId: string) {
       api.requestDocument(firmId, matterId, data),
   });
 }
+
+export function useExtractData(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (docId: string) => api.extractData(firmId, matterId, docId),
+    onSuccess: (_, docId) => {
+      qc.invalidateQueries({ queryKey: queryKeys.document(firmId, matterId, docId) });
+      qc.invalidateQueries({ queryKey: queryKeys.documents(firmId, matterId) });
+    },
+  });
+}

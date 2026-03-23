@@ -31,6 +31,7 @@ _EVENT_MAP: dict[tuple[str, str], str] = {
     ("document", "uploaded"): "document_uploaded",
     ("document", "confirmed"): "document_uploaded",
     ("document", "classified"): "document_uploaded",
+    ("document", "data_extracted"): "document_uploaded",
     ("deadline", "created"): "deadline_updated",
     ("deadline", "updated"): "deadline_updated",
     ("communication", "created"): "communication_new",

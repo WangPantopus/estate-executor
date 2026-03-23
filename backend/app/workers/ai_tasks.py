@@ -1,7 +1,7 @@
 """AI tasks — document classification, extraction, letter drafting.
 
-Classification is fully implemented via the ai_classification_service.
-Extraction and letter drafting remain placeholders for future implementation.
+Classification and extraction are fully implemented via their respective services.
+Letter drafting remains a placeholder for future implementation.
 """
 
 from __future__ import annotations
@@ -14,6 +14,9 @@ from uuid import UUID
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
+
+# Minimum classification confidence to auto-trigger extraction
+_AUTO_EXTRACT_CONFIDENCE_THRESHOLD = 0.7
 
 
 def _run_async(coro: Any) -> Any:
@@ -42,6 +45,7 @@ def classify_document(self: Any, document_id: str, matter_id: str) -> dict[str, 
     3. Sends to Claude API for classification
     4. Updates the document record with doc_type and confidence
     5. Logs AI event and emits WebSocket notification
+    6. If confidence > 0.7 and type is extractable, chains extraction
     """
     try:
         logger.info(
@@ -79,11 +83,33 @@ def classify_document(self: Any, document_id: str, matter_id: str) -> dict[str, 
                     }
                 except Exception:
                     await session.rollback()
-                    # Mark classification as failed in document metadata
                     await _mark_classification_failed(session, document_id, matter_id)
                     raise
 
-        return _run_async(_classify())
+        classification_result = _run_async(_classify())
+
+        # Chain extraction if confidence is high enough and type is extractable
+        doc_type = classification_result.get("doc_type")
+        confidence = classification_result.get("confidence", 0.0)
+
+        if (
+            doc_type
+            and confidence >= _AUTO_EXTRACT_CONFIDENCE_THRESHOLD
+        ):
+            from app.services.ai_extraction_service import EXTRACTABLE_TYPES
+
+            if doc_type in EXTRACTABLE_TYPES:
+                logger.info(
+                    "auto_triggering_extraction",
+                    extra={
+                        "document_id": document_id,
+                        "doc_type": doc_type,
+                        "confidence": confidence,
+                    },
+                )
+                extract_document_data.delay(document_id, matter_id)
+
+        return classification_result
 
     except Exception as exc:
         logger.exception(
@@ -99,7 +125,6 @@ async def _mark_classification_failed(
     """Mark a document as classification_failed in its metadata."""
     try:
         from sqlalchemy import select
-        from sqlalchemy.dialects.postgresql import JSONB
 
         from app.models.documents import Document
 
@@ -129,24 +154,66 @@ async def _mark_classification_failed(
     soft_time_limit=120,
     time_limit=180,
 )
-def extract_document_data(self: Any, document_id: str) -> dict[str, Any]:
-    """Extract structured data from a document using AI.
+def extract_document_data(self: Any, document_id: str, matter_id: str = "") -> dict[str, Any]:
+    """Extract structured data from a classified document using AI.
 
-    Placeholder: In production, this would parse the document content
-    and extract fields like dates, names, amounts, etc.
+    1. Validates the document is classified and extractable
+    2. Downloads and extracts text
+    3. Calls Claude with type-specific extraction prompt
+    4. Stores extracted data in document.ai_extracted_data
+    5. Emits WebSocket notification
     """
     try:
         logger.info(
-            "extract_document_data_placeholder",
+            "extract_document_data_started",
+            extra={"document_id": document_id, "matter_id": matter_id},
+        )
+
+        async def _extract() -> dict[str, Any]:
+            from app.core.database import async_session_factory
+            from app.realtime.publisher import publish_realtime_event
+            from app.services.ai_extraction_service import extract_document_data as do_extract
+
+            async with async_session_factory() as session:
+                try:
+                    result = await do_extract(session, document_id=UUID(document_id))
+                    await session.commit()
+
+                    # Emit WebSocket event
+                    if matter_id:
+                        publish_realtime_event(
+                            matter_id=matter_id,
+                            event="document_data_extracted",
+                            data={
+                                "document_id": document_id,
+                                "extracted_fields": {
+                                    k: v
+                                    for k, v in result.extracted_fields.items()
+                                    if v is not None
+                                },
+                                "confidence": result.confidence,
+                            },
+                        )
+
+                    return {
+                        "document_id": document_id,
+                        "status": "extracted",
+                        "fields_count": len(
+                            [v for v in result.extracted_fields.values() if v is not None]
+                        ),
+                        "confidence": result.confidence,
+                    }
+                except Exception:
+                    await session.rollback()
+                    raise
+
+        return _run_async(_extract())
+
+    except Exception as exc:
+        logger.exception(
+            "extract_document_data_failed",
             extra={"document_id": document_id},
         )
-        return {
-            "document_id": document_id,
-            "status": "extracted",
-            "extracted_data": None,
-        }
-    except Exception as exc:
-        logger.exception("extract_document_data failed")
         raise self.retry(exc=exc) from exc
 
 

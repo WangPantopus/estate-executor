@@ -11,6 +11,8 @@ import {
   Link2,
   History,
   Loader2,
+  Plus,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +26,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DOC_TYPE_LABELS } from "@/lib/constants";
-import { useDocument, useConfirmDocType, useApi } from "@/hooks";
+import { useDocument, useConfirmDocType, useExtractData, useApi } from "@/hooks";
 import type { DocumentResponse, DocumentDetail } from "@/lib/types";
+import type { AssetPrefillData } from "../../assets/_components/AddAssetDialog";
 import { cn } from "@/lib/utils";
+
+/** Doc types that support AI data extraction */
+const EXTRACTABLE_TYPES = new Set([
+  "account_statement",
+  "deed",
+  "insurance_policy",
+  "trust_document",
+  "appraisal",
+  "tax_return",
+]);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,6 +81,8 @@ interface DocumentDetailPanelProps {
   matterId: string;
   documents: DocumentResponse[];
   onClose: () => void;
+  /** Callback to open the Add Asset dialog with prefill data */
+  onCreateAssetFromDoc?: (prefill: AssetPrefillData) => void;
 }
 
 export function DocumentDetailPanel({
@@ -76,10 +91,12 @@ export function DocumentDetailPanel({
   matterId,
   documents,
   onClose,
+  onCreateAssetFromDoc,
 }: DocumentDetailPanelProps) {
   const api = useApi();
   const { data: docDetail, isLoading } = useDocument(firmId, matterId, docId);
   const confirmDocType = useConfirmDocType(firmId, matterId);
+  const extractData = useExtractData(firmId, matterId);
   const [changingType, setChangingType] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("");
   const [downloading, setDownloading] = useState(false);
@@ -306,16 +323,70 @@ export function DocumentDetailPanel({
                 </h3>
                 <div className="rounded-md border border-info/30 bg-info-light/30 p-3 space-y-2">
                   {Object.entries(doc.ai_extracted_data)
-                    .filter(([, v]) => v !== null && v !== undefined && v !== "")
+                    .filter(([k, v]) => v !== null && v !== undefined && v !== "" && !k.startsWith("_"))
                     .map(([key, value]) => (
                       <div key={key} className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground text-xs capitalize">
                           {key.replace(/_/g, " ")}
                         </span>
-                        <span className="text-foreground font-medium">{String(value)}</span>
+                        <span className="text-foreground font-medium">
+                          {typeof value === "boolean"
+                            ? value ? "Yes" : "No"
+                            : Array.isArray(value)
+                              ? value.join(", ")
+                              : String(value)}
+                        </span>
                       </div>
                     ))}
                 </div>
+                {onCreateAssetFromDoc && doc.doc_type && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 w-full"
+                    onClick={() => {
+                      const extracted = { ...doc.ai_extracted_data };
+                      // Remove internal metadata before prefilling
+                      delete extracted._extraction_metadata;
+                      delete extracted.extraction_status;
+                      delete extracted.classification_status;
+                      onCreateAssetFromDoc({
+                        docType: doc.doc_type!,
+                        extractedData: extracted as Record<string, unknown>,
+                        documentId: doc.id,
+                      });
+                    }}
+                  >
+                    <Plus className="size-3.5 mr-1" />
+                    Create Asset from This
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Extract Data button — shown when classified but not yet extracted */}
+          {doc.doc_type &&
+            EXTRACTABLE_TYPES.has(doc.doc_type) &&
+            (!doc.ai_extracted_data ||
+              Object.keys(doc.ai_extracted_data).filter(k => !k.startsWith("_") && k !== "classification_status" && k !== "extraction_status").length === 0) && (
+            <>
+              <Separator />
+              <div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  disabled={extractData.isPending}
+                  onClick={() => extractData.mutate(doc.id)}
+                >
+                  {extractData.isPending ? (
+                    <Loader2 className="size-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <Wand2 className="size-3.5 mr-1" />
+                  )}
+                  Extract Data with AI
+                </Button>
               </div>
             </>
           )}

@@ -33,6 +33,10 @@ import {
   DocumentRequestDialog,
   BulkDownloadDialog,
 } from "./_components/DocumentDialogs";
+import {
+  AddAssetDialog,
+  type AssetPrefillData,
+} from "../assets/_components/AddAssetDialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -68,6 +72,8 @@ export default function DocumentsPage({
   const [showUpload, setShowUpload] = useState(false);
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [bulkDownloadOpen, setBulkDownloadOpen] = useState(false);
+  const [assetPrefill, setAssetPrefill] = useState<AssetPrefillData | null>(null);
+  const [addAssetOpen, setAddAssetOpen] = useState(false);
 
   // ─── Filter logic ───────────────────────────────────────────────────────────
   const filteredDocs = useMemo(() => {
@@ -274,6 +280,10 @@ export default function DocumentsPage({
               matterId={matterId}
               documents={allDocs}
               onClose={() => setDetailDocId(null)}
+              onCreateAssetFromDoc={(prefill) => {
+                setAssetPrefill(prefill);
+                setAddAssetOpen(true);
+              }}
             />
           )}
         </SheetContent>
@@ -296,6 +306,18 @@ export default function DocumentsPage({
         firmId={FIRM_ID}
         matterId={matterId}
         documents={allDocs}
+      />
+
+      {/* Add Asset from document (AI prefill) */}
+      <AddAssetDialog
+        open={addAssetOpen}
+        onOpenChange={(open) => {
+          setAddAssetOpen(open);
+          if (!open) setAssetPrefill(null);
+        }}
+        firmId={FIRM_ID}
+        matterId={matterId}
+        prefill={assetPrefill}
       />
     </div>
   );

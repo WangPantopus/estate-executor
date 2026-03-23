@@ -103,6 +103,7 @@ module = [
     "app.services.text_extraction_service",
     "app.services.ai_classification_service",
     "app.services.ai_rate_limiter",
+    "app.services.ai_extraction_service",
     "app.workers.ai_tasks",
 ]
 disallow_untyped_calls = false
