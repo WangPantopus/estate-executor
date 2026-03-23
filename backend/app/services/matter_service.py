@@ -87,9 +87,7 @@ async def create_matter(
     # Generate tasks from templates (sync for now, async later)
     from app.services.task_generation_service import generate_tasks
 
-    generated_tasks = await generate_tasks(
-        db, matter_id=matter.id, actor_id=current_user.user_id
-    )
+    generated_tasks = await generate_tasks(db, matter_id=matter.id, actor_id=current_user.user_id)
     logger.info("Generated %d tasks for new matter %s", len(generated_tasks), matter.id)
 
     await event_logger.log(
@@ -231,12 +229,14 @@ async def get_dashboard(
         func.count().filter(Task.status == TaskStatus.blocked).label("blocked"),
         func.count().filter(Task.status == TaskStatus.complete).label("complete"),
         func.count().filter(Task.status == TaskStatus.waived).label("waived"),
-        func.count().filter(
+        func.count()
+        .filter(
             and_(
                 Task.due_date < today,
                 Task.status.notin_([TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]),
             )
-        ).label("overdue"),
+        )
+        .label("overdue"),
     ).where(Task.matter_id == matter_id)
 
     task_result = (await db.execute(task_q)).one()
@@ -290,9 +290,7 @@ async def get_dashboard(
 
     # --- Stakeholder count ---
     stakeholder_count_q = (
-        select(func.count())
-        .select_from(Stakeholder)
-        .where(Stakeholder.matter_id == matter_id)
+        select(func.count()).select_from(Stakeholder).where(Stakeholder.matter_id == matter_id)
     )
     stakeholder_count = (await db.execute(stakeholder_count_q)).scalar_one()
 
@@ -362,7 +360,9 @@ async def update_matter(
                 old_str = (
                     old_value.value
                     if hasattr(old_value, "value")
-                    else str(old_value) if old_value is not None else None
+                    else str(old_value)
+                    if old_value is not None
+                    else None
                 )
                 new_str = value.value if hasattr(value, "value") else str(value)
                 changes[field] = {"old": old_str, "new": new_str}
@@ -510,9 +510,7 @@ async def get_portfolio(
     all_active_ids_q = select(Matter.id).where(
         Matter.firm_id == firm_id, Matter.status == MatterStatus.active
     )
-    all_active_ids = [
-        row[0] for row in (await db.execute(all_active_ids_q)).all()
-    ]
+    all_active_ids = [row[0] for row in (await db.execute(all_active_ids_q)).all()]
 
     total_overdue_tasks = 0
     approaching_deadlines_this_week = 0
@@ -557,9 +555,7 @@ async def get_portfolio(
 
     # ── Filtered matters with pagination ─────────────────────────────────────
 
-    count_q = (
-        select(func.count()).select_from(Matter).where(*base_filters)
-    )
+    count_q = select(func.count()).select_from(Matter).where(*base_filters)
     total = (await db.execute(count_q)).scalar_one()
 
     matters_q = (
@@ -583,15 +579,14 @@ async def get_portfolio(
         select(
             Task.matter_id,
             func.count().label("total_count"),
-            func.count().filter(
-                Task.status == TaskStatus.complete
-            ).label("complete_count"),
-            func.count().filter(
-                Task.status.notin_(
-                    [TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]
-                )
-            ).label("open_count"),
-            func.count().filter(
+            func.count().filter(Task.status == TaskStatus.complete).label("complete_count"),
+            func.count()
+            .filter(
+                Task.status.notin_([TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled])
+            )
+            .label("open_count"),
+            func.count()
+            .filter(
                 and_(
                     Task.due_date < today,
                     Task.due_date.isnot(None),
@@ -599,17 +594,16 @@ async def get_portfolio(
                         [TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled]
                     ),
                 )
-            ).label("overdue_count"),
-            func.min(Task.updated_at).filter(
-                Task.status == TaskStatus.blocked
-            ).label("oldest_blocked_at"),
+            )
+            .label("overdue_count"),
+            func.min(Task.updated_at)
+            .filter(Task.status == TaskStatus.blocked)
+            .label("oldest_blocked_at"),
         )
         .where(Task.matter_id.in_(matter_ids))
         .group_by(Task.matter_id)
     )
-    task_stats = {
-        row.matter_id: row for row in (await db.execute(task_stats_q)).all()
-    }
+    task_stats = {row.matter_id: row for row in (await db.execute(task_stats_q)).all()}
 
     # Next deadline per matter
     next_deadline_q = (
@@ -625,8 +619,7 @@ async def get_portfolio(
         .group_by(Deadline.matter_id)
     )
     next_deadlines = {
-        row.matter_id: row.next_due_date
-        for row in (await db.execute(next_deadline_q)).all()
+        row.matter_id: row.next_due_date for row in (await db.execute(next_deadline_q)).all()
     }
 
     # Approaching deadlines count per matter (this week)
@@ -643,10 +636,7 @@ async def get_portfolio(
         )
         .group_by(Deadline.matter_id)
     )
-    approaching_dl = {
-        row.matter_id: row.cnt
-        for row in (await db.execute(approaching_dl_q)).all()
-    }
+    approaching_dl = {row.matter_id: row.cnt for row in (await db.execute(approaching_dl_q)).all()}
 
     # Dispute flags per matter (unresolved)
     dispute_q = (
@@ -657,9 +647,7 @@ async def get_portfolio(
         )
         .group_by(Communication.matter_id)
     )
-    matters_with_disputes = {
-        row[0] for row in (await db.execute(dispute_q)).all()
-    }
+    matters_with_disputes = {row[0] for row in (await db.execute(dispute_q)).all()}
 
     # ── Build response items with risk level ─────────────────────────────────
 
@@ -690,18 +678,20 @@ async def get_portfolio(
             oldest_blocked_days=oldest_blocked_days,
         )
 
-        portfolio_items.append({
-            "matter": matter,
-            "total_task_count": total_count,
-            "complete_task_count": complete_count,
-            "open_task_count": open_count,
-            "overdue_task_count": overdue_count,
-            "approaching_deadline_count": approaching_dl.get(matter.id, 0),
-            "next_deadline": next_deadlines.get(matter.id),
-            "has_dispute": has_dispute,
-            "oldest_blocked_task_days": oldest_blocked_days,
-            "risk_level": risk_level,
-        })
+        portfolio_items.append(
+            {
+                "matter": matter,
+                "total_task_count": total_count,
+                "complete_task_count": complete_count,
+                "open_task_count": open_count,
+                "overdue_task_count": overdue_count,
+                "approaching_deadline_count": approaching_dl.get(matter.id, 0),
+                "next_deadline": next_deadlines.get(matter.id),
+                "has_dispute": has_dispute,
+                "oldest_blocked_task_days": oldest_blocked_days,
+                "risk_level": risk_level,
+            }
+        )
 
     # Sort by risk level (red first, then amber, then green)
     risk_order = {"red": 0, "amber": 1, "green": 2}

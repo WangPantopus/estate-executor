@@ -380,6 +380,7 @@ class TestUploadURLGeneration:
 
     def test_presign_expiry_is_15_minutes(self):
         from app.services.storage_service import _PRESIGN_EXPIRY
+
         assert _PRESIGN_EXPIRY == 900
 
     def test_upload_url_returns_tuple(self):
@@ -394,14 +395,17 @@ class TestVersionManagement:
 
     def test_version_model_has_version_number(self):
         from app.models.document_versions import DocumentVersion
+
         assert hasattr(DocumentVersion, "version_number")
 
     def test_version_model_has_document_id(self):
         from app.models.document_versions import DocumentVersion
+
         assert hasattr(DocumentVersion, "document_id")
 
     def test_version_model_has_storage_key(self):
         from app.models.document_versions import DocumentVersion
+
         assert hasattr(DocumentVersion, "storage_key")
 
     def test_version_number_increments(self):
@@ -413,10 +417,10 @@ class TestVersionManagement:
     def test_version_unique_constraint(self):
         """(document_id, version_number) should be unique."""
         from app.models.document_versions import DocumentVersion
+
         table = DocumentVersion.__table__
         unique_constraints = [
-            c for c in table.constraints
-            if hasattr(c, "columns") and len(c.columns) == 2
+            c for c in table.constraints if hasattr(c, "columns") and len(c.columns) == 2
         ]
         assert len(unique_constraints) >= 1
 
@@ -427,15 +431,18 @@ class TestBulkDownload:
     def test_bulk_download_task_exists(self):
         import app.workers.document_tasks  # noqa: F401
         from app.workers.celery_app import celery_app
+
         assert "app.workers.document_tasks.generate_bulk_download" in celery_app.tasks
 
     def test_bulk_download_returns_job_id(self):
         """enqueue_bulk_download should return a UUID string job_id."""
         import uuid
+
         job_id = str(uuid.uuid4())
         assert len(job_id) == 36
 
     def test_zip_generation_uses_deflated_compression(self):
         """ZIP archives should use DEFLATED compression."""
         import zipfile
+
         assert zipfile.ZIP_DEFLATED is not None

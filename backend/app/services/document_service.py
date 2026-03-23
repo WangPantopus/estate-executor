@@ -114,15 +114,11 @@ async def register_document(
 
     # Link to task if provided
     if task_id is not None:
-        await db.execute(
-            task_documents.insert().values(task_id=task_id, document_id=doc.id)
-        )
+        await db.execute(task_documents.insert().values(task_id=task_id, document_id=doc.id))
 
     # Link to asset if provided
     if asset_id is not None:
-        await db.execute(
-            asset_documents.insert().values(asset_id=asset_id, document_id=doc.id)
-        )
+        await db.execute(asset_documents.insert().values(asset_id=asset_id, document_id=doc.id))
 
     await db.flush()
 
@@ -182,24 +178,16 @@ async def list_documents(
     q_base = select(Document).where(*filters)
 
     if linked_task_id is not None:
-        q_base = q_base.join(task_documents).where(
-            task_documents.c.task_id == linked_task_id
-        )
+        q_base = q_base.join(task_documents).where(task_documents.c.task_id == linked_task_id)
     if linked_asset_id is not None:
-        q_base = q_base.join(asset_documents).where(
-            asset_documents.c.asset_id == linked_asset_id
-        )
+        q_base = q_base.join(asset_documents).where(asset_documents.c.asset_id == linked_asset_id)
 
     # Count
     count_q = select(func.count()).select_from(q_base.subquery())
     total = (await db.execute(count_q)).scalar_one()
 
     # Data
-    q = (
-        q_base.order_by(Document.created_at.desc())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-    )
+    q = q_base.order_by(Document.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(q)
     docs = list(result.scalars().unique().all())
 
@@ -211,9 +199,7 @@ async def list_documents(
 # ---------------------------------------------------------------------------
 
 
-async def get_document(
-    db: AsyncSession, *, doc_id: uuid.UUID, matter_id: uuid.UUID
-) -> Document:
+async def get_document(db: AsyncSession, *, doc_id: uuid.UUID, matter_id: uuid.UUID) -> Document:
     """Get full document detail with versions, tasks, and assets."""
     return await _get_document_or_404(db, doc_id=doc_id, matter_id=matter_id)
 
@@ -418,9 +404,7 @@ async def request_document(
     )
 
     # Email stub
-    target = await db.execute(
-        select(Stakeholder).where(Stakeholder.id == target_stakeholder_id)
-    )
+    target = await db.execute(select(Stakeholder).where(Stakeholder.id == target_stakeholder_id))
     target_stakeholder = target.scalar_one_or_none()
     if target_stakeholder:
         logger.info(

@@ -13,6 +13,7 @@ class TestTaskStateMachine:
     @pytest.fixture(autouse=True)
     def _import(self):
         from app.services.task_service import VALID_TRANSITIONS
+
         self.VALID_TRANSITIONS = VALID_TRANSITIONS
 
     # ── Valid transitions from not_started ───────────────────────────────────
@@ -105,6 +106,7 @@ class TestTaskStateMachineInvalidTransitions:
     @pytest.fixture(autouse=True)
     def _import(self):
         from app.services.task_service import VALID_TRANSITIONS
+
         self.VALID_TRANSITIONS = VALID_TRANSITIONS
 
     def test_complete_to_not_started_invalid(self):
@@ -134,8 +136,15 @@ class TestTaskPhaseEnum:
 
     def test_all_phases(self):
         expected = {
-            "immediate", "asset_inventory", "notification", "probate_filing",
-            "tax", "transfer_distribution", "family_communication", "closing", "custom",
+            "immediate",
+            "asset_inventory",
+            "notification",
+            "probate_filing",
+            "tax",
+            "transfer_distribution",
+            "family_communication",
+            "closing",
+            "custom",
         }
         actual = {p.value for p in TaskPhase}
         assert expected == actual
@@ -262,9 +271,7 @@ class TestCompletionWithDependencies:
     def test_task_with_no_dependencies_can_complete(self):
         """Tasks without dependencies can always be completed."""
         dependencies = []
-        all_resolved = all(
-            d["status"] in ("complete", "waived", "cancelled") for d in dependencies
-        )
+        all_resolved = all(d["status"] in ("complete", "waived", "cancelled") for d in dependencies)
         assert all_resolved is True  # vacuously true
 
 
@@ -304,7 +311,6 @@ class TestCascadingUnblock:
         dep_a = TaskFactory.build(status="complete")
         dep_b = TaskFactory.build(status="in_progress")
         all_resolved = all(
-            d["status"] in ("complete", "waived", "cancelled")
-            for d in [dep_a, dep_b]
+            d["status"] in ("complete", "waived", "cancelled") for d in [dep_a, dep_b]
         )
         assert not all_resolved  # B is still incomplete

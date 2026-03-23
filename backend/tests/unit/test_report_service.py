@@ -260,6 +260,7 @@ class TestReportCaching:
     def test_cache_get_returns_none_on_error(self):
         """Cache failures should return None, not raise."""
         from app.services.report_service import _cache_get
+
         # With no Redis running, should gracefully return None
         result = _cache_get("nonexistent:key")
         # May return None (no Redis) or None (key not found) — both are fine
@@ -268,11 +269,13 @@ class TestReportCaching:
     def test_cache_set_does_not_raise(self):
         """Cache write failures should be silent."""
         from app.services.report_service import _cache_set
+
         # With no Redis running, should not raise
         _cache_set("test:key", b"test data")  # Should not raise
 
     def test_cache_ttl_is_24h(self):
         from app.services.report_service import _CACHE_TTL
+
         assert _CACHE_TTL == 86400
 
 

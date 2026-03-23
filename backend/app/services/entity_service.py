@@ -57,9 +57,7 @@ async def _validate_asset_ids(
     )
     found = result.scalar_one()
     if found != len(set(asset_ids)):
-        raise BadRequestError(
-            detail="One or more asset IDs not found on this matter"
-        )
+        raise BadRequestError(detail="One or more asset IDs not found on this matter")
 
 
 async def _set_asset_links(
@@ -67,9 +65,7 @@ async def _set_asset_links(
 ) -> None:
     """Replace all entity_asset links for an entity (set semantics)."""
     # Delete existing links
-    await db.execute(
-        delete(entity_assets).where(entity_assets.c.entity_id == entity_id)
-    )
+    await db.execute(delete(entity_assets).where(entity_assets.c.entity_id == entity_id))
     # Insert new links
     if asset_ids:
         unique_ids = list(set(asset_ids))
@@ -302,9 +298,7 @@ async def get_entity_map(
 
     # 3. Load all assets for this matter
     all_assets_result = await db.execute(
-        select(Asset)
-        .where(Asset.matter_id == matter_id)
-        .order_by(Asset.created_at.asc())
+        select(Asset).where(Asset.matter_id == matter_id).order_by(Asset.created_at.asc())
     )
     all_assets = list(all_assets_result.scalars().all())
 
@@ -315,10 +309,7 @@ async def get_entity_map(
     has_trust = any(e.entity_type in _TRUST_ENTITY_TYPES for e in entities)
     pour_over: list[Asset] = []
     if has_trust:
-        pour_over = [
-            a for a in all_assets
-            if a.transfer_mechanism == TransferMechanism.probate
-        ]
+        pour_over = [a for a in all_assets if a.transfer_mechanism == TransferMechanism.probate]
 
     return {
         "entities": entities,

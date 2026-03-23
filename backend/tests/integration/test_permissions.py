@@ -24,34 +24,56 @@ from app.models.enums import StakeholderRole
 
 ROLE_PERMISSIONS: dict[StakeholderRole, list[str]] = {
     StakeholderRole.matter_admin: [
-        "matter:read", "matter:write", "matter:close",
-        "task:read", "task:write", "task:assign", "task:complete",
-        "asset:read", "asset:write",
-        "entity:read", "entity:write",
-        "document:read", "document:upload", "document:download",
-        "stakeholder:invite", "stakeholder:manage",
-        "communication:read", "communication:write",
+        "matter:read",
+        "matter:write",
+        "matter:close",
+        "task:read",
+        "task:write",
+        "task:assign",
+        "task:complete",
+        "asset:read",
+        "asset:write",
+        "entity:read",
+        "entity:write",
+        "document:read",
+        "document:upload",
+        "document:download",
+        "stakeholder:invite",
+        "stakeholder:manage",
+        "communication:read",
+        "communication:write",
         "event:read",
         "ai:trigger",
         "report:generate",
     ],
     StakeholderRole.professional: [
         "matter:read",
-        "task:read", "task:write", "task:assign", "task:complete",
-        "asset:read", "asset:write",
-        "entity:read", "entity:write",
-        "document:read", "document:upload", "document:download",
-        "communication:read", "communication:write",
+        "task:read",
+        "task:write",
+        "task:assign",
+        "task:complete",
+        "asset:read",
+        "asset:write",
+        "entity:read",
+        "entity:write",
+        "document:read",
+        "document:upload",
+        "document:download",
+        "communication:read",
+        "communication:write",
         "event:read",
         "ai:trigger",
         "report:generate",
     ],
     StakeholderRole.executor_trustee: [
         "matter:read",
-        "task:read:assigned", "task:complete:assigned",
+        "task:read:assigned",
+        "task:complete:assigned",
         "asset:read",
-        "document:read:linked", "document:upload",
-        "communication:read", "communication:write",
+        "document:read:linked",
+        "document:upload",
+        "communication:read",
+        "communication:write",
     ],
     StakeholderRole.beneficiary: [
         "matter:read:summary",
@@ -488,9 +510,7 @@ class TestCrossTenantIsolation:
     def test_read_only_has_minimal_permissions(self):
         """read_only should have at most 2 permissions."""
         perms = ROLE_PERMISSIONS[StakeholderRole.read_only]
-        assert len(perms) <= 3, (
-            f"read_only has {len(perms)} permissions — too many"
-        )
+        assert len(perms) <= 3, f"read_only has {len(perms)} permissions — too many"
 
     def test_hierarchical_permission_check(self):
         """task:read should grant task:read:assigned (hierarchical match)."""
@@ -596,9 +616,7 @@ class TestEndpointCoverage:
         """Every permission in the matrix should define access for all 5 roles."""
         for perm, role_map in PERMISSION_MATRIX.items():
             for role in StakeholderRole:
-                assert role in role_map, (
-                    f"Permission '{perm}' missing role '{role.value}'"
-                )
+                assert role in role_map, f"Permission '{perm}' missing role '{role.value}'"
 
     @pytest.mark.parametrize(
         "endpoint,permission",

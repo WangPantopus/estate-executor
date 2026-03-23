@@ -128,9 +128,7 @@ async def generate_report_async(
 
     config = report_service.REPORT_GENERATORS[report_type]
     if format not in config["formats"]:
-        raise ValidationError(
-            detail=f"Format '{format}' not supported for '{report_type}'"
-        )
+        raise ValidationError(detail=f"Format '{format}' not supported for '{report_type}'")
 
     import uuid as uuid_mod
 

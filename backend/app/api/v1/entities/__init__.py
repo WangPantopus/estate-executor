@@ -140,9 +140,7 @@ async def get_entity_detail(
     db: AsyncSession = Depends(get_db),
 ) -> EntityResponse:
     """Get full entity detail with all linked assets."""
-    entity = await entity_service.get_entity_detail(
-        db, entity_id=entity_id, matter_id=matter_id
-    )
+    entity = await entity_service.get_entity_detail(db, entity_id=entity_id, matter_id=matter_id)
     return _entity_to_response(entity)
 
 

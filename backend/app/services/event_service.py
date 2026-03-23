@@ -30,16 +30,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-async def _load_actor_names(
-    db: AsyncSession, *, actor_ids: set[uuid.UUID]
-) -> dict[uuid.UUID, str]:
+async def _load_actor_names(db: AsyncSession, *, actor_ids: set[uuid.UUID]) -> dict[uuid.UUID, str]:
     """Load stakeholder full_name for a set of actor user_ids."""
     if not actor_ids:
         return {}
     result = await db.execute(
-        select(Stakeholder.user_id, Stakeholder.full_name).where(
-            Stakeholder.user_id.in_(actor_ids)
-        )
+        select(Stakeholder.user_id, Stakeholder.full_name).where(Stakeholder.user_id.in_(actor_ids))
     )
     # A user may be a stakeholder on multiple matters; just pick any name
     names: dict[uuid.UUID, str] = {}
@@ -161,9 +157,7 @@ async def export_events_csv(
     """
     # Fetch all events for the matter, oldest first for chronological CSV
     result = await db.execute(
-        select(Event)
-        .where(Event.matter_id == matter_id)
-        .order_by(Event.created_at.asc())
+        select(Event).where(Event.matter_id == matter_id).order_by(Event.created_at.asc())
     )
     events = list(result.scalars().all())
 
@@ -181,13 +175,15 @@ async def export_events_csv(
             if event.actor_id
             else event.actor_type.value
         )
-        writer.writerow([
-            event.created_at.isoformat(),
-            actor_name,
-            event.entity_type,
-            str(event.entity_id),
-            event.action,
-            _summarize_changes(event.changes),
-        ])
+        writer.writerow(
+            [
+                event.created_at.isoformat(),
+                actor_name,
+                event.entity_type,
+                str(event.entity_id),
+                event.action,
+                _summarize_changes(event.changes),
+            ]
+        )
 
     return output.getvalue()

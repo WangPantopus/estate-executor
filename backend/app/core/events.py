@@ -143,16 +143,18 @@ class EventLogger:
             ws_event = _EVENT_MAP.get((entity_type, action))
 
             # Always emit a generic 'event_new' for the activity feed
-            event_data = _serialize_uuid({
-                "event_id": event_id,
-                "matter_id": matter_id,
-                "entity_type": entity_type,
-                "entity_id": entity_id,
-                "action": action,
-                "changes": changes,
-                "actor_id": actor_id,
-                "actor_type": actor_type.value if hasattr(actor_type, "value") else actor_type,
-            })
+            event_data = _serialize_uuid(
+                {
+                    "event_id": event_id,
+                    "matter_id": matter_id,
+                    "entity_type": entity_type,
+                    "entity_id": entity_id,
+                    "action": action,
+                    "changes": changes,
+                    "actor_id": actor_id,
+                    "actor_type": actor_type.value if hasattr(actor_type, "value") else actor_type,
+                }
+            )
 
             # Emit the specific typed event (task_updated, document_uploaded, etc.)
             if ws_event:

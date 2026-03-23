@@ -80,9 +80,7 @@ async def invite_stakeholder(
         raise ConflictError(detail="A stakeholder with this email already exists on this matter")
 
     # Check if email matches an existing user (case-insensitive)
-    result = await db.execute(
-        select(User).where(func.lower(User.email) == normalized_email)
-    )
+    result = await db.execute(select(User).where(func.lower(User.email) == normalized_email))
     existing_user = result.scalar_one_or_none()
 
     invite_token = _generate_invite_token()
@@ -151,11 +149,7 @@ async def list_stakeholders(
     if viewer_role in _RESTRICTED_VIEWER_ROLES:
         base_filter.append(Stakeholder.role.in_(_RESTRICTED_VISIBLE_ROLES))
 
-    count_q = (
-        select(func.count())
-        .select_from(Stakeholder)
-        .where(*base_filter)
-    )
+    count_q = select(func.count()).select_from(Stakeholder).where(*base_filter)
     total = (await db.execute(count_q)).scalar_one()
 
     q = (
@@ -282,9 +276,7 @@ async def resend_invite(
     stakeholder = await get_stakeholder(db, matter_id=matter_id, stakeholder_id=stakeholder_id)
 
     if stakeholder.invite_status != InviteStatus.pending:
-        raise BadRequestError(
-            detail="Can only resend invitations for pending stakeholders"
-        )
+        raise BadRequestError(detail="Can only resend invitations for pending stakeholders")
 
     matter = await _get_matter_or_404(db, matter_id)
 
@@ -328,8 +320,7 @@ _ROLE_DESCRIPTIONS: dict[StakeholderRole, str] = {
         "access to your assigned tasks, linked documents, and communications"
     ),
     StakeholderRole.beneficiary: (
-        "access to view estate milestones, shared documents, "
-        "and communications relevant to you"
+        "access to view estate milestones, shared documents, and communications relevant to you"
     ),
     StakeholderRole.read_only: "read-only access to view estate milestones",
 }

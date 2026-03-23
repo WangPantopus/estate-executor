@@ -35,9 +35,7 @@ class AssetBrief(BaseModel):
     id: UUID
     title: str
     asset_type: str
-    current_estimated_value: Decimal | None = Field(
-        None, max_digits=15, decimal_places=2
-    )
+    current_estimated_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
 
 
 class EntityCreate(BaseModel):

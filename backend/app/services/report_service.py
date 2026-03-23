@@ -43,13 +43,13 @@ logger = logging.getLogger(__name__)
 
 # ─── Color palette (navy/gold) ──────────────────────────────────────────────
 
-NAVY = (26, 35, 50)       # #1a2332
-GOLD = (201, 168, 76)     # #c9a84c
+NAVY = (26, 35, 50)  # #1a2332
+GOLD = (201, 168, 76)  # #c9a84c
 DARK_TEXT = (30, 30, 30)
 MUTED_TEXT = (120, 120, 120)
 LIGHT_BG = (248, 247, 244)  # #f8f7f4
 WHITE = (255, 255, 255)
-BORDER = (229, 226, 219)    # #e5e2db
+BORDER = (229, 226, 219)  # #e5e2db
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -59,6 +59,7 @@ BORDER = (229, 226, 219)    # #e5e2db
 
 def _rgb(color: tuple[int, int, int]):
     from reportlab.lib.colors import Color
+
     return Color(color[0] / 255, color[1] / 255, color[2] / 255)
 
 
@@ -158,23 +159,27 @@ def _styled_table(data: list[list[str]], col_widths: list[float] | None = None):
     from reportlab.platypus import Table, TableStyle
 
     t = Table(data, colWidths=col_widths, repeatRows=1)
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), _rgb(NAVY)),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 8),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE", (0, 1), (-1, -1), 8),
-        ("TEXTCOLOR", (0, 1), (-1, -1), _rgb(DARK_TEXT)),
-        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, _rgb(LIGHT_BG)]),
-        ("GRID", (0, 0), (-1, -1), 0.5, _rgb(BORDER)),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-    ]))
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), _rgb(NAVY)),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 8),
+                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("TEXTCOLOR", (0, 1), (-1, -1), _rgb(DARK_TEXT)),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, _rgb(LIGHT_BG)]),
+                ("GRID", (0, 0), (-1, -1), 0.5, _rgb(BORDER)),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
     return t
 
 
@@ -256,9 +261,7 @@ async def _get_matter_with_firm(db: AsyncSession, matter_id: uuid.UUID) -> Matte
     from app.core.exceptions import NotFoundError
 
     result = await db.execute(
-        select(Matter)
-        .options(selectinload(Matter.firm))
-        .where(Matter.id == matter_id)
+        select(Matter).options(selectinload(Matter.firm)).where(Matter.id == matter_id)
     )
     matter = result.scalar_one_or_none()
     if matter is None:
@@ -268,7 +271,8 @@ async def _get_matter_with_firm(db: AsyncSession, matter_id: uuid.UUID) -> Matte
 
 async def _get_stakeholders(db: AsyncSession, matter_id: uuid.UUID) -> list[Stakeholder]:
     result = await db.execute(
-        select(Stakeholder).where(Stakeholder.matter_id == matter_id)
+        select(Stakeholder)
+        .where(Stakeholder.matter_id == matter_id)
         .order_by(Stakeholder.role, Stakeholder.full_name)
     )
     return list(result.scalars().all())
@@ -286,16 +290,14 @@ async def _get_tasks(db: AsyncSession, matter_id: uuid.UUID) -> list[Task]:
 
 async def _get_assets(db: AsyncSession, matter_id: uuid.UUID) -> list[Asset]:
     result = await db.execute(
-        select(Asset).where(Asset.matter_id == matter_id)
-        .order_by(Asset.asset_type, Asset.title)
+        select(Asset).where(Asset.matter_id == matter_id).order_by(Asset.asset_type, Asset.title)
     )
     return list(result.scalars().all())
 
 
 async def _get_deadlines(db: AsyncSession, matter_id: uuid.UUID) -> list[Deadline]:
     result = await db.execute(
-        select(Deadline).where(Deadline.matter_id == matter_id)
-        .order_by(Deadline.due_date)
+        select(Deadline).where(Deadline.matter_id == matter_id).order_by(Deadline.due_date)
     )
     return list(result.scalars().all())
 
@@ -306,7 +308,8 @@ async def _get_recent_events(
     limit: int = 10,
 ) -> list[Event]:
     result = await db.execute(
-        select(Event).where(Event.matter_id == matter_id)
+        select(Event)
+        .where(Event.matter_id == matter_id)
         .order_by(Event.created_at.desc())
         .limit(limit)
     )
@@ -331,9 +334,7 @@ async def _get_distributions(db: AsyncSession, matter_id: uuid.UUID) -> list[Com
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-async def generate_matter_summary_pdf(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_matter_summary_pdf(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate a one-page PDF overview of the estate."""
     from reportlab.platypus import Spacer
 
@@ -371,12 +372,14 @@ async def generate_matter_summary_pdf(
     if stakeholders:
         sh_data = [["Name", "Role", "Email", "Status"]]
         for s in stakeholders:
-            sh_data.append([
-                s.full_name,
-                _enum_label(s.role),
-                s.email,
-                _enum_label(s.invite_status),
-            ])
+            sh_data.append(
+                [
+                    s.full_name,
+                    _enum_label(s.role),
+                    s.email,
+                    _enum_label(s.invite_status),
+                ]
+            )
         elements.append(_styled_table(sh_data, [140, 100, 180, 70]))
 
     # Task completion
@@ -385,28 +388,30 @@ async def generate_matter_summary_pdf(
     total = len(tasks)
     complete = sum(1 for t in tasks if t.status in (TaskStatus.complete, TaskStatus.waived))
     overdue = sum(
-        1 for t in tasks
-        if t.due_date and t.due_date < date.today()
+        1
+        for t in tasks
+        if t.due_date
+        and t.due_date < date.today()
         and t.status not in (TaskStatus.complete, TaskStatus.waived, TaskStatus.cancelled)
     )
     pct = round(complete / total * 100) if total > 0 else 0
-    elements.append(_body_text(
-        f"Total tasks: {total} | Complete: {complete} ({pct}%) | Overdue: {overdue}"
-    ))
+    elements.append(
+        _body_text(f"Total tasks: {total} | Complete: {complete} ({pct}%) | Overdue: {overdue}")
+    )
 
     # Asset summary
     elements.append(Spacer(1, 8))
     elements.append(_section_heading("Asset Summary"))
     total_value = sum((a.current_estimated_value or Decimal(0)) for a in assets)
-    elements.append(_body_text(
-        f"Total assets: {len(assets)} | Estimated value: {_format_currency(total_value)}"
-    ))
+    elements.append(
+        _body_text(
+            f"Total assets: {len(assets)} | Estimated value: {_format_currency(total_value)}"
+        )
+    )
 
     # Key deadlines
     upcoming = [
-        d for d in deadlines
-        if d.status == DeadlineStatus.upcoming
-        and d.due_date >= date.today()
+        d for d in deadlines if d.status == DeadlineStatus.upcoming and d.due_date >= date.today()
     ][:5]
     if upcoming:
         elements.append(Spacer(1, 8))
@@ -423,12 +428,14 @@ async def generate_matter_summary_pdf(
         act_data = [["Date", "Action", "Entity", "Actor"]]
         for ev in recent_events:
             actor_label = _enum_label(ev.actor_type) if ev.actor_type else "—"
-            act_data.append([
-                _format_date(ev.created_at),
-                f"{ev.entity_type} {ev.action}",
-                str(ev.entity_id)[:12] + "...",
-                actor_label,
-            ])
+            act_data.append(
+                [
+                    _format_date(ev.created_at),
+                    f"{ev.entity_type} {ev.action}",
+                    str(ev.entity_id)[:12] + "...",
+                    actor_label,
+                ]
+            )
         elements.append(_styled_table(act_data, [85, 120, 120, 80]))
 
     def on_page(canvas, doc_obj):
@@ -443,9 +450,7 @@ async def generate_matter_summary_pdf(
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-async def generate_asset_inventory_pdf(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_asset_inventory_pdf(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate a PDF asset inventory report."""
     from reportlab.platypus import Spacer
 
@@ -459,22 +464,22 @@ async def generate_asset_inventory_pdf(
     elements: list = []
 
     elements.append(_section_heading("Asset Inventory"))
-    elements.append(_body_text(
-        f"Estate of {matter.decedent_name} | {len(assets)} assets"
-    ))
+    elements.append(_body_text(f"Estate of {matter.decedent_name} | {len(assets)} assets"))
     elements.append(Spacer(1, 8))
 
     if assets:
         data = [["Type", "Title", "Institution", "Ownership", "Value", "Status"]]
         for a in assets:
-            data.append([
-                _enum_label(a.asset_type),
-                a.title[:40],
-                (a.institution or "—")[:25],
-                _enum_label(a.ownership_type),
-                _format_currency(a.current_estimated_value),
-                _enum_label(a.status),
-            ])
+            data.append(
+                [
+                    _enum_label(a.asset_type),
+                    a.title[:40],
+                    (a.institution or "—")[:25],
+                    _enum_label(a.ownership_type),
+                    _format_currency(a.current_estimated_value),
+                    _enum_label(a.status),
+                ]
+            )
         # Summary row
         total_value = sum((a.current_estimated_value or Decimal(0)) for a in assets)
         data.append(["", "", "", "TOTAL", _format_currency(total_value), ""])
@@ -487,9 +492,7 @@ async def generate_asset_inventory_pdf(
     return buffer.getvalue()
 
 
-async def generate_asset_inventory_xlsx(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_asset_inventory_xlsx(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate an Excel asset inventory report."""
     await _get_matter_with_firm(db, matter_id)
     assets = await _get_assets(db, matter_id)
@@ -499,31 +502,41 @@ async def generate_asset_inventory_xlsx(
     ws.title = "Asset Inventory"
 
     headers = [
-        "Type", "Title", "Description", "Institution", "Ownership Type",
-        "Transfer Mechanism", "Status", "Date of Death Value",
-        "Current Estimated Value", "Final Appraised Value",
+        "Type",
+        "Title",
+        "Description",
+        "Institution",
+        "Ownership Type",
+        "Transfer Mechanism",
+        "Status",
+        "Date of Death Value",
+        "Current Estimated Value",
+        "Final Appraised Value",
     ]
     ws.append(headers)
     _style_excel_header(ws, len(headers))
 
     for a in assets:
-        ws.append([
-            _enum_label(a.asset_type),
-            a.title,
-            a.description or "",
-            a.institution or "",
-            _enum_label(a.ownership_type),
-            _enum_label(a.transfer_mechanism),
-            _enum_label(a.status),
-            float(a.date_of_death_value) if a.date_of_death_value else None,
-            float(a.current_estimated_value) if a.current_estimated_value else None,
-            float(a.final_appraised_value) if a.final_appraised_value else None,
-        ])
+        ws.append(
+            [
+                _enum_label(a.asset_type),
+                a.title,
+                a.description or "",
+                a.institution or "",
+                _enum_label(a.ownership_type),
+                _enum_label(a.transfer_mechanism),
+                _enum_label(a.status),
+                float(a.date_of_death_value) if a.date_of_death_value else None,
+                float(a.current_estimated_value) if a.current_estimated_value else None,
+                float(a.final_appraised_value) if a.final_appraised_value else None,
+            ]
+        )
 
     # Summary row
     total_row = ws.max_row + 1
     ws.cell(row=total_row, column=1, value="TOTAL")
     from openpyxl.styles import Font
+
     ws.cell(row=total_row, column=1).font = Font(bold=True)
     total_value = sum((a.current_estimated_value or Decimal(0)) for a in assets)
     ws.cell(row=total_row, column=9, value=float(total_value))
@@ -542,9 +555,7 @@ async def generate_asset_inventory_xlsx(
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-async def generate_task_audit_pdf(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_task_audit_pdf(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate a PDF task completion audit report."""
     from reportlab.platypus import Spacer
 
@@ -558,9 +569,9 @@ async def generate_task_audit_pdf(
     elements: list = []
 
     elements.append(_section_heading("Task Completion Audit"))
-    elements.append(_body_text(
-        f"Estate of {matter.decedent_name} | Generated {_format_date(date.today())}"
-    ))
+    elements.append(
+        _body_text(f"Estate of {matter.decedent_name} | Generated {_format_date(date.today())}")
+    )
     elements.append(Spacer(1, 8))
 
     if tasks:
@@ -568,14 +579,16 @@ async def generate_task_audit_pdf(
         for t in tasks:
             assignee_name = t.assignee.full_name if t.assignee else "—"
             completer_name = t.completer.full_name if t.completer else "—"
-            data.append([
-                t.title[:45],
-                _enum_label(t.phase),
-                assignee_name[:20],
-                _enum_label(t.status),
-                _format_date(t.completed_at),
-                completer_name[:20],
-            ])
+            data.append(
+                [
+                    t.title[:45],
+                    _enum_label(t.phase),
+                    assignee_name[:20],
+                    _enum_label(t.status),
+                    _format_date(t.completed_at),
+                    completer_name[:20],
+                ]
+            )
         elements.append(_styled_table(data, [140, 70, 70, 60, 75, 70]))
 
     def on_page(canvas, doc_obj):
@@ -585,9 +598,7 @@ async def generate_task_audit_pdf(
     return buffer.getvalue()
 
 
-async def generate_task_audit_xlsx(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_task_audit_xlsx(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate an Excel task completion audit report."""
     await _get_matter_with_firm(db, matter_id)
     tasks = await _get_tasks(db, matter_id)
@@ -597,8 +608,15 @@ async def generate_task_audit_xlsx(
     ws.title = "Task Audit"
 
     headers = [
-        "Title", "Phase", "Priority", "Assigned To", "Status",
-        "Due Date", "Completed Date", "Completed By", "Description",
+        "Title",
+        "Phase",
+        "Priority",
+        "Assigned To",
+        "Status",
+        "Due Date",
+        "Completed Date",
+        "Completed By",
+        "Description",
     ]
     ws.append(headers)
     _style_excel_header(ws, len(headers))
@@ -606,17 +624,19 @@ async def generate_task_audit_xlsx(
     for t in tasks:
         assignee_name = t.assignee.full_name if t.assignee else ""
         completer_name = t.completer.full_name if t.completer else ""
-        ws.append([
-            t.title,
-            _enum_label(t.phase),
-            _enum_label(t.priority),
-            assignee_name,
-            _enum_label(t.status),
-            _format_date(t.due_date),
-            _format_date(t.completed_at),
-            completer_name,
-            t.description or "",
-        ])
+        ws.append(
+            [
+                t.title,
+                _enum_label(t.phase),
+                _enum_label(t.priority),
+                assignee_name,
+                _enum_label(t.status),
+                _format_date(t.due_date),
+                _format_date(t.completed_at),
+                completer_name,
+                t.description or "",
+            ]
+        )
 
     _auto_width(ws)
     _freeze_header(ws)
@@ -631,9 +651,7 @@ async def generate_task_audit_xlsx(
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-async def generate_distribution_ledger_pdf(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_distribution_ledger_pdf(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate a PDF distribution ledger report."""
     from reportlab.platypus import Spacer
 
@@ -651,9 +669,9 @@ async def generate_distribution_ledger_pdf(
     elements: list = []
 
     elements.append(_section_heading("Distribution Ledger"))
-    elements.append(_body_text(
-        f"Estate of {matter.decedent_name} | {len(distributions)} distribution(s)"
-    ))
+    elements.append(
+        _body_text(f"Estate of {matter.decedent_name} | {len(distributions)} distribution(s)")
+    )
     elements.append(Spacer(1, 8))
 
     if distributions:
@@ -672,7 +690,7 @@ async def generate_distribution_ledger_pdf(
             body_text = d.body or ""
             subject_text = d.subject or ""
             for text in [subject_text, body_text]:
-                match = re.search(r'\$[\d,]+\.?\d*', text)
+                match = re.search(r"\$[\d,]+\.?\d*", text)
                 if match:
                     amount = match.group(0)
                     break
@@ -681,13 +699,15 @@ async def generate_distribution_ledger_pdf(
             total_visible = len(d.visible_to or [])
             ack_label = f"{ack_count}/{total_visible}" if total_visible > 0 else f"{ack_count}"
 
-            data.append([
-                _format_date(d.created_at),
-                recipients[:40],
-                (d.subject or "Distribution Notice")[:40],
-                amount,
-                ack_label,
-            ])
+            data.append(
+                [
+                    _format_date(d.created_at),
+                    recipients[:40],
+                    (d.subject or "Distribution Notice")[:40],
+                    amount,
+                    ack_label,
+                ]
+            )
         elements.append(_styled_table(data, [70, 120, 120, 70, 60]))
     else:
         elements.append(_body_text("No distributions recorded for this matter."))
@@ -704,9 +724,7 @@ async def generate_distribution_ledger_pdf(
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-async def generate_time_tracking_xlsx(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> bytes:
+async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
     """Generate a stub time tracking export.
 
     Time tracking is not yet implemented — this generates a template
@@ -720,16 +738,27 @@ async def generate_time_tracking_xlsx(
     ws.title = "Time Tracking"
 
     headers = [
-        "Date", "Professional", "Task", "Hours", "Description", "Billable",
+        "Date",
+        "Professional",
+        "Task",
+        "Hours",
+        "Description",
+        "Billable",
     ]
     ws.append(headers)
     _style_excel_header(ws, len(headers))
 
     # Add a note row
-    ws.append([
-        "", "Time tracking entries will appear here once the feature is enabled.",
-        "", "", "", "",
-    ])
+    ws.append(
+        [
+            "",
+            "Time tracking entries will appear here once the feature is enabled.",
+            "",
+            "",
+            "",
+            "",
+        ]
+    )
 
     # Add professional names as reference
     ws.append([])

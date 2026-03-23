@@ -122,9 +122,7 @@ class TestTaskStateTransitions:
         assert resp.status_code == 200
 
     @patch("app.services.task_service.waive_task")
-    async def test_waive_without_reason_returns_422(
-        self, mock_waive, client, firm_id, matter_id
-    ):
+    async def test_waive_without_reason_returns_422(self, mock_waive, client, firm_id, matter_id):
         resp = await client.post(
             f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks/{uuid.uuid4()}/waive",
             json={},
@@ -144,9 +142,7 @@ class TestTaskStateTransitions:
 
     @pytest.mark.xfail(reason="TaskUpdate strict=True prevents string→enum in JSON")
     @patch("app.services.task_service.update_task")
-    async def test_invalid_transition_returns_409(
-        self, mock_update, client, firm_id, matter_id
-    ):
+    async def test_invalid_transition_returns_409(self, mock_update, client, firm_id, matter_id):
         from app.core.exceptions import ConflictError
 
         mock_update.side_effect = ConflictError(detail="Invalid transition")

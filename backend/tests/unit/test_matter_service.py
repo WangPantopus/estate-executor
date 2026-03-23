@@ -16,11 +16,14 @@ class TestComputeRiskLevel:
 
     def _compute(self, **kw):
         from app.services.matter_service import _compute_risk_level
+
         return _compute_risk_level(**kw)
 
     def test_green_no_issues(self):
         result = self._compute(
-            overdue_count=0, has_dispute=False, oldest_blocked_days=None,
+            overdue_count=0,
+            has_dispute=False,
+            oldest_blocked_days=None,
         )
         assert result == "green"
 
@@ -82,8 +85,14 @@ class TestDashboardAggregation:
     def test_task_summary_fields(self):
         """Dashboard task_summary must have expected keys."""
         expected_keys = {
-            "total", "not_started", "in_progress", "blocked",
-            "complete", "waived", "overdue", "completion_percentage",
+            "total",
+            "not_started",
+            "in_progress",
+            "blocked",
+            "complete",
+            "waived",
+            "overdue",
+            "completion_percentage",
         }
         # These are the keys returned by get_dashboard
         assert len(expected_keys) == 8
@@ -140,27 +149,39 @@ class TestMatterModelStructure:
         from app.models.matters import Matter
 
         required = [
-            "id", "firm_id", "title", "status", "estate_type",
-            "jurisdiction_state", "decedent_name", "phase",
-            "date_of_death", "estimated_value", "closed_at",
+            "id",
+            "firm_id",
+            "title",
+            "status",
+            "estate_type",
+            "jurisdiction_state",
+            "decedent_name",
+            "phase",
+            "date_of_death",
+            "estimated_value",
+            "closed_at",
         ]
         for field in required:
             assert hasattr(Matter, field), f"Matter missing: {field}"
 
     def test_matter_has_firm_relationship(self):
         from app.models.matters import Matter
+
         assert hasattr(Matter, "firm")
 
     def test_matter_has_tasks_relationship(self):
         from app.models.matters import Matter
+
         assert hasattr(Matter, "tasks")
 
     def test_matter_has_assets_relationship(self):
         from app.models.matters import Matter
+
         assert hasattr(Matter, "assets")
 
     def test_matter_has_stakeholders_relationship(self):
         from app.models.matters import Matter
+
         assert hasattr(Matter, "stakeholders")
 
 
@@ -169,36 +190,46 @@ class TestCreateMatterValidation:
 
     def test_create_matter_requires_firm_id(self):
         from tests.factories import MatterFactory
+
         matter = MatterFactory.build()
         assert matter["firm_id"] is not None
 
     def test_create_matter_requires_title(self):
         from tests.factories import MatterFactory
+
         matter = MatterFactory.build()
         assert matter["title"] is not None
         assert len(matter["title"]) > 0
 
     def test_create_matter_requires_estate_type(self):
         from tests.factories import MatterFactory
+
         matter = MatterFactory.build()
         valid_types = {
-            "testate_probate", "intestate_probate", "trust_administration",
-            "conservatorship", "mixed_probate_trust", "other",
+            "testate_probate",
+            "intestate_probate",
+            "trust_administration",
+            "conservatorship",
+            "mixed_probate_trust",
+            "other",
         }
         assert matter["estate_type"] in valid_types
 
     def test_create_matter_requires_jurisdiction(self):
         from tests.factories import MatterFactory
+
         matter = MatterFactory.build()
         assert len(matter["jurisdiction_state"]) == 2
 
     def test_create_matter_default_status_is_active(self):
         from tests.factories import MatterFactory
+
         matter = MatterFactory.build()
         assert matter["status"] == "active"
 
     def test_create_matter_default_phase_is_immediate(self):
         from tests.factories import MatterFactory
+
         matter = MatterFactory.build()
         assert matter["phase"] == "immediate"
 
@@ -253,6 +284,7 @@ class TestDashboardVariousConfigurations:
 
     def test_dashboard_with_all_overdue_tasks(self):
         from datetime import timedelta
+
         today = date.today()
         today - timedelta(days=10)
         overdue_count = 5

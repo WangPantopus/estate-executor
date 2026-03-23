@@ -155,10 +155,7 @@ class TestNotificationTasks:
         from app.workers.notification_tasks import send_task_assignment_notification
 
         assert callable(send_task_assignment_notification)
-        expected = (
-            "app.workers.notification_tasks"
-            ".send_task_assignment_notification"
-        )
+        expected = "app.workers.notification_tasks.send_task_assignment_notification"
         assert send_task_assignment_notification.name == expected
 
     def test_send_deadline_reminder_exists(self):
@@ -172,10 +169,7 @@ class TestNotificationTasks:
         from app.workers.notification_tasks import send_milestone_notification
 
         assert callable(send_milestone_notification)
-        expected = (
-            "app.workers.notification_tasks"
-            ".send_milestone_notification"
-        )
+        expected = "app.workers.notification_tasks.send_milestone_notification"
         assert send_milestone_notification.name == expected
 
 

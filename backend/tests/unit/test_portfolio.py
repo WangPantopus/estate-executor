@@ -8,6 +8,7 @@ class TestComputeRiskLevel:
 
     def _compute(self, **kwargs):
         from app.services.matter_service import _compute_risk_level
+
         return _compute_risk_level(**kwargs)
 
     def test_no_issues_returns_green(self):

@@ -116,15 +116,11 @@ async def export_events(
 ) -> StreamingResponse:
     """Export all events for a matter as CSV. Requires matter_admin permission."""
     if stakeholder.role != StakeholderRole.matter_admin:
-        raise PermissionDeniedError(
-            detail="Only matter admins can export event logs"
-        )
+        raise PermissionDeniedError(detail="Only matter admins can export event logs")
 
     csv_content = await event_service.export_events_csv(db, matter_id=matter_id)
     return StreamingResponse(
         iter([csv_content]),
         media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename=events_{matter_id}.csv"
-        },
+        headers={"Content-Disposition": f"attachment; filename=events_{matter_id}.csv"},
     )

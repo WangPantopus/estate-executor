@@ -32,10 +32,15 @@ if "jwt" not in sys.modules:
 
 # Mock cryptography
 for _mod in [
-    "cryptography", "cryptography.hazmat", "cryptography.hazmat.bindings",
-    "cryptography.hazmat.bindings._rust", "cryptography.hazmat.bindings._rust.exceptions",
-    "cryptography.exceptions", "cryptography.hazmat.primitives",
-    "cryptography.hazmat.primitives.ciphers", "cryptography.hazmat.primitives.ciphers.aead",
+    "cryptography",
+    "cryptography.hazmat",
+    "cryptography.hazmat.bindings",
+    "cryptography.hazmat.bindings._rust",
+    "cryptography.hazmat.bindings._rust.exceptions",
+    "cryptography.exceptions",
+    "cryptography.hazmat.primitives",
+    "cryptography.hazmat.primitives.ciphers",
+    "cryptography.hazmat.primitives.ciphers.aead",
     "cryptography.hazmat.primitives.ciphers.base",
     "cryptography.hazmat.primitives.asymmetric",
     "cryptography.hazmat.primitives.asymmetric.ec",
@@ -104,9 +109,7 @@ async def client(firm_id, user_id) -> AsyncGenerator[AsyncClient]:
         return CurrentUser(
             user_id=user_id,
             email="testuser@example.com",
-            firm_memberships=[
-                FirmMembershipBrief(firm_id=firm_id, firm_role="owner")
-            ],
+            firm_memberships=[FirmMembershipBrief(firm_id=firm_id, firm_role="owner")],
         )
 
     # Mock DB session — most endpoints will need specific mocks per test

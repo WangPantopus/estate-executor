@@ -200,29 +200,31 @@ async def list_assets(
 
     items = []
     for asset in assets:
-        items.append({
-            "id": asset.id,
-            "matter_id": asset.matter_id,
-            "asset_type": asset.asset_type,
-            "title": asset.title,
-            "description": asset.description,
-            "institution": asset.institution,
-            "account_number_masked": mask_account_number(asset.account_number_encrypted),
-            "ownership_type": asset.ownership_type,
-            "transfer_mechanism": asset.transfer_mechanism,
-            "status": asset.status,
-            "date_of_death_value": asset.date_of_death_value,
-            "current_estimated_value": asset.current_estimated_value,
-            "final_appraised_value": asset.final_appraised_value,
-            "metadata": asset.metadata_,
-            "document_count": len(asset.documents),
-            "entities": [
-                {"id": e.id, "name": e.name, "entity_type": e.entity_type.value}
-                for e in asset.entities
-            ],
-            "created_at": asset.created_at,
-            "updated_at": asset.updated_at,
-        })
+        items.append(
+            {
+                "id": asset.id,
+                "matter_id": asset.matter_id,
+                "asset_type": asset.asset_type,
+                "title": asset.title,
+                "description": asset.description,
+                "institution": asset.institution,
+                "account_number_masked": mask_account_number(asset.account_number_encrypted),
+                "ownership_type": asset.ownership_type,
+                "transfer_mechanism": asset.transfer_mechanism,
+                "status": asset.status,
+                "date_of_death_value": asset.date_of_death_value,
+                "current_estimated_value": asset.current_estimated_value,
+                "final_appraised_value": asset.final_appraised_value,
+                "metadata": asset.metadata_,
+                "document_count": len(asset.documents),
+                "entities": [
+                    {"id": e.id, "name": e.name, "entity_type": e.entity_type.value}
+                    for e in asset.entities
+                ],
+                "created_at": asset.created_at,
+                "updated_at": asset.updated_at,
+            }
+        )
 
     return items, total
 
@@ -269,13 +271,17 @@ async def get_asset_detail(
     valuations = []
     for ev in val_events:
         meta = ev.metadata_ or {}
-        valuations.append({
-            "type": meta.get("valuation_type", ""),
-            "value": Decimal(str(meta["value"])) if meta.get("value") is not None else Decimal("0"),
-            "notes": meta.get("notes"),
-            "recorded_at": ev.created_at,
-            "recorded_by": ev.actor_id,
-        })
+        valuations.append(
+            {
+                "type": meta.get("valuation_type", ""),
+                "value": Decimal(str(meta["value"]))
+                if meta.get("value") is not None
+                else Decimal("0"),
+                "notes": meta.get("notes"),
+                "recorded_at": ev.created_at,
+                "recorded_by": ev.actor_id,
+            }
+        )
 
     return {
         "id": asset.id,
@@ -302,8 +308,7 @@ async def get_asset_detail(
             for doc in asset.documents
         ],
         "entities": [
-            {"id": e.id, "name": e.name, "entity_type": e.entity_type.value}
-            for e in asset.entities
+            {"id": e.id, "name": e.name, "entity_type": e.entity_type.value} for e in asset.entities
         ],
         "valuations": valuations,
         "created_at": asset.created_at,

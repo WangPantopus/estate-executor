@@ -320,9 +320,17 @@ def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_i
     retry_backoff=True,
 )
 def send_task_overdue_notification(
-    self, *, task_id: str, to: str, recipient_name: str, task_title: str,
-    due_date: str, status: str, assigned_to_name: str | None = None,
-    decedent_name: str = "Unknown", firm_name: str | None = None,
+    self,
+    *,
+    task_id: str,
+    to: str,
+    recipient_name: str,
+    task_title: str,
+    due_date: str,
+    status: str,
+    assigned_to_name: str | None = None,
+    decedent_name: str = "Unknown",
+    firm_name: str | None = None,
     matter_id: str = "",
 ):
     """Send overdue task notification using the premium template."""
@@ -408,9 +416,7 @@ def send_deadline_reminder(self, deadline_id: str):
                     "linked_task": deadline.task.title if deadline.task else None,
                     "decedent_name": matter.decedent_name if matter else "Unknown",
                     "firm_name": firm.name if firm else None,
-                    "calendar_url": (
-                        f"{settings.frontend_url}/matters/{matter_id}/deadlines"
-                    ),
+                    "calendar_url": (f"{settings.frontend_url}/matters/{matter_id}/deadlines"),
                 }
 
         info = _run_async(_fetch())
@@ -482,10 +488,12 @@ def send_deadline_missed_notification(self, deadline_id: str):
                 # Notify assignee + all matter admins
                 recipients = []
                 if deadline.assignee:
-                    recipients.append({
-                        "to": deadline.assignee.email,
-                        "recipient_name": deadline.assignee.full_name,
-                    })
+                    recipients.append(
+                        {
+                            "to": deadline.assignee.email,
+                            "recipient_name": deadline.assignee.full_name,
+                        }
+                    )
 
                 admin_result = await session.execute(
                     select(Stakeholder).where(
@@ -495,10 +503,12 @@ def send_deadline_missed_notification(self, deadline_id: str):
                 )
                 for admin in admin_result.scalars().all():
                     if not any(r["to"] == admin.email for r in recipients):
-                        recipients.append({
-                            "to": admin.email,
-                            "recipient_name": admin.full_name,
-                        })
+                        recipients.append(
+                            {
+                                "to": admin.email,
+                                "recipient_name": admin.full_name,
+                            }
+                        )
 
                 return {
                     "recipients": recipients,
@@ -509,9 +519,7 @@ def send_deadline_missed_notification(self, deadline_id: str):
                     "linked_task": deadline.task.title if deadline.task else None,
                     "decedent_name": matter.decedent_name if matter else "Unknown",
                     "firm_name": firm.name if firm else None,
-                    "calendar_url": (
-                        f"{settings.frontend_url}/matters/{matter_id}/deadlines"
-                    ),
+                    "calendar_url": (f"{settings.frontend_url}/matters/{matter_id}/deadlines"),
                 }
 
         info = _run_async(_fetch())
@@ -552,8 +560,12 @@ def send_deadline_missed_notification(self, deadline_id: str):
     retry_backoff=True,
 )
 def send_milestone_notification(
-    self, matter_id: str, milestone_type: str, stakeholder_ids: list[str],
-    milestone_description: str | None = None, progress_summary: str | None = None,
+    self,
+    matter_id: str,
+    milestone_type: str,
+    stakeholder_ids: list[str],
+    milestone_description: str | None = None,
+    progress_summary: str | None = None,
 ):
     """Notify stakeholders about a milestone in the matter."""
     try:
@@ -569,9 +581,7 @@ def send_milestone_notification(
 
             async with async_session_factory() as session:
                 matter_result = await session.execute(
-                    select(Matter)
-                    .options(selectinload(Matter.firm))
-                    .where(Matter.id == matter_id)
+                    select(Matter).options(selectinload(Matter.firm)).where(Matter.id == matter_id)
                 )
                 matter = matter_result.scalar_one_or_none()
 
@@ -638,9 +648,15 @@ def send_milestone_notification(
     retry_backoff=True,
 )
 def send_distribution_notice(
-    self, *, matter_id: str, communication_id: str,
-    to: str, recipient_name: str, decedent_name: str,
-    distribution_details: str, amount: str | None = None,
+    self,
+    *,
+    matter_id: str,
+    communication_id: str,
+    to: str,
+    recipient_name: str,
+    decedent_name: str,
+    distribution_details: str,
+    amount: str | None = None,
     firm_name: str | None = None,
 ):
     """Send distribution notice email to a beneficiary."""
@@ -684,9 +700,16 @@ def send_distribution_notice(
     retry_backoff=True,
 )
 def send_document_request(
-    self, *, matter_id: str, to: str, recipient_name: str,
-    requester_name: str, doc_type: str, reason: str | None = None,
-    decedent_name: str = "Unknown", firm_name: str | None = None,
+    self,
+    *,
+    matter_id: str,
+    to: str,
+    recipient_name: str,
+    requester_name: str,
+    doc_type: str,
+    reason: str | None = None,
+    decedent_name: str = "Unknown",
+    firm_name: str | None = None,
 ):
     """Send document request email to a stakeholder."""
     from app.core.config import settings

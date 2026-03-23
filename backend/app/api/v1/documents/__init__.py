@@ -109,12 +109,8 @@ def _doc_to_detail(doc) -> DocumentDetailResponse:
         )
         for v in sorted(doc.versions, key=lambda v: v.version_number)
     ]
-    linked_tasks = [
-        TaskBriefDoc(id=t.id, title=t.title) for t in doc.tasks
-    ]
-    linked_assets = [
-        AssetBriefDoc(id=a.id, title=a.title) for a in doc.assets
-    ]
+    linked_tasks = [TaskBriefDoc(id=t.id, title=t.title) for t in doc.tasks]
+    linked_assets = [AssetBriefDoc(id=a.id, title=a.title) for a in doc.assets]
     return DocumentDetailResponse(
         id=doc.id,
         matter_id=doc.matter_id,

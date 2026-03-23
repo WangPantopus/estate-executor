@@ -22,15 +22,11 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.create_table(
         "email_logs",
-        sa.Column(
-            "id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False
-        ),
+        sa.Column("id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False),
         sa.Column("to_address", sa.Text(), nullable=False),
         sa.Column("subject", sa.Text(), nullable=False),
         sa.Column("template", sa.Text(), nullable=True),
-        sa.Column(
-            "status", sa.Text(), server_default=sa.text("'pending'"), nullable=False
-        ),
+        sa.Column("status", sa.Text(), server_default=sa.text("'pending'"), nullable=False),
         sa.Column("resend_id", sa.Text(), nullable=True),
         sa.Column("error", sa.Text(), nullable=True),
         sa.Column("sent_at", postgresql.TIMESTAMP(timezone=True), nullable=True),

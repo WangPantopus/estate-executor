@@ -205,9 +205,7 @@ async def get_asset_detail(
         documents=[DocumentBrief(**d) for d in detail["documents"]] if not is_beneficiary else [],
         entities=[EntityBrief(**e) for e in detail["entities"]],
         valuations=(
-            [ValuationEntry(**v) for v in detail["valuations"]]
-            if not is_beneficiary
-            else []
+            [ValuationEntry(**v) for v in detail["valuations"]] if not is_beneficiary else []
         ),
         created_at=detail["created_at"],
         updated_at=detail["updated_at"],

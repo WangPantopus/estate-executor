@@ -143,9 +143,7 @@ async def get_current_user(
         await db.flush()
         # Reload with relationships
         result = await db.execute(
-            select(User)
-            .options(selectinload(User.firm_memberships))
-            .where(User.id == user.id)
+            select(User).options(selectinload(User.firm_memberships)).where(User.id == user.id)
         )
         user = result.scalar_one()
 
@@ -212,9 +210,7 @@ async def require_stakeholder(
         return stakeholder
 
     # Fallback: check if user is a firm member of the matter's firm
-    result = await db.execute(
-        select(Matter.firm_id).where(Matter.id == matter_id)
-    )
+    result = await db.execute(select(Matter.firm_id).where(Matter.id == matter_id))
     firm_id = result.scalar_one_or_none()
     if firm_id is None:
         raise NotFoundError(detail="Matter not found")
@@ -252,34 +248,56 @@ async def require_stakeholder(
 
 ROLE_PERMISSIONS: dict[StakeholderRole, list[str]] = {
     StakeholderRole.matter_admin: [
-        "matter:read", "matter:write", "matter:close",
-        "task:read", "task:write", "task:assign", "task:complete",
-        "asset:read", "asset:write",
-        "entity:read", "entity:write",
-        "document:read", "document:upload", "document:download",
-        "stakeholder:invite", "stakeholder:manage",
-        "communication:read", "communication:write",
+        "matter:read",
+        "matter:write",
+        "matter:close",
+        "task:read",
+        "task:write",
+        "task:assign",
+        "task:complete",
+        "asset:read",
+        "asset:write",
+        "entity:read",
+        "entity:write",
+        "document:read",
+        "document:upload",
+        "document:download",
+        "stakeholder:invite",
+        "stakeholder:manage",
+        "communication:read",
+        "communication:write",
         "event:read",
         "ai:trigger",
         "report:generate",
     ],
     StakeholderRole.professional: [
         "matter:read",
-        "task:read", "task:write", "task:assign", "task:complete",
-        "asset:read", "asset:write",
-        "entity:read", "entity:write",
-        "document:read", "document:upload", "document:download",
-        "communication:read", "communication:write",
+        "task:read",
+        "task:write",
+        "task:assign",
+        "task:complete",
+        "asset:read",
+        "asset:write",
+        "entity:read",
+        "entity:write",
+        "document:read",
+        "document:upload",
+        "document:download",
+        "communication:read",
+        "communication:write",
         "event:read",
         "ai:trigger",
         "report:generate",
     ],
     StakeholderRole.executor_trustee: [
         "matter:read",
-        "task:read:assigned", "task:complete:assigned",
+        "task:read:assigned",
+        "task:complete:assigned",
         "asset:read",
-        "document:read:linked", "document:upload",
-        "communication:read", "communication:write",
+        "document:read:linked",
+        "document:upload",
+        "communication:read",
+        "communication:write",
     ],
     StakeholderRole.beneficiary: [
         "matter:read:summary",

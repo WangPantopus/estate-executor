@@ -71,15 +71,13 @@ async def create_communication(
         and body.visibility
         and body.visibility != CommunicationVisibility.all_stakeholders
     ):
-            raise PermissionDeniedError(
-                detail="Beneficiaries can only send to all stakeholders"
-            )
+        raise PermissionDeniedError(detail="Beneficiaries can only send to all stakeholders")
 
     # Only professionals can use professionals_only visibility
-    if (
-        body.visibility == CommunicationVisibility.professionals_only
-        and stakeholder.role not in {StakeholderRole.matter_admin, StakeholderRole.professional}
-    ):
+    if body.visibility == CommunicationVisibility.professionals_only and stakeholder.role not in {
+        StakeholderRole.matter_admin,
+        StakeholderRole.professional,
+    }:
         raise PermissionDeniedError(
             detail="Only matter admins and professionals can use professionals_only visibility"
         )

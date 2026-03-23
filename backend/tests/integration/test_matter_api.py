@@ -129,18 +129,24 @@ class TestMatterDashboard:
 
     @patch("app.services.matter_service.get_dashboard")
     @patch("app.services.matter_service.get_matter")
-    async def test_get_dashboard_returns_200(
-        self, mock_get, mock_dash, client, firm_id, matter_id
-    ):
+    async def test_get_dashboard_returns_200(self, mock_get, mock_dash, client, firm_id, matter_id):
         mock_get.return_value = _make_matter_obj(id=matter_id, firm_id=firm_id)
         mock_dash.return_value = {
             "task_summary": {
-                "total": 10, "not_started": 3, "in_progress": 2, "blocked": 1,
-                "complete": 3, "waived": 1, "overdue": 0, "completion_percentage": 40.0,
+                "total": 10,
+                "not_started": 3,
+                "in_progress": 2,
+                "blocked": 1,
+                "complete": 3,
+                "waived": 1,
+                "overdue": 0,
+                "completion_percentage": 40.0,
             },
             "asset_summary": {
-                "total_count": 5, "total_estimated_value": Decimal("500000"),
-                "by_type": {}, "by_status": {},
+                "total_count": 5,
+                "total_estimated_value": Decimal("500000"),
+                "by_type": {},
+                "by_status": {},
             },
             "stakeholder_count": 3,
             "upcoming_deadlines": [],
@@ -167,9 +173,7 @@ class TestMatterClose:
         assert resp.json()["status"] == "closed"
 
     @patch("app.services.matter_service.close_matter")
-    async def test_close_already_closed_returns_409(
-        self, mock_close, client, firm_id, matter_id
-    ):
+    async def test_close_already_closed_returns_409(self, mock_close, client, firm_id, matter_id):
         from app.core.exceptions import ConflictError
 
         mock_close.side_effect = ConflictError(detail="Already closed")
@@ -217,12 +221,20 @@ class TestMatterLifecycleFlow:
         mock_get.return_value = matter
         mock_dash.return_value = {
             "task_summary": {
-                "total": 5, "not_started": 0, "in_progress": 0, "blocked": 0,
-                "complete": 5, "waived": 0, "overdue": 0, "completion_percentage": 100.0,
+                "total": 5,
+                "not_started": 0,
+                "in_progress": 0,
+                "blocked": 0,
+                "complete": 5,
+                "waived": 0,
+                "overdue": 0,
+                "completion_percentage": 100.0,
             },
             "asset_summary": {
-                "total_count": 2, "total_estimated_value": Decimal("500000"),
-                "by_type": {}, "by_status": {},
+                "total_count": 2,
+                "total_estimated_value": Decimal("500000"),
+                "by_type": {},
+                "by_status": {},
             },
             "stakeholder_count": 2,
             "upcoming_deadlines": [],
@@ -256,12 +268,20 @@ class TestConcurrentOperations:
         mock_get.return_value = matter
         mock_dash.return_value = {
             "task_summary": {
-                "total": 0, "not_started": 0, "in_progress": 0, "blocked": 0,
-                "complete": 0, "waived": 0, "overdue": 0, "completion_percentage": 0.0,
+                "total": 0,
+                "not_started": 0,
+                "in_progress": 0,
+                "blocked": 0,
+                "complete": 0,
+                "waived": 0,
+                "overdue": 0,
+                "completion_percentage": 0.0,
             },
             "asset_summary": {
-                "total_count": 0, "total_estimated_value": None,
-                "by_type": {}, "by_status": {},
+                "total_count": 0,
+                "total_estimated_value": None,
+                "by_type": {},
+                "by_status": {},
             },
             "stakeholder_count": 1,
             "upcoming_deadlines": [],

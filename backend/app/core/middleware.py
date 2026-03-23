@@ -85,13 +85,15 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
 
             logger.error(
-                json.dumps({
-                    "request_id": request_id,
-                    "method": request.method,
-                    "path": request.url.path,
-                    "error": str(exc),
-                    "traceback": traceback.format_exc(),
-                })
+                json.dumps(
+                    {
+                        "request_id": request_id,
+                        "method": request.method,
+                        "path": request.url.path,
+                        "error": str(exc),
+                        "traceback": traceback.format_exc(),
+                    }
+                )
             )
 
             detail = str(exc) if not settings.is_production else "Internal server error"

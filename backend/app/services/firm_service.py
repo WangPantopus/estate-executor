@@ -171,9 +171,7 @@ async def list_firm_members(
 ) -> tuple[list[FirmMembership], int]:
     """List all members of a firm."""
     count_q = (
-        select(func.count())
-        .select_from(FirmMembership)
-        .where(FirmMembership.firm_id == firm_id)
+        select(func.count()).select_from(FirmMembership).where(FirmMembership.firm_id == firm_id)
     )
     total = (await db.execute(count_q)).scalar_one()
 

@@ -222,6 +222,7 @@ class TestDeadlineReminderConfig:
 
         for days_before in config["days_before"]:
             from datetime import timedelta
+
             check_date = due - timedelta(days=days_before)
             remaining = (due - check_date).days
             assert remaining == days_before
@@ -238,12 +239,14 @@ class TestDeadlineOverdueDetection:
 
     def test_past_due_date_is_overdue(self):
         from datetime import timedelta
+
         today = date.today()
         past_due = today - timedelta(days=5)
         assert past_due < today
 
     def test_future_due_date_is_not_overdue(self):
         from datetime import timedelta
+
         today = date.today()
         future_due = today + timedelta(days=5)
         assert future_due >= today

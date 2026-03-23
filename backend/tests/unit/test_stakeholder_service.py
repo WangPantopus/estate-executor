@@ -37,8 +37,14 @@ class TestStakeholderModel:
         from app.models.stakeholders import Stakeholder
 
         required = [
-            "id", "matter_id", "user_id", "email", "full_name",
-            "role", "invite_status", "invite_token",
+            "id",
+            "matter_id",
+            "user_id",
+            "email",
+            "full_name",
+            "role",
+            "invite_status",
+            "invite_token",
         ]
         for field in required:
             assert hasattr(Stakeholder, field), f"Stakeholder missing field: {field}"
@@ -54,8 +60,7 @@ class TestStakeholderModel:
 
         table = Stakeholder.__table__
         unique_constraints = [
-            c for c in table.constraints
-            if hasattr(c, "columns") and len(c.columns) == 2
+            c for c in table.constraints if hasattr(c, "columns") and len(c.columns) == 2
         ]
         # Check there's at least one 2-column unique constraint
         assert len(unique_constraints) >= 1

@@ -42,9 +42,7 @@ class TestDeadlineAPI:
 
     @pytest.mark.xfail(reason="DeadlineCreate strict=True prevents JSON enum coercion")
     @patch("app.services.deadline_service.create_deadline")
-    async def test_create_deadline_returns_201(
-        self, mock_create, client, firm_id, matter_id
-    ):
+    async def test_create_deadline_returns_201(self, mock_create, client, firm_id, matter_id):
         mock_create.return_value = _make_deadline_obj(matter_id=matter_id)
         resp = await client.post(
             f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines",
@@ -57,37 +55,25 @@ class TestDeadlineAPI:
         assert resp.status_code == 201
 
     @patch("app.services.deadline_service.list_deadlines")
-    async def test_list_deadlines_returns_200(
-        self, mock_list, client, firm_id, matter_id
-    ):
+    async def test_list_deadlines_returns_200(self, mock_list, client, firm_id, matter_id):
         mock_list.return_value = ([_make_deadline_obj(matter_id=matter_id)], 1)
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines")
         assert resp.status_code == 200
         assert resp.json()["meta"]["total"] == 1
 
     @patch("app.services.deadline_service.list_deadlines")
-    async def test_list_deadlines_empty(
-        self, mock_list, client, firm_id, matter_id
-    ):
+    async def test_list_deadlines_empty(self, mock_list, client, firm_id, matter_id):
         mock_list.return_value = ([], 0)
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines")
         assert resp.status_code == 200
         assert resp.json()["meta"]["total"] == 0
 
     @patch("app.services.deadline_service.get_calendar")
-    async def test_calendar_view_returns_200(
-        self, mock_cal, client, firm_id, matter_id
-    ):
+    async def test_calendar_view_returns_200(self, mock_cal, client, firm_id, matter_id):
         mock_cal.return_value = [
             {"month": "2026-04", "deadlines": []},
         ]
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines/calendar"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/deadlines/calendar")
         assert resp.status_code == 200
 
 

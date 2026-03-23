@@ -330,16 +330,26 @@ class TestQueryFiltering:
     def test_entity_type_filter_values(self):
         """Common entity_type filter values."""
         valid_types = {
-            "task", "asset", "document", "stakeholder",
-            "matter", "deadline", "communication",
+            "task",
+            "asset",
+            "document",
+            "stakeholder",
+            "matter",
+            "deadline",
+            "communication",
         }
         assert len(valid_types) >= 7
 
     def test_action_filter_values(self):
         """Common action filter values."""
         valid_actions = {
-            "created", "updated", "completed", "waived",
-            "assigned", "uploaded", "removed",
+            "created",
+            "updated",
+            "completed",
+            "waived",
+            "assigned",
+            "uploaded",
+            "removed",
         }
         assert len(valid_actions) >= 7
 

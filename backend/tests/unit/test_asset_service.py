@@ -23,9 +23,7 @@ def _validate_status_transition(current: AssetStatus, target: AssetStatus):
 
     idx = _status_index()
     if idx[target] <= idx[current]:
-        raise ConflictError(
-            detail=f"Cannot transition from {current.value} to {target.value}"
-        )
+        raise ConflictError(detail=f"Cannot transition from {current.value} to {target.value}")
 
 
 class TestStatusLifecycle:
@@ -58,31 +56,37 @@ class TestStatusLifecycle:
 
     def test_backward_valued_to_discovered_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.valued, AssetStatus.discovered)
 
     def test_backward_distributed_to_discovered_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.distributed, AssetStatus.discovered)
 
     def test_backward_distributed_to_valued_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.distributed, AssetStatus.valued)
 
     def test_backward_transferred_to_discovered_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.transferred, AssetStatus.discovered)
 
     def test_backward_transferred_to_valued_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.transferred, AssetStatus.valued)
 
     def test_backward_distributed_to_transferred_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.distributed, AssetStatus.transferred)
 
@@ -90,21 +94,25 @@ class TestStatusLifecycle:
 
     def test_same_status_discovered_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.discovered, AssetStatus.discovered)
 
     def test_same_status_valued_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.valued, AssetStatus.valued)
 
     def test_same_status_transferred_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.transferred, AssetStatus.transferred)
 
     def test_same_status_distributed_raises(self):
         from app.core.exceptions import ConflictError
+
         with pytest.raises(ConflictError):
             self._validate(AssetStatus.distributed, AssetStatus.distributed)
 
@@ -146,6 +154,7 @@ class TestValuationFieldMap:
 
     def test_all_types_have_matching_asset_fields(self):
         from app.models.assets import Asset
+
         for val_type, field_name in self.VALUATION_FIELD_MAP.items():
             assert hasattr(Asset, field_name), (
                 f"Valuation type '{val_type}' maps to '{field_name}' "
@@ -161,9 +170,17 @@ class TestAssetTypeEnum:
 
     def test_all_asset_types(self):
         expected = {
-            "real_estate", "bank_account", "brokerage_account", "retirement_account",
-            "life_insurance", "business_interest", "vehicle", "digital_asset",
-            "personal_property", "receivable", "other",
+            "real_estate",
+            "bank_account",
+            "brokerage_account",
+            "retirement_account",
+            "life_insurance",
+            "business_interest",
+            "vehicle",
+            "digital_asset",
+            "personal_property",
+            "receivable",
+            "other",
         }
         actual = {t.value for t in AssetType}
         assert expected == actual
@@ -175,8 +192,13 @@ class TestAssetTypeEnum:
 class TestOwnershipTypeEnum:
     def test_all_ownership_types(self):
         expected = {
-            "in_trust", "joint_tenancy", "community_property",
-            "pod_tod", "individual", "business_owned", "other",
+            "in_trust",
+            "joint_tenancy",
+            "community_property",
+            "pod_tod",
+            "individual",
+            "business_owned",
+            "other",
         }
         actual = {t.value for t in OwnershipType}
         assert expected == actual
@@ -185,8 +207,11 @@ class TestOwnershipTypeEnum:
 class TestTransferMechanismEnum:
     def test_all_mechanisms(self):
         expected = {
-            "probate", "trust_administration", "beneficiary_designation",
-            "joint_survivorship", "other",
+            "probate",
+            "trust_administration",
+            "beneficiary_designation",
+            "joint_survivorship",
+            "other",
         }
         actual = {t.value for t in TransferMechanism}
         assert expected == actual
@@ -197,20 +222,24 @@ class TestAssetModel:
 
     def test_has_financial_fields(self):
         from app.models.assets import Asset
+
         assert hasattr(Asset, "date_of_death_value")
         assert hasattr(Asset, "current_estimated_value")
         assert hasattr(Asset, "final_appraised_value")
 
     def test_has_encrypted_field(self):
         from app.models.assets import Asset
+
         assert hasattr(Asset, "account_number_encrypted")
 
     def test_has_entity_relationship(self):
         from app.models.assets import Asset
+
         assert hasattr(Asset, "entities")
 
     def test_has_document_relationship(self):
         from app.models.assets import Asset
+
         assert hasattr(Asset, "documents")
 
 
@@ -220,10 +249,10 @@ class TestEncryptionRoundtrip:
     def _can_import_crypto(self) -> bool:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
+
             # Verify it's the real module, not a mock
-            return (
-                hasattr(AESGCM, "__module__")
-                and not str(type(AESGCM)).startswith("<class 'unittest.mock")
+            return hasattr(AESGCM, "__module__") and not str(type(AESGCM)).startswith(
+                "<class 'unittest.mock"
             )
         except BaseException:
             return False
@@ -233,8 +262,10 @@ class TestEncryptionRoundtrip:
         if not self._can_import_crypto():
             pytest.skip("cryptography module unavailable")
         import os
+
         os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
         from app.core.security import encrypt_field
+
         ciphertext = encrypt_field("1234567890")
         assert isinstance(ciphertext, bytes)
         assert len(ciphertext) > 10
@@ -244,8 +275,10 @@ class TestEncryptionRoundtrip:
         if not self._can_import_crypto():
             pytest.skip("cryptography module unavailable")
         import os
+
         os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
         from app.core.security import decrypt_field, encrypt_field
+
         original = "9876543210"
         ciphertext = encrypt_field(original)
         plaintext = decrypt_field(ciphertext)
@@ -256,8 +289,10 @@ class TestEncryptionRoundtrip:
         if not self._can_import_crypto():
             pytest.skip("cryptography module unavailable")
         import os
+
         os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
         from app.core.security import encrypt_field
+
         ct1 = encrypt_field("1111111111")
         ct2 = encrypt_field("2222222222")
         assert ct1 != ct2
@@ -265,6 +300,7 @@ class TestEncryptionRoundtrip:
     def test_account_number_model_field_is_bytes(self):
         """Asset model stores account_number_encrypted as LargeBinary (bytes)."""
         from app.models.assets import Asset
+
         col = Asset.__table__.columns["account_number_encrypted"]
         assert col.nullable is True
 

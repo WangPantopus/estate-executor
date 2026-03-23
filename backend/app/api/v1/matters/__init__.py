@@ -137,9 +137,7 @@ async def list_matters(
         if membership.firm_role not in (FirmRole.owner, FirmRole.admin):
             from app.core.exceptions import PermissionDeniedError
 
-            raise PermissionDeniedError(
-                detail="Portfolio view requires firm admin access"
-            )
+            raise PermissionDeniedError(detail="Portfolio view requires firm admin access")
 
         portfolio_data = await matter_service.get_portfolio(
             db,
@@ -236,9 +234,7 @@ async def get_matter_dashboard(
         upcoming_deadlines=[
             DeadlineResponse.model_validate(d) for d in dashboard_data["upcoming_deadlines"]
         ],
-        recent_events=[
-            EventResponse.model_validate(e) for e in dashboard_data["recent_events"]
-        ],
+        recent_events=[EventResponse.model_validate(e) for e in dashboard_data["recent_events"]],
     )
 
 
@@ -296,9 +292,7 @@ async def close_matter(
     if stakeholder.role != StakeholderRole.matter_admin:
         from app.core.exceptions import PermissionDeniedError
 
-        raise PermissionDeniedError(
-            detail="Only matter admins can close matters"
-        )
+        raise PermissionDeniedError(detail="Only matter admins can close matters")
 
     matter = await matter_service.close_matter(
         db,
