@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any
+from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.documents import Document
 from app.models.enums import StakeholderRole
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
+from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.documents import (
     AssetBriefDoc,
@@ -30,16 +36,6 @@ from app.schemas.documents import (
     TaskBriefDoc,
 )
 from app.services import document_service
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.documents import Document
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
-    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

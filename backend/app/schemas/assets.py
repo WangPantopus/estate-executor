@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from datetime import datetime
+from decimal import Decimal
+from typing import Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,13 +16,8 @@ from app.models.enums import (
     TransferMechanism,
 )
 
-if TYPE_CHECKING:
-    from datetime import datetime
-    from decimal import Decimal
-    from uuid import UUID
-
-    from .common import PaginationMeta
-    from .tasks import DocumentBrief
+from .common import PaginationMeta
+from .tasks import DocumentBrief
 
 
 class EntityBrief(BaseModel):

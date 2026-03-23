@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.assets import Asset
+from app.models.entities import Entity
 from app.models.enums import FundingStatus, StakeholderRole
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
+from app.schemas.auth import CurrentUser
 from app.schemas.entities import (
     AssetBrief,
     EntityCreate,
@@ -18,17 +24,6 @@ from app.schemas.entities import (
     EntityUpdate,
 )
 from app.services import entity_service
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.assets import Asset
-    from app.models.entities import Entity
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
-    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

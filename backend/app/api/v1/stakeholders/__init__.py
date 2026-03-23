@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.security import (
@@ -14,6 +15,9 @@ from app.core.security import (
     require_permission,
     require_stakeholder,
 )
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
+from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.stakeholders import (
     StakeholderInvite,
@@ -22,15 +26,6 @@ from app.schemas.stakeholders import (
     StakeholderUpdate,
 )
 from app.services import stakeholder_service
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
-    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

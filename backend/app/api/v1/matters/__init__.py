@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from datetime import date
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
 from app.models.enums import FirmRole, MatterPhase, MatterStatus, StakeholderRole
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
+from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.deadlines import DeadlineResponse
 from app.schemas.events import EventResponse
@@ -24,16 +29,6 @@ from app.schemas.matters import (
     TaskSummary,
 )
 from app.services import matter_service
-
-if TYPE_CHECKING:
-    from datetime import date
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
-    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

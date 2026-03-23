@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import contextlib
 import math
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
 from app.models.enums import StakeholderRole, TaskPhase, TaskPriority, TaskStatus
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
+from app.models.tasks import Task as TaskModel
+from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.tasks import (
     CommentBrief,
@@ -29,16 +34,6 @@ from app.schemas.tasks import (
     TaskWaive,
 )
 from app.services import task_generation_service, task_service
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
-    from app.models.tasks import Task as TaskModel
-    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

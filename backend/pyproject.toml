@@ -59,9 +59,8 @@ ignore = ["B008"]  # Allow Depends() / Query() in FastAPI parameter defaults
 
 [tool.ruff.lint.per-file-ignores]
 "app/models/*.py" = ["TCH003", "TC003"]
-"app/schemas/matters.py" = ["TC001", "TC003", "TCH001", "TCH003"]
-"app/schemas/deadlines.py" = ["TC001", "TC003", "TCH001", "TCH003"]
-"app/schemas/events.py" = ["TC001", "TC003", "TCH001", "TCH003"]
+"app/schemas/*.py" = ["TC001", "TC002", "TC003", "TCH001", "TCH002", "TCH003"]
+"app/api/v1/*/__init__.py" = ["TC001", "TC002", "TC003", "TCH001", "TCH002", "TCH003"]
 "migrations/versions/*.py" = ["E501"]
 
 [tool.mypy]

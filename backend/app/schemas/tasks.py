@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from datetime import date, datetime
+from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-if TYPE_CHECKING:
-    from datetime import date, datetime
-    from uuid import UUID
+from app.models.enums import TaskPhase, TaskPriority, TaskStatus
 
-    from app.models.enums import TaskPhase, TaskPriority, TaskStatus
-
-    from .common import PaginationMeta
+from .common import PaginationMeta
 
 
 class DocumentBrief(BaseModel):

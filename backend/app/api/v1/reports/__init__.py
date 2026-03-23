@@ -6,24 +6,20 @@ via Celery for large reports (returns job_id for polling).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError, ValidationError
 from app.core.security import require_firm_member, require_stakeholder
 from app.models.enums import StakeholderRole
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
 from app.services import report_service
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
 
 router = APIRouter()
 

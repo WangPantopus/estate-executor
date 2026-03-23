@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.assets import Asset
 from app.models.enums import (
     AssetStatus,
     AssetType,
@@ -17,6 +19,8 @@ from app.models.enums import (
     StakeholderRole,
     TransferMechanism,
 )
+from app.models.firm_memberships import FirmMembership
+from app.models.stakeholders import Stakeholder
 from app.schemas.assets import (
     AssetCreate,
     AssetDetailResponse,
@@ -28,19 +32,10 @@ from app.schemas.assets import (
     EntityBrief,
     ValuationEntry,
 )
+from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.tasks import DocumentBrief
 from app.services import asset_service
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.models.assets import Asset
-    from app.models.firm_memberships import FirmMembership
-    from app.models.stakeholders import Stakeholder
-    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

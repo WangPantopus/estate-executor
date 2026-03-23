@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from datetime import datetime
+from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-if TYPE_CHECKING:
-    from datetime import datetime
-    from uuid import UUID
+from app.models.enums import InviteStatus, StakeholderRole
 
-    from app.models.enums import InviteStatus, StakeholderRole
-
-    from .common import PaginationMeta
+from .common import PaginationMeta
 
 
 class StakeholderInvite(BaseModel):
