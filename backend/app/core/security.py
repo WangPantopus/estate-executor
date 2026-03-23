@@ -55,13 +55,41 @@ def _get_signing_key(token: str) -> jwt.PyJWK:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Mock auth user map for E2E tests
+# ---------------------------------------------------------------------------
+
+_MOCK_USERS: dict[str, dict[str, str]] = {
+    "admin": {"sub": "auth0|e2e-admin", "email": "admin@e2e-test.local"},
+    "professional": {"sub": "auth0|e2e-professional", "email": "pro@e2e-test.local"},
+    "beneficiary": {"sub": "auth0|e2e-beneficiary", "email": "beneficiary@e2e-test.local"},
+    "readOnly": {"sub": "auth0|e2e-readOnly", "email": "readonly@e2e-test.local"},
+}
+
+
 async def verify_jwt(token: str) -> TokenPayload:
     """Verify and decode a JWT token from Auth0.
 
     - Fetches Auth0 JWKS (cached for 24h via cachetools)
     - Validates JWT signature, expiration, audience, issuer
     - Returns decoded payload as TokenPayload schema
+
+    When E2E_MOCK_AUTH is enabled, accepts tokens of the form
+    ``e2e-mock-token-<userKey>`` and returns a synthetic payload.
     """
+    # Mock auth bypass for E2E tests
+    if settings.e2e_mock_auth and token.startswith("e2e-mock-token-"):
+        user_key = token.removeprefix("e2e-mock-token-")
+        mock = _MOCK_USERS.get(user_key)
+        if mock is None:
+            raise UnauthorizedError(detail=f"Unknown mock user: {user_key}")
+        return TokenPayload(
+            sub=mock["sub"],
+            email=mock["email"],
+            firm_ids=[],
+            roles={},
+        )
+
     try:
         signing_key = _get_signing_key(token)
         payload = jwt.decode(

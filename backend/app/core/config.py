@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     # Encryption
     encryption_master_key: str = ""
 
+    # E2E testing
+    e2e_mock_auth: bool = False
+
     # Celery
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
