@@ -178,3 +178,55 @@ class TestProfessionalRestrictions:
         )
         assert resp.status_code in (403, 404)
         await c.aclose()
+
+
+@pytest.mark.asyncio
+class TestExecutorRestrictions:
+    """executor_trustee should only access assigned tasks."""
+
+    async def test_executor_cannot_create_task(self, firm_id, matter_id):
+        c = await _make_role_client("executor_trustee", firm_id)
+        resp = await c.post(
+            f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks",
+            json={"title": "Executor Task", "phase": "immediate"},
+        )
+        assert resp.status_code in (403, 404, 422)
+        await c.aclose()
+
+    async def test_executor_cannot_close_matter(self, firm_id, matter_id):
+        c = await _make_role_client("executor_trustee", firm_id)
+        resp = await c.post(
+            f"/api/v1/firms/{firm_id}/matters/{matter_id}/close"
+        )
+        assert resp.status_code in (403, 404)
+        await c.aclose()
+
+    async def test_executor_cannot_invite_stakeholder(self, firm_id, matter_id):
+        c = await _make_role_client("executor_trustee", firm_id)
+        resp = await c.post(
+            f"/api/v1/firms/{firm_id}/matters/{matter_id}/stakeholders",
+            json={
+                "email": "new@example.com",
+                "full_name": "New Person",
+                "role": "beneficiary",
+            },
+        )
+        assert resp.status_code in (403, 404)
+        await c.aclose()
+
+    async def test_executor_cannot_waive_task(self, firm_id, matter_id):
+        c = await _make_role_client("executor_trustee", firm_id)
+        resp = await c.post(
+            f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks/{uuid.uuid4()}/waive",
+            json={"reason": "Test"},
+        )
+        assert resp.status_code in (403, 404)
+        await c.aclose()
+
+    async def test_executor_cannot_generate_reports(self, firm_id, matter_id):
+        c = await _make_role_client("executor_trustee", firm_id)
+        resp = await c.post(
+            f"/api/v1/firms/{firm_id}/matters/{matter_id}/reports/matter-summary"
+        )
+        assert resp.status_code in (403, 404)
+        await c.aclose()

@@ -44,7 +44,7 @@ def _make_task_obj(**overrides):
 
 @pytest.mark.asyncio
 class TestTaskCreation:
-    @pytest.mark.xfail(reason="Mock ORM model_validate; passes with real PostgreSQL")
+    @pytest.mark.xfail(reason="TaskCreate strict=True prevents string→enum in JSON")
     @patch("app.services.task_service.create_task")
     async def test_create_task_returns_201(self, mock_create, client, firm_id, matter_id):
         mock_create.return_value = _make_task_obj(matter_id=matter_id)
@@ -132,7 +132,7 @@ class TestTaskStateTransitions:
         )
         assert resp.status_code == 422
 
-    @pytest.mark.xfail(reason="Mock ORM model_validate; passes with real PostgreSQL")
+    @pytest.mark.xfail(reason="TaskUpdate strict=True prevents string→enum in JSON")
     @patch("app.services.task_service.update_task")
     async def test_update_task_status(self, mock_update, client, firm_id, matter_id):
         task = _make_task_obj(matter_id=matter_id, status="in_progress")
@@ -143,7 +143,7 @@ class TestTaskStateTransitions:
         )
         assert resp.status_code == 200
 
-    @pytest.mark.xfail(reason="Mock ORM model_validate; passes with real PostgreSQL")
+    @pytest.mark.xfail(reason="TaskUpdate strict=True prevents string→enum in JSON")
     @patch("app.services.task_service.update_task")
     async def test_invalid_transition_returns_409(
         self, mock_update, client, firm_id, matter_id

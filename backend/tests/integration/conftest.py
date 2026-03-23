@@ -64,6 +64,15 @@ _MATTER_ID = uuid.UUID("30000000-0000-0000-0000-000000000001")
 _STAKEHOLDER_ID = uuid.UUID("40000000-0000-0000-0000-000000000001")
 
 
+class SimpleNamespace:
+    """A simple namespace that works with Pydantic from_attributes=True."""
+
+    def __init__(self, **kwargs: Any):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        self.__dict__.update(kwargs)
+
+
 @pytest.fixture
 def firm_id() -> uuid.UUID:
     return _FIRM_ID
