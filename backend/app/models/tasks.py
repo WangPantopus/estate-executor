@@ -68,7 +68,9 @@ class Task(BaseModel):
         nullable=True,
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, server_default="{}"
+    )
 
     matter: Mapped[Matter] = relationship(back_populates="tasks")
     parent_task: Mapped[Task | None] = relationship(

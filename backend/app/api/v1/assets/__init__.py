@@ -28,8 +28,8 @@ from app.schemas.assets import (
     EntityBrief,
     ValuationEntry,
 )
-from app.schemas.tasks import DocumentBrief
 from app.schemas.common import PaginationMeta, PaginationParams
+from app.schemas.tasks import DocumentBrief
 from app.services import asset_service
 
 if TYPE_CHECKING:
@@ -38,7 +38,6 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.models.assets import Asset
-
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
     from app.schemas.auth import CurrentUser

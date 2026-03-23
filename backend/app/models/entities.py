@@ -37,7 +37,9 @@ class Entity(BaseModel):
         server_default="unknown",
     )
     distribution_rules: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
-    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, server_default="{}"
+    )
 
     matter: Mapped[Matter] = relationship(back_populates="entities")
     assets: Mapped[list[Asset]] = relationship(secondary="entity_assets", back_populates="entities")

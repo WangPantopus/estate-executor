@@ -189,7 +189,7 @@ async def list_communications(
         if stakeholder.id is not None:
             vis_conditions.append(
                 (Communication.visibility == CommunicationVisibility.specific)
-                & Communication.visible_to.any(stakeholder.id)
+                & Communication.visible_to.any(stakeholder.id)  # type: ignore[arg-type]
             )
         visibility_filter = or_(*vis_conditions)
 

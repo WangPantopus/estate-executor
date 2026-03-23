@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import jwt
@@ -94,7 +93,7 @@ async def verify_jwt(token: str) -> TokenPayload:
 from app.core.database import async_session_factory  # noqa: E402
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Callable
     from uuid import UUID
 
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -229,7 +228,7 @@ async def require_stakeholder(
     # Firm members get a synthetic stakeholder with matter_admin permissions
     # Create a transient stakeholder object (not persisted)
     synthetic = Stakeholder(
-        id=None,  # type: ignore[arg-type]
+        id=None,
         matter_id=matter_id,
         user_id=current_user.user_id,
         email=current_user.email,

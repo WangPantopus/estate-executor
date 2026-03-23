@@ -113,7 +113,12 @@ class MatterNamespace(socketio.AsyncNamespace):  # type: ignore[misc]
     Then emit 'join_matter' with { matter_id: "<uuid>" } to join a room.
     """
 
-    async def on_connect(self, sid: str, environ: dict[str, Any], auth: dict[str, Any] | None = None) -> None:
+    async def on_connect(
+        self,
+        sid: str,
+        environ: dict[str, Any],
+        auth: dict[str, Any] | None = None,
+    ) -> None:
         """Authenticate the connection using JWT."""
         token = None
 

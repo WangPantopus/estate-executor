@@ -93,7 +93,14 @@ def send_email(
     retry_backoff=True,
     retry_backoff_max=900,
 )
-def send_templated_email(self: Any, *, to: str, subject: str, template_name: str, context: dict[str, Any]) -> dict[str, str]:
+def send_templated_email(
+    self: Any,
+    *,
+    to: str,
+    subject: str,
+    template_name: str,
+    context: dict[str, Any],
+) -> dict[str, str]:
     """Render a Jinja2 template and send the email.
 
     This is the preferred entry point for all notification tasks.
@@ -214,7 +221,11 @@ def send_stakeholder_invitation(self: Any, stakeholder_id: str) -> dict[str, str
     max_retries=3,
     retry_backoff=True,
 )
-def send_task_assignment_notification(self: Any, task_id: str, assignee_stakeholder_id: str) -> dict[str, str]:
+def send_task_assignment_notification(
+    self: Any,
+    task_id: str,
+    assignee_stakeholder_id: str,
+) -> dict[str, str]:
     """Notify a stakeholder that a task has been assigned to them."""
     try:
 

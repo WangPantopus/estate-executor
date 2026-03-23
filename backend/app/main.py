@@ -125,7 +125,7 @@ def create_app() -> FastAPI:
 
     from app.realtime import create_socketio_app
 
-    socketio_asgi = create_socketio_app()  # type: ignore[no-untyped-call]
+    socketio_asgi = create_socketio_app()
     fastapi_app.mount("/ws", socketio_asgi)
 
     return fastapi_app
