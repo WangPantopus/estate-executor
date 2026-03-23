@@ -382,10 +382,10 @@ function DistributionWaterfall({
       <div className="space-y-3">
         {entitiesWithRules.map((entity) => {
           const rules = entity.distribution_rules || {};
-          const provisions = rules.provisions || rules.distribution_provisions;
-          const specialProvisions: string[] = rules.special_provisions || [];
-          const spendthrift = rules.spendthrift_clause;
-          const specialNeeds = rules.special_needs_provisions;
+          const provisions = (rules.provisions || rules.distribution_provisions) as string | undefined;
+          const specialProvisions = (rules.special_provisions || []) as string[];
+          const spendthrift = rules.spendthrift_clause as boolean | undefined;
+          const specialNeeds = rules.special_needs_provisions as boolean | undefined;
 
           return (
             <div key={entity.id} className="space-y-2">
