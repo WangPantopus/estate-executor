@@ -9,8 +9,8 @@ A step-by-step guide to get Estate Executor OS running on your local macOS machi
 1. [Prerequisites](#1-prerequisites)
 2. [Clone the Repository](#2-clone-the-repository)
 3. [Install System Dependencies](#3-install-system-dependencies)
-4. [Start Infrastructure Services](#4-start-infrastructure-services)
-5. [Configure Environment Variables](#5-configure-environment-variables)
+4. [Configure Environment Variables](#4-configure-environment-variables)
+5. [Start Infrastructure Services](#5-start-infrastructure-services)
 6. [Set Up the Backend](#6-set-up-the-backend)
 7. [Run Database Migrations](#7-run-database-migrations)
 8. [Set Up the Frontend](#8-set-up-the-frontend)
@@ -127,7 +127,143 @@ brew install openssl readline
 
 ---
 
-## 4. Start Infrastructure Services
+## 4. Configure Environment Variables
+
+The project uses three `.env` files. Set these up **before** starting any services so that Docker Compose and the application pick up the correct values from the start.
+
+### 4a. Root `.env` (used by Docker Compose)
+
+```bash
+cp .env.example .env
+```
+
+The defaults work out of the box for local development. You only need to fill in API keys for services you plan to use:
+
+| Variable              | Required? | Notes                                        |
+|----------------------|-----------|----------------------------------------------|
+| `DATABASE_URL`        | Pre-filled | Works with default Docker Compose setup      |
+| `REDIS_URL`           | Pre-filled | Works with default Docker Compose setup      |
+| `AUTH0_DOMAIN`        | Yes       | Your Auth0 tenant domain                     |
+| `AUTH0_API_AUDIENCE`  | Yes       | Your Auth0 API audience                      |
+| `AUTH0_CLIENT_ID`     | Yes       | Auth0 application client ID                  |
+| `AUTH0_CLIENT_SECRET` | Yes       | Auth0 application client secret              |
+| `ANTHROPIC_API_KEY`   | Optional  | Needed for AI-powered features               |
+| `STRIPE_SECRET_KEY`   | Optional  | Needed for payment features                  |
+| `RESEND_API_KEY`      | Optional  | Needed for real email sending (Mailpit works without it) |
+| `APP_SECRET_KEY`      | Yes       | Generate with `openssl rand -hex 32`         |
+| `ENCRYPTION_MASTER_KEY`| Yes      | Generate with `openssl rand -hex 32`         |
+
+### 4b. Backend `.env` (complete reference)
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+The `backend/.env.example` only contains a minimal subset. Below is the **complete** list of every environment variable the backend reads (from `app/core/config.py`), organized by category. Copy this into `backend/.env` and fill in the values marked with `<...>`:
+
+```dotenv
+# ============================================================
+# Estate Executor OS — Backend Environment Variables (Complete)
+# ============================================================
+
+# ---- Application ----
+APP_ENV=development                          # "development" or "production"
+APP_SECRET_KEY=<run: openssl rand -hex 32>   # REQUIRED — used for JWT/session signing
+ENVIRONMENT=dev                              # Alias: "dev" or "production"
+LOG_LEVEL=INFO                               # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# ---- Database ----
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/estate_executor
+DATABASE_URL_SYNC=postgresql://postgres:postgres@localhost:5432/estate_executor
+
+# ---- Redis ----
+REDIS_URL=redis://localhost:6379/0
+
+# ---- CORS ----
+BACKEND_CORS_ORIGINS=http://localhost:3000    # Comma-separated list of allowed origins
+CORS_ORIGINS=http://localhost:3000            # Alias — same as above
+
+# ---- Auth0 ----
+AUTH0_DOMAIN=<your-tenant.us.auth0.com>      # REQUIRED — Auth0 tenant domain
+AUTH0_API_AUDIENCE=<your-api-audience>        # REQUIRED — Auth0 API identifier
+AUTH0_CLIENT_ID=<your-client-id>             # REQUIRED — Auth0 app client ID
+AUTH0_CLIENT_SECRET=<your-client-secret>      # REQUIRED — Auth0 app client secret
+# AUTH0_ALGORITHMS=RS256                     # Default: RS256 — rarely needs changing
+
+# ---- Anthropic (Claude AI) ----
+ANTHROPIC_API_KEY=<sk-ant-xxx>               # Optional — needed for AI document extraction & classification
+
+# ---- AWS S3 / MinIO (Document Storage) ----
+AWS_S3_BUCKET=estate-executor-documents      # Bucket name (auto-created by minio-init)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=minioadmin                 # Use MinIO credentials for local dev
+AWS_SECRET_ACCESS_KEY=minioadmin             # Use MinIO credentials for local dev
+S3_ENDPOINT_URL=http://localhost:9000        # REQUIRED for local dev — points to MinIO
+
+# ---- Stripe (Payments) ----
+STRIPE_SECRET_KEY=<sk_test_xxx>              # Optional — needed for payment features
+STRIPE_WEBHOOK_SECRET=<whsec_xxx>            # Optional — needed for Stripe webhooks
+
+# ---- Email ----
+RESEND_API_KEY=<re_xxx>                      # Optional — Mailpit catches emails without this
+EMAIL_FROM=Estate Executor <notifications@estate-executor.com>
+MAILPIT_SMTP_HOST=localhost                  # Points to local Mailpit SMTP
+MAILPIT_SMTP_PORT=1025                       # Mailpit SMTP port
+
+# ---- URLs ----
+BACKEND_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:3000
+
+# ---- Encryption (Field-Level) ----
+ENCRYPTION_MASTER_KEY=<run: openssl rand -hex 32>   # REQUIRED — AES-256-GCM key for encrypting sensitive fields
+
+# ---- Celery (Background Workers) ----
+CELERY_BROKER_URL=redis://localhost:6379/1    # Uses Redis DB 1 (separate from app cache)
+CELERY_RESULT_BACKEND=redis://localhost:6379/2 # Uses Redis DB 2
+
+# ---- E2E Testing ----
+# E2E_MOCK_AUTH=false                        # Set to "true" to bypass Auth0 in E2E tests
+```
+
+**Quick summary of what you must fill in:**
+
+| Variable               | How to get it                                   |
+|------------------------|-------------------------------------------------|
+| `APP_SECRET_KEY`       | Run `openssl rand -hex 32`                      |
+| `ENCRYPTION_MASTER_KEY`| Run `openssl rand -hex 32`                      |
+| `AUTH0_DOMAIN`         | From your Auth0 Dashboard → Applications        |
+| `AUTH0_API_AUDIENCE`   | From Auth0 Dashboard → APIs                     |
+| `AUTH0_CLIENT_ID`      | From Auth0 Dashboard → Applications → Settings  |
+| `AUTH0_CLIENT_SECRET`  | From Auth0 Dashboard → Applications → Settings  |
+
+Everything else either has a working default or is optional for local development.
+
+### 4c. Frontend `.env`
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+Edit `frontend/.env`:
+
+```dotenv
+# Auth0 Configuration
+AUTH0_DOMAIN=<your-tenant.us.auth0.com>
+AUTH0_CLIENT_ID=<your-client-id>
+AUTH0_CLIENT_SECRET=<your-client-secret>
+AUTH0_SECRET=<run: openssl rand -hex 32>
+AUTH0_AUDIENCE=<your-api-audience>
+APP_BASE_URL=http://localhost:3000
+
+# API
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+```
+
+> **Auth0 Setup:** You need an Auth0 account and application configured. Create a "Regular Web Application" in Auth0 Dashboard, set the callback URL to `http://localhost:3000/api/auth/callback`, and the logout URL to `http://localhost:3000`. Under "Allowed Web Origins" add `http://localhost:3000`.
+
+---
+
+## 5. Start Infrastructure Services
 
 The project uses Docker Compose to run all infrastructure services locally. This includes:
 
@@ -167,86 +303,6 @@ docker compose exec redis redis-cli ping
 You can also visit:
 - **Mailpit Web UI**: [http://localhost:8025](http://localhost:8025) — catches all outgoing emails
 - **MinIO Console**: [http://localhost:9001](http://localhost:9001) — login with `minioadmin` / `minioadmin`
-
----
-
-## 5. Configure Environment Variables
-
-The project uses three `.env` files: one at the root (for Docker Compose), one for the backend, and one for the frontend.
-
-### 5a. Root `.env`
-
-```bash
-cp .env.example .env
-```
-
-The defaults work out of the box for local development. You only need to fill in API keys for services you plan to use:
-
-| Variable              | Required? | Notes                                        |
-|----------------------|-----------|----------------------------------------------|
-| `DATABASE_URL`        | Pre-filled | Works with default Docker Compose setup      |
-| `REDIS_URL`           | Pre-filled | Works with default Docker Compose setup      |
-| `AUTH0_DOMAIN`        | Yes       | Your Auth0 tenant domain                     |
-| `AUTH0_API_AUDIENCE`  | Yes       | Your Auth0 API audience                      |
-| `AUTH0_CLIENT_ID`     | Yes       | Auth0 application client ID                  |
-| `AUTH0_CLIENT_SECRET` | Yes       | Auth0 application client secret              |
-| `ANTHROPIC_API_KEY`   | Optional  | Needed for AI-powered features               |
-| `STRIPE_SECRET_KEY`   | Optional  | Needed for payment features                  |
-| `RESEND_API_KEY`      | Optional  | Needed for real email sending (Mailpit works without it) |
-| `APP_SECRET_KEY`      | Yes       | Generate with `openssl rand -hex 32`         |
-| `ENCRYPTION_MASTER_KEY`| Yes      | Generate with `openssl rand -hex 32`         |
-
-### 5b. Backend `.env`
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Edit `backend/.env` and configure:
-
-```dotenv
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/estate_executor
-DATABASE_URL_SYNC=postgresql://postgres:postgres@localhost:5432/estate_executor
-REDIS_URL=redis://localhost:6379/0
-APP_ENV=development
-APP_SECRET_KEY=<run: openssl rand -hex 32>
-BACKEND_CORS_ORIGINS=http://localhost:3000
-AUTH0_DOMAIN=your-tenant.us.auth0.com
-AUTH0_API_AUDIENCE=https://api.estate-executor.com
-
-# Add these for full functionality:
-ANTHROPIC_API_KEY=sk-ant-xxx
-CELERY_BROKER_URL=redis://localhost:6379/1
-CELERY_RESULT_BACKEND=redis://localhost:6379/2
-ENCRYPTION_MASTER_KEY=<run: openssl rand -hex 32>
-
-# MinIO (local S3)
-AWS_S3_BUCKET=estate-executor-documents
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
-S3_ENDPOINT_URL=http://localhost:9000
-```
-
-### 5c. Frontend `.env`
-
-```bash
-cp frontend/.env.example frontend/.env
-```
-
-Edit `frontend/.env`:
-
-```dotenv
-AUTH0_DOMAIN=your-tenant.us.auth0.com
-AUTH0_CLIENT_ID=your-client-id
-AUTH0_CLIENT_SECRET=your-client-secret
-AUTH0_SECRET=<run: openssl rand -hex 32>
-AUTH0_AUDIENCE=https://api.estateexecutoros.com
-APP_BASE_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-```
-
-> **Auth0 Setup:** You need an Auth0 account and application configured. Create a "Regular Web Application" in Auth0 Dashboard, set the callback URL to `http://localhost:3000/api/auth/callback`, and the logout URL to `http://localhost:3000`.
 
 ---
 
