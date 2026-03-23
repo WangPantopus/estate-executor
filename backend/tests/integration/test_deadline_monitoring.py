@@ -5,11 +5,10 @@ Tests deadline CRUD via API endpoints and deadline detection logic.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, date, datetime, timedelta
+from unittest.mock import patch
 
 import pytest
-from httpx import AsyncClient
 
 from app.models.enums import DeadlineSource, DeadlineStatus
 
@@ -20,20 +19,20 @@ def _make_deadline_obj(**overrides):
     return SimpleNamespace(
         id=overrides.get("id", __import__("uuid").uuid4()),
         matter_id=overrides.get("matter_id", __import__("uuid").uuid4()),
-        task_id=overrides.get("task_id", None),
+        task_id=overrides.get("task_id"),
         title=overrides.get("title", "Federal Estate Tax Return"),
         description=overrides.get("description", "Due 9 months from DOD"),
         due_date=overrides.get("due_date", date.today() + timedelta(days=30)),
         source=overrides.get("source", DeadlineSource.manual),
-        rule=overrides.get("rule", None),
+        rule=overrides.get("rule"),
         status=overrides.get("status", DeadlineStatus.upcoming),
-        assigned_to=overrides.get("assigned_to", None),
+        assigned_to=overrides.get("assigned_to"),
         reminder_config=overrides.get("reminder_config", {"days_before": [30, 7, 1]}),
         last_reminder_sent=None,
         task=None,
         assignee=None,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
 
@@ -139,7 +138,7 @@ class TestReminderScheduling:
 
     async def test_idempotent_same_day(self):
         today = date.today()
-        last_sent = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+        last_sent = datetime(today.year, today.month, today.day, tzinfo=UTC)
         assert last_sent.date() == today
 
     async def test_extend_status(self):

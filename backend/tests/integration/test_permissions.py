@@ -2,7 +2,8 @@
 
 Tests the full permission enforcement model:
 - matter_admin: full access to everything
-- professional: full access to tasks/assets/entities/documents; cannot manage stakeholders or close matter
+- professional: full access to tasks/assets/entities/documents;
+  cannot manage stakeholders or close matter
 - executor_trustee: can see/complete assigned tasks, upload documents, send communications
 - beneficiary: read-only progress view, shared documents, visible communications only
 - read_only: status view only, no documents, no communications

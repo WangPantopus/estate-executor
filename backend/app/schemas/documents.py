@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 
-from .common import PaginationMeta
+if TYPE_CHECKING:
+    from datetime import datetime
+    from uuid import UUID
+
+    from .common import PaginationMeta
 
 
 class DocumentUploadRequest(BaseModel):

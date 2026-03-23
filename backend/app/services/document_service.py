@@ -4,24 +4,27 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.events import event_logger
 from app.core.exceptions import NotFoundError
 from app.models.asset_documents import asset_documents
-from app.models.documents import Document
-from app.models.document_versions import DocumentVersion
-from app.models.enums import ActorType, CommunicationType, CommunicationVisibility
 from app.models.communications import Communication
+from app.models.document_versions import DocumentVersion
+from app.models.documents import Document
+from app.models.enums import ActorType, CommunicationType, CommunicationVisibility
 from app.models.stakeholders import Stakeholder
 from app.models.task_documents import task_documents
-from app.schemas.auth import CurrentUser
 from app.services import storage_service
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +81,7 @@ async def register_document(
     db: AsyncSession,
     *,
     matter_id: uuid.UUID,
-    stakeholder: "Stakeholder",
+    stakeholder: Stakeholder,
     filename: str,
     storage_key: str,
     mime_type: str,
@@ -325,7 +328,7 @@ async def register_version(
     *,
     doc_id: uuid.UUID,
     matter_id: uuid.UUID,
-    stakeholder: "Stakeholder",
+    stakeholder: Stakeholder,
     storage_key: str,
     size_bytes: int,
     current_user: CurrentUser,
@@ -375,7 +378,7 @@ async def request_document(
     db: AsyncSession,
     *,
     matter_id: uuid.UUID,
-    sender: "Stakeholder",
+    sender: Stakeholder,
     target_stakeholder_id: uuid.UUID,
     doc_type_needed: str,
     task_id: uuid.UUID | None = None,

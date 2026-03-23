@@ -24,7 +24,7 @@ async def client_firm_b() -> AsyncClient:
     """
     from app.core.dependencies import get_db
     from app.core.exceptions import NotFoundError
-    from app.core.security import get_current_user, require_firm_member, _get_db_session
+    from app.core.security import _get_db_session, get_current_user, require_firm_member
     from app.main import app
 
     firm_b_id = uuid.uuid4()
@@ -49,6 +49,7 @@ async def client_firm_b() -> AsyncClient:
         if firm_id != firm_b_id:
             raise NotFoundError(detail="Firm not found")
         from unittest.mock import MagicMock
+
         from app.models.enums import FirmRole
         from app.models.firm_memberships import FirmMembership
 
@@ -102,7 +103,10 @@ class TestCrossTenantAccess:
         )
         assert resp.status_code == 404
 
-    @pytest.mark.xfail(reason="Default client overrides require_firm_member; needs separate fixture")
+    @pytest.mark.xfail(
+        reason="Default client overrides require_firm_member; "
+        "needs separate fixture"
+    )
     async def test_nonexistent_firm_returns_404(self, client):
         fake_firm = uuid.uuid4()
         resp = await client.get(f"/api/v1/firms/{fake_firm}/matters")

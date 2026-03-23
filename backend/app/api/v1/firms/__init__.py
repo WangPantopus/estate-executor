@@ -3,20 +3,25 @@
 from __future__ import annotations
 
 import math
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, EmailStr
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.security import get_current_user, require_firm_member
-from app.models.enums import FirmRole
-from app.models.firm_memberships import FirmMembership
-from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.firms import FirmCreate, FirmListResponse, FirmResponse, FirmUpdate
 from app.services import firm_service
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.models.enums import FirmRole
+    from app.models.firm_memberships import FirmMembership
+    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 

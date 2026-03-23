@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncGenerator
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 import jwt
 from cachetools import TTLCache
@@ -13,7 +11,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import Depends, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
@@ -75,9 +72,9 @@ async def verify_jwt(token: str) -> TokenPayload:
             issuer=settings.auth0_issuer,
         )
     except jwt.ExpiredSignatureError:
-        raise UnauthorizedError(detail="Token has expired")
+        raise UnauthorizedError(detail="Token has expired") from None
     except jwt.InvalidTokenError as exc:
-        raise UnauthorizedError(detail=f"Invalid token: {exc}")
+        raise UnauthorizedError(detail=f"Invalid token: {exc}") from exc
 
     return TokenPayload(
         sub=payload["sub"],
@@ -94,6 +91,12 @@ async def verify_jwt(token: str) -> TokenPayload:
 # Avoid circular import: get_db is defined in dependencies.py but that
 # module must not import from security. We re-use the same session factory.
 from app.core.database import async_session_factory  # noqa: E402
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def _get_db_session() -> AsyncGenerator[AsyncSession]:
@@ -307,7 +310,8 @@ def _has_permission(role: StakeholderRole, required: str) -> bool:
 
 
 def require_permission(permission: str):
-    """Return a FastAPI dependency that checks the resolved stakeholder has the required permission."""
+    """Return a FastAPI dependency that checks the resolved
+    stakeholder has the required permission."""
 
     async def _check(
         request: Request,

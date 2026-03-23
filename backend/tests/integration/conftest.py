@@ -16,10 +16,7 @@ from __future__ import annotations
 
 import sys
 import uuid
-from collections.abc import AsyncGenerator
-from datetime import date, datetime, timezone
-from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock
 
 # ─── Patch broken jwt/cryptography before any app imports ─────────────────────
@@ -48,12 +45,15 @@ for _mod in [
     if _mod not in sys.modules:
         sys.modules[_mod] = MagicMock()
 
-import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
+import pytest  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
-from app.models.enums import FirmRole, InviteStatus, StakeholderRole
-from app.schemas.auth import CurrentUser, FirmMembershipBrief
+from app.models.enums import FirmRole, StakeholderRole  # noqa: E402
+from app.schemas.auth import CurrentUser, FirmMembershipBrief  # noqa: E402
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────

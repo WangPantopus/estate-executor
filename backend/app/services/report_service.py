@@ -13,13 +13,11 @@ from __future__ import annotations
 import io
 import logging
 import re
-import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models.assets import Asset
@@ -28,13 +26,17 @@ from app.models.deadlines import Deadline
 from app.models.enums import (
     CommunicationType,
     DeadlineStatus,
-    MatterStatus,
     TaskStatus,
 )
 from app.models.events import Event
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.tasks import Task
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +116,8 @@ def _header_footer(canvas, doc, *, firm_name: str, report_title: str):
 
 def _section_heading(text: str):
     """Create a styled section heading paragraph."""
-    from reportlab.platypus import Paragraph
     from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import Paragraph
 
     style = ParagraphStyle(
         "SectionHeading",
@@ -131,8 +133,8 @@ def _section_heading(text: str):
 
 
 def _body_text(text: str):
-    from reportlab.platypus import Paragraph
     from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import Paragraph
 
     style = ParagraphStyle(
         "BodyText",
@@ -152,8 +154,8 @@ def _kv_pair(label: str, value: str):
 
 def _styled_table(data: list[list[str]], col_widths: list[float] | None = None):
     """Create a styled table with navy header."""
-    from reportlab.platypus import Table, TableStyle
     from reportlab.lib import colors
+    from reportlab.platypus import Table, TableStyle
 
     t = Table(data, colWidths=col_widths, repeatRows=1)
     t.setStyle(TableStyle([
@@ -204,7 +206,6 @@ def _enum_label(val: Any) -> str:
 
 def _create_workbook():
     from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
     wb = Workbook()
     return wb
@@ -212,7 +213,7 @@ def _create_workbook():
 
 def _style_excel_header(ws, col_count: int):
     """Style the first row as a navy header with white text."""
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
     navy_fill = PatternFill(start_color="1A2332", end_color="1A2332", fill_type="solid")
     white_font = Font(name="Calibri", bold=True, color="FFFFFF", size=10)
@@ -299,7 +300,11 @@ async def _get_deadlines(db: AsyncSession, matter_id: uuid.UUID) -> list[Deadlin
     return list(result.scalars().all())
 
 
-async def _get_recent_events(db: AsyncSession, matter_id: uuid.UUID, limit: int = 10) -> list[Event]:
+async def _get_recent_events(
+    db: AsyncSession,
+    matter_id: uuid.UUID,
+    limit: int = 10,
+) -> list[Event]:
     result = await db.execute(
         select(Event).where(Event.matter_id == matter_id)
         .order_by(Event.created_at.desc())
@@ -398,7 +403,11 @@ async def generate_matter_summary_pdf(
     ))
 
     # Key deadlines
-    upcoming = [d for d in deadlines if d.status == DeadlineStatus.upcoming and d.due_date >= date.today()][:5]
+    upcoming = [
+        d for d in deadlines
+        if d.status == DeadlineStatus.upcoming
+        and d.due_date >= date.today()
+    ][:5]
     if upcoming:
         elements.append(Spacer(1, 8))
         elements.append(_section_heading("Upcoming Deadlines"))
@@ -482,7 +491,7 @@ async def generate_asset_inventory_xlsx(
     db: AsyncSession, *, matter_id: uuid.UUID
 ) -> bytes:
     """Generate an Excel asset inventory report."""
-    matter = await _get_matter_with_firm(db, matter_id)
+    await _get_matter_with_firm(db, matter_id)
     assets = await _get_assets(db, matter_id)
 
     wb = _create_workbook()
@@ -580,7 +589,7 @@ async def generate_task_audit_xlsx(
     db: AsyncSession, *, matter_id: uuid.UUID
 ) -> bytes:
     """Generate an Excel task completion audit report."""
-    matter = await _get_matter_with_firm(db, matter_id)
+    await _get_matter_with_firm(db, matter_id)
     tasks = await _get_tasks(db, matter_id)
 
     wb = _create_workbook()
@@ -703,7 +712,7 @@ async def generate_time_tracking_xlsx(
     Time tracking is not yet implemented — this generates a template
     with column headers and a note about the feature being upcoming.
     """
-    matter = await _get_matter_with_firm(db, matter_id)
+    await _get_matter_with_firm(db, matter_id)
     stakeholders = await _get_stakeholders(db, matter_id)
 
     wb = _create_workbook()
@@ -786,6 +795,7 @@ def _cache_get(key: str) -> bytes | None:
     """Try to get a cached report from Redis. Returns None on miss or error."""
     try:
         import redis
+
         from app.core.config import settings
 
         r = redis.from_url(settings.redis_url)
@@ -801,6 +811,7 @@ def _cache_set(key: str, data: bytes) -> None:
     """Cache a generated report in Redis. Fire-and-forget."""
     try:
         import redis
+
         from app.core.config import settings
 
         r = redis.from_url(settings.redis_url)

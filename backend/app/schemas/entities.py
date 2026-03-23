@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from decimal import Decimal
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import EntityType, FundingStatus
+if TYPE_CHECKING:
+    from datetime import datetime
+    from decimal import Decimal
+    from uuid import UUID
 
-from .common import PaginationMeta
+    from app.models.enums import EntityType, FundingStatus
 
 
 class AssetBrief(BaseModel):

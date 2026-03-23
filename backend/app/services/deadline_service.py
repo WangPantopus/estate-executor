@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from collections import defaultdict
-from datetime import date, datetime, timezone
-from typing import Any
+from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -17,7 +15,13 @@ from app.core.exceptions import NotFoundError
 from app.models.deadlines import Deadline
 from app.models.enums import ActorType, DeadlineSource, DeadlineStatus, MatterStatus
 from app.models.matters import Matter
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -281,8 +285,8 @@ async def check_deadlines(db: AsyncSession, *, today: date | None = None) -> dic
     if today is None:
         today = date.today()
 
-    now = datetime.now(timezone.utc)
-    today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+    now = datetime.now(UTC)
+    today_start = datetime(today.year, today.month, today.day, tzinfo=UTC)
 
     stats = {"missed": 0, "reminders_sent": 0}
 

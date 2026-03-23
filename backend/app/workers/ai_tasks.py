@@ -46,7 +46,7 @@ def classify_document(self, document_id: str, matter_id: str):
         }
     except Exception as exc:
         logger.exception("classify_document failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 @celery_app.task(
@@ -76,7 +76,7 @@ def extract_document_data(self, document_id: str):
         }
     except Exception as exc:
         logger.exception("extract_document_data failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 @celery_app.task(
@@ -112,4 +112,4 @@ def draft_letter(self, matter_id: str, asset_id: str, letter_type: str):
         }
     except Exception as exc:
         logger.exception("draft_letter failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

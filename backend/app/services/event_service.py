@@ -12,13 +12,15 @@ import json
 import logging
 import uuid
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.events import Event
 from app.models.stakeholders import Stakeholder
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +176,11 @@ async def export_events_csv(
     writer.writerow(["timestamp", "actor", "entity_type", "entity_id", "action", "changes_summary"])
 
     for event in events:
-        actor_name = actor_names.get(event.actor_id, event.actor_type.value) if event.actor_id else event.actor_type.value
+        actor_name = (
+            actor_names.get(event.actor_id, event.actor_type.value)
+            if event.actor_id
+            else event.actor_type.value
+        )
         writer.writerow([
             event.created_at.isoformat(),
             actor_name,

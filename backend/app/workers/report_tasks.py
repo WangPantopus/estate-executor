@@ -90,4 +90,4 @@ def generate_report_task(
             "report_generation_failed",
             extra={"job_id": job_id, "report_type": report_type},
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

@@ -2,21 +2,26 @@
 
 from __future__ import annotations
 
-from datetime import date
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import require_firm_member, require_stakeholder
 from app.models.enums import StakeholderRole
-from app.models.firm_memberships import FirmMembership
-from app.models.stakeholders import Stakeholder
 from app.schemas.events import CursorMeta, EventListResponse, EventResponse
 from app.services import event_service
+
+if TYPE_CHECKING:
+    from datetime import date
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.models.firm_memberships import FirmMembership
+    from app.models.stakeholders import Stakeholder
 
 router = APIRouter()
 
@@ -59,7 +64,10 @@ async def list_events(
     action: str | None = Query(None),
     date_from: date | None = Query(None, alias="from"),
     date_to: date | None = Query(None, alias="to"),
-    cursor: str | None = Query(None, description="Cursor for pagination (created_at ISO timestamp)"),
+    cursor: str | None = Query(
+        None,
+        description="Cursor for pagination (created_at ISO timestamp)",
+    ),
     per_page: int = Query(50, ge=1, le=200),
     _membership: FirmMembership = Depends(require_firm_member),
     _stakeholder: Stakeholder = Depends(require_stakeholder),

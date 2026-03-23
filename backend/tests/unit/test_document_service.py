@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
 from app.models.enums import CommunicationType, CommunicationVisibility
 
 
@@ -376,7 +374,6 @@ class TestUploadURLGeneration:
 
         firm_id = uuid.uuid4()
         matter_id = uuid.uuid4()
-        filename = "will.pdf"
         # Expected pattern
         expected_prefix = f"firms/{firm_id}/matters/{matter_id}/docs/"
         assert expected_prefix.startswith("firms/")

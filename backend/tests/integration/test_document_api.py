@@ -6,7 +6,6 @@ import uuid
 from unittest.mock import patch
 
 import pytest
-from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

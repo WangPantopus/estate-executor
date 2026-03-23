@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from datetime import date
 
-import pytest
-
 from app.services.task_generation_service import _add_months, _resolve_due_date
 
 
@@ -111,7 +109,7 @@ class TestTemplateRegistry:
         tasks = registry.get_templates("trust_administration", "CA")
         keys = {t["key"] for t in tasks}
         # Trust admin should NOT have probate filing tasks
-        probate_keys = {k for k in keys if "probate" in k.lower()}
+        {k for k in keys if "probate" in k.lower()}
         trust_keys = {k for k in keys if "trust" in k.lower()}
         assert len(trust_keys) >= 0  # May or may not have trust-specific
 

@@ -7,14 +7,16 @@ Socket.IO server can broadcast real-time updates to connected clients.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from fastapi import Request
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.enums import ActorType
 from app.models.events import Event
+
+if TYPE_CHECKING:
+    from fastapi import Request
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.models.enums import ActorType
 
 logger = logging.getLogger(__name__)
 

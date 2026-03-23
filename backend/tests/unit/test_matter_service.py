@@ -2,19 +2,11 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import date, datetime, timezone
-from decimal import Decimal
-
-import pytest
+from datetime import date
 
 from app.models.enums import (
-    AssetStatus,
-    DeadlineStatus,
     MatterPhase,
     MatterStatus,
-    StakeholderRole,
-    TaskPriority,
     TaskStatus,
 )
 
@@ -27,7 +19,10 @@ class TestComputeRiskLevel:
         return _compute_risk_level(**kw)
 
     def test_green_no_issues(self):
-        assert self._compute(overdue_count=0, has_dispute=False, oldest_blocked_days=None) == "green"
+        result = self._compute(
+            overdue_count=0, has_dispute=False, oldest_blocked_days=None,
+        )
+        assert result == "green"
 
     def test_red_overdue(self):
         assert self._compute(overdue_count=1, has_dispute=False, oldest_blocked_days=None) == "red"
@@ -259,7 +254,7 @@ class TestDashboardVariousConfigurations:
     def test_dashboard_with_all_overdue_tasks(self):
         from datetime import timedelta
         today = date.today()
-        past_due = today - timedelta(days=10)
+        today - timedelta(days=10)
         overdue_count = 5
         total = 5
         assert overdue_count == total
@@ -304,4 +299,5 @@ class TestPortfolioSchema:
                     result = _compute_risk_level(
                         overdue_count=oc, has_dispute=dispute, oldest_blocked_days=blocked
                     )
-                    assert result in valid, f"Invalid: {result} for oc={oc}, d={dispute}, b={blocked}"
+                    msg = f"Invalid: {result} for oc={oc}, d={dispute}, b={blocked}"
+                    assert result in valid, msg

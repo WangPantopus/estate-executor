@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import logging
-import uuid
-from datetime import date, datetime, timezone
-from decimal import Decimal
-from typing import Any
+from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import func, select, and_, or_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, func, or_, select
 
 from app.core.events import event_logger
-from app.core.exceptions import ConflictError, NotFoundError, PermissionDeniedError
+from app.core.exceptions import ConflictError, NotFoundError
 from app.models.assets import Asset
 from app.models.deadlines import Deadline
 from app.models.enums import (
@@ -31,7 +28,14 @@ from app.models.firm_memberships import FirmMembership
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.tasks import Task
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+    from decimal import Decimal
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +127,10 @@ async def list_matters(
     page: int = 1,
     per_page: int = 50,
 ) -> tuple[list[Matter], int]:
-    """List matters with filters. Non-admin firm members only see matters where they are stakeholders."""
+    """List matters with filters.
+
+    Non-admin firm members only see matters where they are stakeholders.
+    """
     # Check if user is a firm admin/owner
     membership_q = select(FirmMembership).where(
         FirmMembership.firm_id == firm_id,
@@ -352,7 +359,11 @@ async def update_matter(
         if value is not None:
             old_value = getattr(matter, field, None)
             if old_value != value:
-                old_str = old_value.value if hasattr(old_value, "value") else str(old_value) if old_value is not None else None
+                old_str = (
+                    old_value.value
+                    if hasattr(old_value, "value")
+                    else str(old_value) if old_value is not None else None
+                )
                 new_str = value.value if hasattr(value, "value") else str(value)
                 changes[field] = {"old": old_str, "new": new_str}
                 setattr(matter, field, value)
@@ -404,11 +415,14 @@ async def close_matter(
 
     if incomplete_count > 0:
         raise ConflictError(
-            detail=f"Cannot close matter: {incomplete_count} critical task(s) are not complete or waived"
+            detail=(
+                f"Cannot close matter: {incomplete_count} "
+                "critical task(s) are not complete or waived"
+            )
         )
 
     matter.status = MatterStatus.closed
-    matter.closed_at = datetime.now(timezone.utc)
+    matter.closed_at = datetime.now(UTC)
     await db.flush()
 
     await event_logger.log(
@@ -649,7 +663,7 @@ async def get_portfolio(
 
     # ── Build response items with risk level ─────────────────────────────────
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     portfolio_items = []
     for matter in matters:
@@ -663,11 +677,10 @@ async def get_portfolio(
         # Compute oldest blocked task days
         oldest_blocked_days: int | None = None
         if stats and stats.oldest_blocked_at:
-            now_utc = datetime.now(timezone.utc)
+            now_utc = datetime.now(UTC)
             blocked_at = stats.oldest_blocked_at
             if blocked_at.tzinfo is None:
-                from datetime import timezone as tz
-                blocked_at = blocked_at.replace(tzinfo=tz.utc)
+                blocked_at = blocked_at.replace(tzinfo=UTC)
             oldest_blocked_days = (now_utc - blocked_at).days
 
         # Compute risk level

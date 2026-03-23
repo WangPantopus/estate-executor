@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import logging
-import uuid
-from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -19,7 +16,13 @@ from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
 from app.models.documents import Document
 from app.models.enums import ActorType, AssetStatus, AssetType, OwnershipType, TransferMechanism
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,12 @@ logger = logging.getLogger(__name__)
 # Asset status lifecycle — ordered, forward-only
 # ---------------------------------------------------------------------------
 
-_STATUS_ORDER = [AssetStatus.discovered, AssetStatus.valued, AssetStatus.transferred, AssetStatus.distributed]
+_STATUS_ORDER = [
+    AssetStatus.discovered,
+    AssetStatus.valued,
+    AssetStatus.transferred,
+    AssetStatus.distributed,
+]
 _STATUS_INDEX = {s: i for i, s in enumerate(_STATUS_ORDER)}
 
 
@@ -347,7 +355,10 @@ async def update_asset(
             old_str = old_val.value if hasattr(old_val, "value") else old_val
             new_str = value.value if hasattr(value, "value") else value
             if old_str != new_str:
-                changes[field] = {"old": str(old_str) if old_str is not None else None, "new": str(new_str)}
+                changes[field] = {
+                    "old": str(old_str) if old_str is not None else None,
+                    "new": str(new_str),
+                }
                 setattr(asset, field, value)
 
     if changes:

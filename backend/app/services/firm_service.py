@@ -5,10 +5,9 @@ from __future__ import annotations
 import logging
 import re
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -17,7 +16,11 @@ from app.models.enums import ActorType, FirmRole
 from app.models.firm_memberships import FirmMembership
 from app.models.firms import Firm
 from app.models.users import User
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +140,10 @@ async def update_firm(
         if value is not None:
             old_value = getattr(firm, field, None)
             if old_value != value:
-                changes[field] = {"old": str(old_value) if old_value is not None else None, "new": str(value)}
+                changes[field] = {
+                    "old": str(old_value) if old_value is not None else None,
+                    "new": str(value),
+                }
                 setattr(firm, field, value)
 
     if changes:

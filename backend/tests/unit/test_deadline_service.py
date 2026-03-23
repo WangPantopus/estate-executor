@@ -1,8 +1,6 @@
 """Unit tests for deadline service — monitoring logic, calendar grouping, schemas."""
 
-from datetime import date, datetime, timezone
-
-import pytest
+from datetime import UTC, date, datetime
 
 from app.models.enums import DeadlineSource, DeadlineStatus
 
@@ -122,8 +120,8 @@ class TestReminderIdempotency:
 
     def test_reminder_already_sent_today_should_skip(self):
         """If last_reminder_sent is today, the reminder should be skipped."""
-        now = datetime.now(timezone.utc)
-        today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+        now = datetime.now(UTC)
+        today_start = datetime(now.year, now.month, now.day, tzinfo=UTC)
         # Simulating: last_reminder_sent = 2 hours ago (still today)
         last_sent = today_start.replace(hour=2)
         assert last_sent >= today_start  # Would be skipped by the check
@@ -132,15 +130,15 @@ class TestReminderIdempotency:
         """If last_reminder_sent is yesterday, the reminder should fire."""
         from datetime import timedelta
 
-        now = datetime.now(timezone.utc)
-        today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+        now = datetime.now(UTC)
+        today_start = datetime(now.year, now.month, now.day, tzinfo=UTC)
         last_sent = today_start - timedelta(days=1)
         assert last_sent < today_start  # Would pass the check
 
     def test_no_previous_reminder_should_fire(self):
         """If last_reminder_sent is None, the reminder should fire."""
         last_sent = None
-        today_start = datetime(2025, 1, 15, tzinfo=timezone.utc)
+        datetime(2025, 1, 15, tzinfo=UTC)
         # None means never sent — should always fire
         assert last_sent is None  # Would pass the `is not None` check (short-circuit)
 
@@ -231,7 +229,7 @@ class TestDeadlineReminderConfig:
     def test_idempotent_reminder_check(self):
         """If last_reminder_sent is today, should not send again."""
         today = date.today()
-        last_sent_today = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+        last_sent_today = datetime(today.year, today.month, today.day, tzinfo=UTC)
         assert last_sent_today.date() == today
 
 

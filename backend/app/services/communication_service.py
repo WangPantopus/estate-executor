@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import logging
-import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -20,7 +18,13 @@ from app.models.enums import (
     StakeholderRole,
 )
 from app.models.stakeholders import Stakeholder
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -100,8 +104,11 @@ async def create_communication(
 ) -> Communication:
     """Create a communication. Sender is set from the authenticated stakeholder."""
     # Ensure sender is always in visible_to for specific visibility
-    if visibility == CommunicationVisibility.specific and visible_to is not None:
-        if sender.id not in visible_to:
+    if (
+        visibility == CommunicationVisibility.specific
+        and visible_to is not None
+        and sender.id not in visible_to
+    ):
             visible_to = [sender.id, *visible_to]
 
     comm = Communication(

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 
 import pytest
 
@@ -232,8 +231,9 @@ class TestEventCreation:
     @pytest.mark.asyncio
     async def test_event_logger_creates_event(self):
         """EventLogger.log should add an Event to the session."""
-        from unittest.mock import AsyncMock, MagicMock
         import uuid
+        from unittest.mock import AsyncMock, MagicMock
+
         from app.core.events import EventLogger
         from app.models.enums import ActorType
 
@@ -259,8 +259,9 @@ class TestEventCreation:
     @pytest.mark.asyncio
     async def test_event_logger_records_ip_from_request(self):
         """EventLogger should extract IP from request when provided."""
-        from unittest.mock import AsyncMock, MagicMock
         import uuid
+        from unittest.mock import AsyncMock, MagicMock
+
         from app.core.events import EventLogger
         from app.models.enums import ActorType
 
@@ -289,8 +290,9 @@ class TestEventCreation:
     @pytest.mark.asyncio
     async def test_event_logger_handles_no_request(self):
         """EventLogger should work without a request object."""
-        from unittest.mock import AsyncMock, MagicMock
         import uuid
+        from unittest.mock import AsyncMock, MagicMock
+
         from app.core.events import EventLogger
         from app.models.enums import ActorType
 
@@ -317,9 +319,9 @@ class TestQueryFiltering:
     def test_cursor_format_is_timestamp_pipe_uuid(self):
         """Cursors should be 'ISO_TIMESTAMP|UUID' format."""
         import uuid
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        ts = datetime.now(timezone.utc).isoformat()
+        ts = datetime.now(UTC).isoformat()
         uid = str(uuid.uuid4())
         cursor = f"{ts}|{uid}"
         parts = cursor.split("|")
@@ -327,12 +329,18 @@ class TestQueryFiltering:
 
     def test_entity_type_filter_values(self):
         """Common entity_type filter values."""
-        valid_types = {"task", "asset", "document", "stakeholder", "matter", "deadline", "communication"}
+        valid_types = {
+            "task", "asset", "document", "stakeholder",
+            "matter", "deadline", "communication",
+        }
         assert len(valid_types) >= 7
 
     def test_action_filter_values(self):
         """Common action filter values."""
-        valid_actions = {"created", "updated", "completed", "waived", "assigned", "uploaded", "removed"}
+        valid_actions = {
+            "created", "updated", "completed", "waived",
+            "assigned", "uploaded", "removed",
+        }
         assert len(valid_actions) >= 7
 
 

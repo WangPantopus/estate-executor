@@ -7,12 +7,11 @@ including authentication, permission enforcement, and response serialization.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-from httpx import AsyncClient
 
 
 def _make_matter_obj(**overrides):
@@ -37,9 +36,9 @@ def _make_matter_obj(**overrides):
         estimated_value=overrides.get("estimated_value", Decimal("1000000")),
         phase=MatterPhase(phase_val) if isinstance(phase_val, str) else phase_val,
         settings={},
-        closed_at=overrides.get("closed_at", None),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        closed_at=overrides.get("closed_at"),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
 
@@ -47,7 +46,10 @@ def _make_matter_obj(**overrides):
 class TestMatterCreation:
     """Test matter creation via API."""
 
-    @pytest.mark.xfail(reason="MatterCreate schema has strict=True which prevents string→enum coercion in JSON — discovered bug in production schemas")
+    @pytest.mark.xfail(
+        reason="MatterCreate schema has strict=True which prevents "
+        "string→enum coercion in JSON — discovered bug in production schemas"
+    )
     @patch("app.services.matter_service.create_matter")
     async def test_create_matter_returns_201(self, mock_create, client, firm_id):
         mock_create.return_value = _make_matter_obj(firm_id=firm_id)
@@ -158,7 +160,7 @@ class TestMatterClose:
     @patch("app.services.matter_service.close_matter")
     async def test_close_matter_success(self, mock_close, client, firm_id, matter_id):
         closed = _make_matter_obj(id=matter_id, firm_id=firm_id, status="closed")
-        closed.closed_at = datetime.now(timezone.utc)
+        closed.closed_at = datetime.now(UTC)
         mock_close.return_value = closed
         resp = await client.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code == 200
@@ -232,7 +234,7 @@ class TestMatterLifecycleFlow:
         assert resp.json()["task_summary"]["completion_percentage"] == 100.0
 
         closed = _make_matter_obj(id=matter_id, firm_id=firm_id, status="closed")
-        closed.closed_at = datetime.now(timezone.utc)
+        closed.closed_at = datetime.now(UTC)
         mock_close.return_value = closed
         resp = await client.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code == 200

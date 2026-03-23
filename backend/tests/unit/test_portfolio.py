@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestComputeRiskLevel:
     """Test the _compute_risk_level helper in matter_service."""

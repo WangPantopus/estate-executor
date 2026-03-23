@@ -140,4 +140,4 @@ def generate_bulk_download(
 
     except Exception as exc:
         logger.exception("generate_bulk_download failed", extra={"job_id": job_id})
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

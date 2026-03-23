@@ -1,6 +1,5 @@
 """Unit tests for entity service helpers — trust detection and pour-over logic."""
 
-import pytest
 
 from app.models.enums import EntityType, TransferMechanism
 

@@ -8,12 +8,15 @@ import re
 import time
 import traceback
 import uuid
+from typing import TYPE_CHECKING
 
-from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
+
+if TYPE_CHECKING:
+    from fastapi import Request, Response
 
 logger = logging.getLogger(__name__)
 

@@ -62,7 +62,7 @@ class TestTaskStateMachine:
     def test_not_started_cannot_go_to_complete(self):
         # not_started → complete is NOT in VALID_TRANSITIONS (must go through in_progress first)
         # Actually, let's check what the actual transition map says
-        allowed = self.VALID_TRANSITIONS.get(TaskStatus.not_started, set())
+        self.VALID_TRANSITIONS.get(TaskStatus.not_started, set())
         # The spec may or may not allow this — we just test the actual map
         # If complete is in allowed, the state machine permits it
         pass  # This test verifies the transition map exists
@@ -238,7 +238,7 @@ class TestCompletionWithDependencies:
         from tests.factories import TaskFactory
 
         blocker = TaskFactory.build(status="in_progress")
-        dependent = TaskFactory.build(status="in_progress")
+        TaskFactory.build(status="in_progress")
         # Business rule: all dependencies must be complete/waived before completion
         blocker_done = blocker["status"] in ("complete", "waived", "cancelled")
         assert not blocker_done

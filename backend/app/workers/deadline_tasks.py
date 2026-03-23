@@ -45,7 +45,7 @@ def check_deadlines(self):
         return stats
     except Exception as exc:
         logger.exception("check_deadlines failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 async def _check_deadlines_async() -> dict[str, int]:
@@ -85,7 +85,7 @@ def check_overdue_tasks(self):
         return stats
     except Exception as exc:
         logger.exception("check_overdue_tasks failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 async def _check_overdue_tasks_async() -> dict[str, int]:

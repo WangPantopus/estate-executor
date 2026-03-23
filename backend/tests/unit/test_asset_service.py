@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
-
 import pytest
 
 from app.models.enums import AssetStatus, AssetType, OwnershipType, TransferMechanism
@@ -223,7 +221,10 @@ class TestEncryptionRoundtrip:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
             # Verify it's the real module, not a mock
-            return hasattr(AESGCM, "__module__") and not str(type(AESGCM)).startswith("<class 'unittest.mock")
+            return (
+                hasattr(AESGCM, "__module__")
+                and not str(type(AESGCM)).startswith("<class 'unittest.mock")
+            )
         except BaseException:
             return False
 
@@ -244,7 +245,7 @@ class TestEncryptionRoundtrip:
             pytest.skip("cryptography module unavailable")
         import os
         os.environ.setdefault("ENCRYPTION_MASTER_KEY", "0" * 64)
-        from app.core.security import encrypt_field, decrypt_field
+        from app.core.security import decrypt_field, encrypt_field
         original = "9876543210"
         ciphertext = encrypt_field(original)
         plaintext = decrypt_field(ciphertext)

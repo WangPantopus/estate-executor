@@ -48,7 +48,8 @@ def send_email(
     Retries on transient failures with exponential backoff.
     Logs every send attempt to the email_logs table.
     """
-    from app.services.email_service import log_email_sync, send_email as _send
+    from app.services.email_service import log_email_sync
+    from app.services.email_service import send_email as _send
 
     try:
         result = _send(
@@ -76,7 +77,7 @@ def send_email(
             status="failed",
             error=str(exc)[:500],
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +100,7 @@ def send_templated_email(self, *, to: str, subject: str, template_name: str, con
     from app.services.email_service import send_templated_email as _send_templated
 
     try:
-        result = _send_templated(
+        _send_templated(
             to=to,
             subject=subject,
             template_name=template_name,
@@ -112,7 +113,7 @@ def send_templated_email(self, *, to: str, subject: str, template_name: str, con
             "send_templated_email failed",
             extra={"to": to, "subject": subject, "template": template_name},
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +199,7 @@ def send_stakeholder_invitation(self, stakeholder_id: str):
 
     except Exception as exc:
         logger.exception("send_stakeholder_invitation failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -244,7 +245,7 @@ def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_i
 
                 matter = task.matter
                 firm = matter.firm if matter else None
-                firm_id = str(firm.id) if firm else ""
+                str(firm.id) if firm else ""
                 matter_id = str(matter.id) if matter else ""
 
                 phase_labels = {
@@ -304,7 +305,7 @@ def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_i
 
     except Exception as exc:
         logger.exception("send_task_assignment_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -349,7 +350,7 @@ def send_task_overdue_notification(
 
     except Exception as exc:
         logger.exception("send_task_overdue_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -428,7 +429,7 @@ def send_deadline_reminder(self, deadline_id: str):
 
     except Exception as exc:
         logger.exception("send_deadline_reminder failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -536,7 +537,7 @@ def send_deadline_missed_notification(self, deadline_id: str):
 
     except Exception as exc:
         logger.exception("send_deadline_missed_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -622,7 +623,7 @@ def send_milestone_notification(
 
     except Exception as exc:
         logger.exception("send_milestone_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -668,7 +669,7 @@ def send_distribution_notice(
 
     except Exception as exc:
         logger.exception("send_distribution_notice failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -711,4 +712,4 @@ def send_document_request(
 
     except Exception as exc:
         logger.exception("send_document_request failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
