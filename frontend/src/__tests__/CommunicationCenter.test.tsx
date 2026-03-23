@@ -3,6 +3,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 import { mockMessage1, mockMessage2, mockMessage3, mockUser, mockStakeholders } from "./fixtures";
+import type { Stakeholder } from "@/lib/types";
 
 // ─── Mock hooks ──────────────────────────────────────────────────────────────
 
@@ -47,19 +48,17 @@ import { MessageList } from "@/app/(dashboard)/matters/[matterId]/communications
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-const testStakeholders = [
+const testStakeholders: Stakeholder[] = [
   {
     id: "sh-1",
     matter_id: "matter-1",
     user_id: "user-1",
     email: "admin@example.com",
     full_name: "Test Admin",
-    role: "matter_admin" as const,
-    invite_status: "accepted" as const,
-    invited_by: null,
-    accepted_at: "2025-12-15T10:00:00Z",
+    role: "matter_admin",
+    relationship: null,
+    invite_status: "accepted",
     created_at: "2025-12-15T10:00:00Z",
-    updated_at: "2025-12-15T10:00:00Z",
   },
 ];
 
@@ -151,7 +150,7 @@ describe("MessageList — tab filtering", () => {
         stakeholders={testStakeholders}
         selectedId={null}
         onSelect={vi.fn()}
-        activeTab="milestone"
+        activeTab="milestone_notification"
         onTabChange={vi.fn()}
       />,
     );

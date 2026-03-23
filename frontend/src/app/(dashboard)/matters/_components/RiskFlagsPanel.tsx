@@ -105,7 +105,7 @@ export function RiskFlagsPanel({ items }: Props) {
         <CardTitle className="flex items-center gap-2 text-base">
           <AlertTriangle className="size-4 text-danger" />
           Risk Flags
-          <Badge variant="destructive" className="ml-1">
+          <Badge variant="danger" className="ml-1">
             {flags.length}
           </Badge>
         </CardTitle>

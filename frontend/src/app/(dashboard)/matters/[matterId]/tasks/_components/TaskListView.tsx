@@ -367,7 +367,6 @@ function GroupSection({
               onTaskClick={() => onTaskClick(task.id)}
               onComplete={() => onComplete(task.id)}
               onWaive={() => onWaive(task.id)}
-              onAssign={(sid) => onAssign(task.id, sid)}
               onEdit={() => onEdit(task.id)}
               onDelete={() => onDelete(task.id)}
             />
@@ -438,7 +437,6 @@ export function TaskListView({
             onTaskClick={() => onTaskClick(task.id)}
             onComplete={() => onComplete(task.id)}
             onWaive={() => onWaive(task.id)}
-            onAssign={(sid) => onAssign(task.id, sid)}
             onEdit={() => onEdit(task.id)}
             onDelete={() => onDelete(task.id)}
           />

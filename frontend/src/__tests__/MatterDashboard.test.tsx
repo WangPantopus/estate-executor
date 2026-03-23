@@ -113,7 +113,7 @@ describe("MetricsRow", () => {
     renderWithProviders(
       <MetricsRow
         {...defaultProps}
-        assetSummary={{ ...mockAssetSummary, total_estimated_value: null }}
+        assetSummary={{ ...mockAssetSummary, total_estimated_value: 0 }}
       />,
     );
     expect(screen.getByText("—")).toBeInTheDocument();

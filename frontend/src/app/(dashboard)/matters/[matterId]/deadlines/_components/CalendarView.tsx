@@ -264,7 +264,6 @@ export function CalendarView({ deadlines, onDeadlineClick }: CalendarViewProps) 
                 <DayPopover
                   deadlines={dayDeadlines}
                   onDeadlineClick={onDeadlineClick}
-                  onClose={() => setPopoverDate(null)}
                   alignRight={idx % 7 >= 4}
                 />
               )}
