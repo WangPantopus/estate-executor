@@ -66,9 +66,13 @@ export default function InviteAcceptPage() {
         setResult(data);
         setStatus("success");
 
-        // Redirect to the matter after a brief delay
+        // Redirect beneficiaries to the portal, others to the dashboard
         setTimeout(() => {
-          router.push(`/matters/${data.matter_id}`);
+          if (data.role === "beneficiary" || data.role === "read_only") {
+            router.push(`/portal/${data.matter_id}`);
+          } else {
+            router.push(`/matters/${data.matter_id}`);
+          }
         }, 2000);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
