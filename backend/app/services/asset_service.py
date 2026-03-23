@@ -106,7 +106,7 @@ async def create_asset(
     transfer_mechanism: TransferMechanism = TransferMechanism.probate,
     date_of_death_value: Decimal | None = None,
     current_estimated_value: Decimal | None = None,
-    metadata: dict | None = None,
+    metadata: dict[str, Any] | None = None,
     current_user: CurrentUser,
 ) -> Asset:
     """Create a new asset with optional account number encryption."""

@@ -22,7 +22,7 @@ def _get_s3_client() -> Any:
     """
     import boto3
 
-    client_kwargs: dict = {
+    client_kwargs: dict[str, Any] = {
         "region_name": settings.aws_region,
         "aws_access_key_id": settings.aws_access_key_id,
         "aws_secret_access_key": settings.aws_secret_access_key,

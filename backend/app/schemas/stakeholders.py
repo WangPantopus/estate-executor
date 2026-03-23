@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -56,7 +56,7 @@ class StakeholderUpdate(BaseModel):
 
     role: StakeholderRole | None = None
     relationship: str | None = None
-    notification_preferences: dict | None = None
+    notification_preferences: dict[str, Any] | None = None
 
 
 class StakeholderResponse(BaseModel):

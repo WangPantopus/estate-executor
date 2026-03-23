@@ -133,7 +133,7 @@ async def list_events(
 # ---------------------------------------------------------------------------
 
 
-def _summarize_changes(changes: dict | None) -> str:
+def _summarize_changes(changes: dict[str, Any] | None) -> str:
     """Create a human-readable summary of changes dict."""
     if not changes:
         return ""

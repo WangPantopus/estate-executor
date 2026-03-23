@@ -88,9 +88,9 @@ async def create_entity(
     name: str,
     trustee: str | None = None,
     successor_trustee: str | None = None,
-    trigger_conditions: dict | None = None,
+    trigger_conditions: dict[str, Any] | None = None,
     funding_status: FundingStatus = FundingStatus.unknown,
-    distribution_rules: dict | None = None,
+    distribution_rules: dict[str, Any] | None = None,
     asset_ids: list[uuid.UUID] | None = None,
     current_user: CurrentUser,
 ) -> Entity:

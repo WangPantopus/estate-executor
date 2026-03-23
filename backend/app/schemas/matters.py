@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -69,7 +69,7 @@ class MatterUpdate(BaseModel):
     phase: MatterPhase | None = None
     jurisdiction_state: str | None = Field(None, min_length=2, max_length=2)
     estimated_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
-    settings: dict | None = None
+    settings: dict[str, Any] | None = None
 
 
 class MatterResponse(BaseModel):

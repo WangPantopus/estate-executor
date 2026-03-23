@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -195,7 +195,7 @@ class TaskResponse(BaseModel):
     completed_at: datetime | None
     completed_by: UUID | None
     sort_order: int
-    metadata: dict | None
+    metadata: dict[str, Any] | None
     documents: list[DocumentBrief]
     dependencies: list[UUID]
     created_at: datetime
@@ -223,7 +223,7 @@ class TaskListItem(BaseModel):
     completed_at: datetime | None
     completed_by: UUID | None
     sort_order: int
-    metadata: dict | None
+    metadata: dict[str, Any] | None
     document_count: int
     dependency_ids: list[UUID]
     created_at: datetime
@@ -251,7 +251,7 @@ class TaskDetailResponse(BaseModel):
     completed_at: datetime | None
     completed_by: UUID | None
     sort_order: int
-    metadata: dict | None
+    metadata: dict[str, Any] | None
     documents: list[DocumentBrief]
     dependencies: list[UUID]
     dependents: list[UUID]

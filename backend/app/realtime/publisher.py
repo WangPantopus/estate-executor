@@ -69,7 +69,7 @@ def publish_realtime_event(
 
 
 def emit_task_updated(
-    matter_id: str, task_id: str, changes: dict, actor: str | None = None
+    matter_id: str, task_id: str, changes: dict[str, Any], actor: str | None = None
 ) -> None:
     publish_realtime_event(
         matter_id=matter_id,
@@ -92,7 +92,7 @@ def emit_document_uploaded(
     )
 
 
-def emit_deadline_updated(matter_id: str, deadline_id: str, changes: dict) -> None:
+def emit_deadline_updated(matter_id: str, deadline_id: str, changes: dict[str, Any]) -> None:
     publish_realtime_event(
         matter_id=matter_id,
         event="deadline_updated",
@@ -114,7 +114,7 @@ def emit_communication_new(
     )
 
 
-def emit_stakeholder_changed(matter_id: str, stakeholder_id: str, changes: dict) -> None:
+def emit_stakeholder_changed(matter_id: str, stakeholder_id: str, changes: dict[str, Any]) -> None:
     publish_realtime_event(
         matter_id=matter_id,
         event="stakeholder_changed",

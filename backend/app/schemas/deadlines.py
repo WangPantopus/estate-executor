@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -48,7 +48,7 @@ class DeadlineCreate(BaseModel):
     due_date: date
     task_id: UUID | None = None
     assigned_to: UUID | None = None
-    reminder_config: dict | None = None
+    reminder_config: dict[str, Any] | None = None
 
 
 class DeadlineUpdate(BaseModel):
@@ -72,7 +72,7 @@ class DeadlineUpdate(BaseModel):
     due_date: date | None = None
     status: DeadlineStatus | None = None
     assigned_to: UUID | None = None
-    reminder_config: dict | None = None
+    reminder_config: dict[str, Any] | None = None
 
 
 class DeadlineResponse(BaseModel):
@@ -87,12 +87,12 @@ class DeadlineResponse(BaseModel):
     description: str | None
     due_date: date
     source: DeadlineSource
-    rule: dict | None
+    rule: dict[str, Any] | None
     status: DeadlineStatus
     assigned_to: UUID | None
     assignee_name: str | None = None
     task: TaskBrief | None = None
-    reminder_config: dict | None
+    reminder_config: dict[str, Any] | None
     last_reminder_sent: datetime | None
     created_at: datetime
     updated_at: datetime

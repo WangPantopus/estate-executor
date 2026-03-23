@@ -113,7 +113,7 @@ class MatterNamespace(socketio.AsyncNamespace):
     Then emit 'join_matter' with { matter_id: "<uuid>" } to join a room.
     """
 
-    async def on_connect(self, sid: str, environ: dict, auth: dict | None = None):
+    async def on_connect(self, sid: str, environ: dict[str, Any], auth: dict[str, Any] | None = None):
         """Authenticate the connection using JWT."""
         token = None
 
@@ -153,7 +153,7 @@ class MatterNamespace(socketio.AsyncNamespace):
     async def on_disconnect(self, sid: str):
         logger.info("websocket_disconnected", extra={"sid": sid})
 
-    async def on_join_matter(self, sid: str, data: dict):
+    async def on_join_matter(self, sid: str, data: dict[str, Any]):
         """Join a matter room. Validates the user is authorized for this matter."""
         matter_id = data.get("matter_id", "")
 
@@ -182,7 +182,7 @@ class MatterNamespace(socketio.AsyncNamespace):
             extra={"sid": sid, "matter_id": matter_id},
         )
 
-    async def on_leave_matter(self, sid: str, data: dict):
+    async def on_leave_matter(self, sid: str, data: dict[str, Any]):
         """Leave a matter room."""
         matter_id = data.get("matter_id", "")
         sio.leave_room(sid, f"matter:{matter_id}", namespace="/matters")

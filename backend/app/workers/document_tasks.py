@@ -13,7 +13,7 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     loop = asyncio.new_event_loop()
     try:
         return loop.run_until_complete(coro)
@@ -21,7 +21,7 @@ def _run_async(coro):
         loop.close()
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.document_tasks.generate_bulk_download",
     bind=True,
     max_retries=2,
@@ -30,12 +30,12 @@ def _run_async(coro):
     time_limit=900,
 )
 def generate_bulk_download(
-    self,
+    self: Any,
     job_id: str,
     matter_id: str,
     document_ids: list[str],
     requester_stakeholder_id: str,
-):
+) -> dict[str, Any]:
     """Generate a ZIP file containing multiple documents for bulk download.
 
     1. Fetches document metadata from DB
@@ -46,7 +46,7 @@ def generate_bulk_download(
     """
     try:
 
-        async def _generate():
+        async def _generate() -> dict[str, Any]:
             from sqlalchemy import select
 
             from app.core.config import settings

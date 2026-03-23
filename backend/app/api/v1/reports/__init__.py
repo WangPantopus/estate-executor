@@ -6,7 +6,7 @@ via Celery for large reports (returns job_id for polling).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
@@ -46,7 +46,7 @@ async def list_report_types(
     matter_id: UUID,
     _membership: FirmMembership = Depends(require_firm_member),
     stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """List available report types with their supported formats."""
     _check_report_permission(stakeholder)
 
@@ -119,7 +119,7 @@ async def generate_report_async(
     format: str = Query("pdf", description="Output format: pdf or xlsx"),  # noqa: A002
     _membership: FirmMembership = Depends(require_firm_member),
     stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> dict:
+) -> dict[str, Any]:
     """Queue async report generation via Celery. Returns a job_id for polling."""
     _check_report_permission(stakeholder)
 
@@ -157,7 +157,7 @@ async def get_report_job_status(
     job_id: str,
     _membership: FirmMembership = Depends(require_firm_member),
     _stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> dict:
+) -> dict[str, Any]:
     """Check the status of an async report generation job."""
     from app.workers.celery_app import celery_app
 

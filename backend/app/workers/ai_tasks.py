@@ -13,7 +13,7 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(  # type: ignore[misc]
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.ai_tasks.classify_document",
     bind=True,
     max_retries=3,
@@ -50,7 +50,7 @@ def classify_document(self: Any, document_id: str, matter_id: str) -> dict[str, 
         raise self.retry(exc=exc) from exc
 
 
-@celery_app.task(  # type: ignore[misc]
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.ai_tasks.extract_document_data",
     bind=True,
     max_retries=3,
@@ -80,7 +80,7 @@ def extract_document_data(self: Any, document_id: str) -> dict[str, Any]:
         raise self.retry(exc=exc) from exc
 
 
-@celery_app.task(  # type: ignore[misc]
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.ai_tasks.draft_letter",
     bind=True,
     max_retries=3,

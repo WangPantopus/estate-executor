@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 router = APIRouter()
 
 
-def _event_to_response(event, actor_names: dict) -> EventResponse:
+def _event_to_response(event, actor_names: dict[str, Any]) -> EventResponse:
     """Convert an Event ORM object to EventResponse."""
     actor_name = None
     if event.actor_id is not None:

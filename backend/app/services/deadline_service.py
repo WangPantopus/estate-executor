@@ -59,7 +59,7 @@ async def create_deadline(
     due_date: date,
     task_id: uuid.UUID | None = None,
     assigned_to: uuid.UUID | None = None,
-    reminder_config: dict | None = None,
+    reminder_config: dict[str, Any] | None = None,
     current_user: CurrentUser,
 ) -> Deadline:
     """Create a manual deadline."""

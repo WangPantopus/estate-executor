@@ -57,13 +57,13 @@ BORDER = (229, 226, 219)  # #e5e2db
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-def _rgb(color: tuple[int, int, int]):
+def _rgb(color: tuple[int, int, int]) -> Any:
     from reportlab.lib.colors import Color
 
     return Color(color[0] / 255, color[1] / 255, color[2] / 255)
 
 
-def _create_pdf_doc(title: str, buffer: io.BytesIO):
+def _create_pdf_doc(title: str, buffer: io.BytesIO) -> Any:
     """Create a ReportLab SimpleDocTemplate with standard margins."""
     from reportlab.lib.pagesizes import letter
     from reportlab.platypus import SimpleDocTemplate
@@ -79,7 +79,7 @@ def _create_pdf_doc(title: str, buffer: io.BytesIO):
     )
 
 
-def _header_footer(canvas, doc, *, firm_name: str, report_title: str):
+def _header_footer(canvas: Any, doc: Any, *, firm_name: str, report_title: str) -> None:
     """Draw header and footer on each page."""
     from reportlab.lib.pagesizes import letter
 
@@ -115,7 +115,7 @@ def _header_footer(canvas, doc, *, firm_name: str, report_title: str):
     canvas.drawRightString(width - 50, 30, f"Page {doc.page}")
 
 
-def _section_heading(text: str):
+def _section_heading(text: str) -> Any:
     """Create a styled section heading paragraph."""
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import Paragraph
@@ -133,7 +133,7 @@ def _section_heading(text: str):
     return Paragraph(text, style)
 
 
-def _body_text(text: str):
+def _body_text(text: str) -> Any:
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import Paragraph
 
@@ -149,11 +149,11 @@ def _body_text(text: str):
     return Paragraph(text, style)
 
 
-def _kv_pair(label: str, value: str):
+def _kv_pair(label: str, value: str) -> Any:
     return _body_text(f"<b>{label}:</b> {value}")
 
 
-def _styled_table(data: list[list[str]], col_widths: list[float] | None = None):
+def _styled_table(data: list[list[str]], col_widths: list[float] | None = None) -> Any:
     """Create a styled table with navy header."""
     from reportlab.lib import colors
     from reportlab.platypus import Table, TableStyle
@@ -209,14 +209,14 @@ def _enum_label(val: Any) -> str:
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-def _create_workbook():
+def _create_workbook() -> Any:
     from openpyxl import Workbook
 
     wb = Workbook()
     return wb
 
 
-def _style_excel_header(ws, col_count: int):
+def _style_excel_header(ws: Any, col_count: int) -> None:
     """Style the first row as a navy header with white text."""
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
@@ -234,7 +234,7 @@ def _style_excel_header(ws, col_count: int):
         cell.border = thin_border
 
 
-def _auto_width(ws):
+def _auto_width(ws: Any) -> None:
     """Auto-adjust column widths based on content."""
     for col in ws.columns:
         max_length = 0
@@ -248,7 +248,7 @@ def _auto_width(ws):
         ws.column_dimensions[col_letter].width = min(max_length + 4, 50)
 
 
-def _freeze_header(ws):
+def _freeze_header(ws: Any) -> None:
     ws.freeze_panes = "A2"
 
 
@@ -345,13 +345,13 @@ async def generate_matter_summary_pdf(db: AsyncSession, *, matter_id: uuid.UUID)
     deadlines = await _get_deadlines(db, matter_id)
     recent_events = await _get_recent_events(db, matter_id, limit=8)
 
-    firm_name = matter.firm.name if matter.firm else None
+    firm_name = (matter.firm.name or "") if matter.firm else ""
     report_title = f"Matter Summary — Estate of {matter.decedent_name}"
 
     buffer = io.BytesIO()
     doc = _create_pdf_doc(report_title, buffer)
 
-    elements: list = []
+    elements: list[Any] = []
 
     # Matter details
     elements.append(_section_heading("Matter Details"))
@@ -456,12 +456,12 @@ async def generate_asset_inventory_pdf(db: AsyncSession, *, matter_id: uuid.UUID
 
     matter = await _get_matter_with_firm(db, matter_id)
     assets = await _get_assets(db, matter_id)
-    firm_name = matter.firm.name if matter.firm else None
+    firm_name = (matter.firm.name or "") if matter.firm else ""
     report_title = f"Asset Inventory — Estate of {matter.decedent_name}"
 
     buffer = io.BytesIO()
     doc = _create_pdf_doc(report_title, buffer)
-    elements: list = []
+    elements: list[Any] = []
 
     elements.append(_section_heading("Asset Inventory"))
     elements.append(_body_text(f"Estate of {matter.decedent_name} | {len(assets)} assets"))
@@ -561,12 +561,12 @@ async def generate_task_audit_pdf(db: AsyncSession, *, matter_id: uuid.UUID) -> 
 
     matter = await _get_matter_with_firm(db, matter_id)
     tasks = await _get_tasks(db, matter_id)
-    firm_name = matter.firm.name if matter.firm else None
+    firm_name = (matter.firm.name or "") if matter.firm else ""
     report_title = f"Task Completion Audit — Estate of {matter.decedent_name}"
 
     buffer = io.BytesIO()
     doc = _create_pdf_doc(report_title, buffer)
-    elements: list = []
+    elements: list[Any] = []
 
     elements.append(_section_heading("Task Completion Audit"))
     elements.append(
@@ -658,7 +658,7 @@ async def generate_distribution_ledger_pdf(db: AsyncSession, *, matter_id: uuid.
     matter = await _get_matter_with_firm(db, matter_id)
     distributions = await _get_distributions(db, matter_id)
     stakeholders = await _get_stakeholders(db, matter_id)
-    firm_name = matter.firm.name if matter.firm else None
+    firm_name = (matter.firm.name or "") if matter.firm else ""
     report_title = f"Distribution Ledger — Estate of {matter.decedent_name}"
 
     # Build stakeholder lookup
@@ -666,7 +666,7 @@ async def generate_distribution_ledger_pdf(db: AsyncSession, *, matter_id: uuid.
 
     buffer = io.BytesIO()
     doc = _create_pdf_doc(report_title, buffer)
-    elements: list = []
+    elements: list[Any] = []
 
     elements.append(_section_heading("Distribution Ledger"))
     elements.append(

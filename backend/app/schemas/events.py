@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -26,8 +26,8 @@ class EventResponse(BaseModel):
     entity_type: str
     entity_id: UUID
     action: str
-    changes: dict | None
-    metadata: dict | None
+    changes: dict[str, Any] | None
+    metadata: dict[str, Any] | None
     created_at: datetime
 
 

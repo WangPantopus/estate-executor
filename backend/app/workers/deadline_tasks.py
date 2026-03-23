@@ -12,7 +12,7 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     loop = asyncio.new_event_loop()
     try:
         return loop.run_until_complete(coro)
@@ -25,13 +25,13 @@ def _run_async(coro):
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.deadline_tasks.check_deadlines",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
-def check_deadlines(self):
+def check_deadlines(self: Any) -> dict[str, int]:
     """Hourly beat task: find overdue and reminder-due deadlines.
 
     For each active matter:
@@ -41,7 +41,7 @@ def check_deadlines(self):
     - Idempotent: won't send duplicate reminders for the same day
     """
     try:
-        stats = _run_async(_check_deadlines_async())
+        stats: dict[str, int] = _run_async(_check_deadlines_async())
         logger.info("check_deadlines completed", extra={"stats": stats})
         return stats
     except Exception as exc:
@@ -68,13 +68,13 @@ async def _check_deadlines_async() -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.deadline_tasks.check_overdue_tasks",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
-def check_overdue_tasks(self):
+def check_overdue_tasks(self: Any) -> dict[str, int]:
     """Periodic task: find tasks past due_date still in not_started or in_progress.
 
     Sends overdue notifications to the assignee and matter admins using

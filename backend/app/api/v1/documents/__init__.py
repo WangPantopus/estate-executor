@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, Query
 
@@ -256,7 +256,7 @@ async def request_document(
     stakeholder: Stakeholder = Depends(require_stakeholder),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     """Request a document from a stakeholder. Sends email with upload link."""
     _require_doc_admin(stakeholder)
     comm = await document_service.request_document(

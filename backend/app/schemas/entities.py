@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -60,9 +60,9 @@ class EntityCreate(BaseModel):
     name: str
     trustee: str | None = None
     successor_trustee: str | None = None
-    trigger_conditions: dict | None = None
+    trigger_conditions: dict[str, Any] | None = None
     funding_status: FundingStatus | None = None
-    distribution_rules: dict | None = None
+    distribution_rules: dict[str, Any] | None = None
     asset_ids: list[UUID] | None = None
 
 
@@ -86,9 +86,9 @@ class EntityUpdate(BaseModel):
     name: str | None = None
     trustee: str | None = None
     successor_trustee: str | None = None
-    trigger_conditions: dict | None = None
+    trigger_conditions: dict[str, Any] | None = None
     funding_status: FundingStatus | None = None
-    distribution_rules: dict | None = None
+    distribution_rules: dict[str, Any] | None = None
     asset_ids: list[UUID] | None = None
 
 
@@ -125,10 +125,10 @@ class EntityResponse(BaseModel):
     name: str
     trustee: str | None
     successor_trustee: str | None
-    trigger_conditions: dict | None
+    trigger_conditions: dict[str, Any] | None
     funding_status: FundingStatus
-    distribution_rules: dict | None
-    metadata: dict | None
+    distribution_rules: dict[str, Any] | None
+    metadata: dict[str, Any] | None
     assets: list[AssetBrief]
     created_at: datetime
     updated_at: datetime
