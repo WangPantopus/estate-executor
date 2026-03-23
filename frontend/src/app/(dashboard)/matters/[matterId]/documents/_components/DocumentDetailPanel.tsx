@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { DOC_TYPE_LABELS } from "@/lib/constants";
 import { useDocument, useConfirmDocType, useExtractData, useApi } from "@/hooks";
+import { useToast } from "@/components/layout/Toaster";
 import type { DocumentResponse, DocumentDetail } from "@/lib/types";
 import type { AssetPrefillData } from "../../assets/_components/AddAssetDialog";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,7 @@ export function DocumentDetailPanel({
   onCreateAssetFromDoc,
 }: DocumentDetailPanelProps) {
   const api = useApi();
+  const { toast } = useToast();
   const { data: docDetail, isLoading } = useDocument(firmId, matterId, docId);
   const confirmDocType = useConfirmDocType(firmId, matterId);
   const extractData = useExtractData(firmId, matterId);
@@ -144,9 +146,19 @@ export function DocumentDetailPanel({
   };
 
   const handleConfirmType = (docType: string) => {
+    const wasCorrection = doc.doc_type !== null && doc.doc_type !== docType;
     confirmDocType.mutate(
       { docId: doc.id, data: { doc_type: docType } },
-      { onSuccess: () => setChangingType(false) },
+      {
+        onSuccess: () => {
+          setChangingType(false);
+          if (wasCorrection) {
+            toast("info", "AI learned from your correction — thank you for the feedback!");
+          } else {
+            toast("success", "Document type confirmed.");
+          }
+        },
+      },
     );
   };
 

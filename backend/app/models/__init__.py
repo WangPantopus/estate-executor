@@ -1,3 +1,4 @@
+from app.models.ai_feedback import AIFeedback
 from app.models.ai_usage_logs import AIUsageLog
 from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
@@ -91,4 +92,5 @@ __all__ = [
     "Event",
     "EmailLog",
     "AIUsageLog",
+    "AIFeedback",
 ]
