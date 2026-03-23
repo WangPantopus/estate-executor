@@ -86,7 +86,7 @@ def _send_via_resend(
     if text_fallback:
         params["text"] = text_fallback
 
-    response = resend.Emails.send(params)
+    response = resend.Emails.send(params)  # type: ignore[arg-type]
     resend_id = response.get("id") if isinstance(response, dict) else getattr(response, "id", None)
 
     logger.info("email_sent_resend", extra={"to": to, "subject": subject, "resend_id": resend_id})
