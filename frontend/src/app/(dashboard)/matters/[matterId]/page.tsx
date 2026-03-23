@@ -13,6 +13,7 @@ import { AssetSummaryCard } from "./_components/AssetSummaryCard";
 import { StakeholdersCard } from "./_components/StakeholdersCard";
 import { UpcomingDeadlinesCard } from "./_components/UpcomingDeadlinesCard";
 import { AlertsPanel } from "./_components/AlertsPanel";
+import { AIInsightsPanel } from "./_components/AIInsightsPanel";
 
 // Placeholder firmId — will come from context/auth in production
 const FIRM_ID = "current";
@@ -86,6 +87,10 @@ export default function MatterDashboardPage({
 
         {/* Right column (40%) */}
         <div className="lg:col-span-2 space-y-6">
+          {/* AI Insights: visible to professionals/admins */}
+          {can("task:create") && (
+            <AIInsightsPanel firmId={FIRM_ID} matterId={matterId} />
+          )}
           {/* Asset summary: hidden for read_only */}
           {!isReadOnly && (
             <AssetSummaryCard

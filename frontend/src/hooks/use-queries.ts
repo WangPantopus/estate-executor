@@ -779,3 +779,17 @@ export function useDraftLetter(firmId: string, matterId: string) {
       api.draftLetter(firmId, matterId, data),
   });
 }
+
+export function useSuggestTasks(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.suggestTasks(firmId, matterId),
+  });
+}
+
+export function useDetectAnomalies(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.detectAnomalies(firmId, matterId),
+  });
+}
