@@ -438,7 +438,7 @@ async def generate_matter_summary_pdf(db: AsyncSession, *, matter_id: uuid.UUID)
             )
         elements.append(_styled_table(act_data, [85, 120, 120, 80]))
 
-    def on_page(canvas, doc_obj):
+    def on_page(canvas: Any, doc_obj: Any) -> None:
         _header_footer(canvas, doc_obj, firm_name=firm_name, report_title=report_title)
 
     doc.build(elements, onFirstPage=on_page, onLaterPages=on_page)
@@ -485,7 +485,7 @@ async def generate_asset_inventory_pdf(db: AsyncSession, *, matter_id: uuid.UUID
         data.append(["", "", "", "TOTAL", _format_currency(total_value), ""])
         elements.append(_styled_table(data, [70, 120, 80, 70, 80, 70]))
 
-    def on_page(canvas, doc_obj):
+    def on_page(canvas: Any, doc_obj: Any) -> None:
         _header_footer(canvas, doc_obj, firm_name=firm_name, report_title=report_title)
 
     doc.build(elements, onFirstPage=on_page, onLaterPages=on_page)
@@ -591,7 +591,7 @@ async def generate_task_audit_pdf(db: AsyncSession, *, matter_id: uuid.UUID) -> 
             )
         elements.append(_styled_table(data, [140, 70, 70, 60, 75, 70]))
 
-    def on_page(canvas, doc_obj):
+    def on_page(canvas: Any, doc_obj: Any) -> None:
         _header_footer(canvas, doc_obj, firm_name=firm_name, report_title=report_title)
 
     doc.build(elements, onFirstPage=on_page, onLaterPages=on_page)
@@ -712,7 +712,7 @@ async def generate_distribution_ledger_pdf(db: AsyncSession, *, matter_id: uuid.
     else:
         elements.append(_body_text("No distributions recorded for this matter."))
 
-    def on_page(canvas, doc_obj):
+    def on_page(canvas: Any, doc_obj: Any) -> None:
         _header_footer(canvas, doc_obj, firm_name=firm_name, report_title=report_title)
 
     doc.build(elements, onFirstPage=on_page, onLaterPages=on_page)
@@ -781,7 +781,7 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
 # ═════════════════════════════════════════════════════════════════════════════
 
 
-REPORT_GENERATORS = {
+REPORT_GENERATORS: dict[str, dict[str, Any]] = {
     "matter-summary": {
         "pdf": generate_matter_summary_pdf,
         "label": "Matter Summary",

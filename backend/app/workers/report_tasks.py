@@ -76,7 +76,7 @@ def generate_report_task(
                 "filename": filename,
             }
 
-        result = _run_async(_generate())
+        result: dict[str, Any] = _run_async(_generate())
         logger.info(
             "report_generated",
             extra={

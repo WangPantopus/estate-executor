@@ -81,7 +81,7 @@ def check_overdue_tasks(self: Any) -> dict[str, int]:
     the premium task_overdue email template.
     """
     try:
-        stats = _run_async(_check_overdue_tasks_async())
+        stats: dict[str, int] = _run_async(_check_overdue_tasks_async())
         logger.info("check_overdue_tasks completed", extra={"stats": stats})
         return stats
     except Exception as exc:

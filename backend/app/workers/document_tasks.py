@@ -135,7 +135,7 @@ def generate_bulk_download(
                     "document_count": len(docs),
                 }
 
-        result = _run_async(_generate())
+        result: dict[str, Any] = _run_async(_generate())
         logger.info("bulk_download_completed", extra={"job_id": job_id, "result": result})
         return result
 
