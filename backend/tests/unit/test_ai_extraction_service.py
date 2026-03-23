@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
 
 from app.schemas.ai import AIExtractResponse
 from app.services.ai_extraction_service import (
@@ -35,7 +36,7 @@ class TestExtractionSchemas:
         assert set(EXTRACTION_SCHEMAS.keys()) == expected
 
     def test_extractable_types_matches(self):
-        assert EXTRACTABLE_TYPES == set(EXTRACTION_SCHEMAS.keys())
+        assert set(EXTRACTION_SCHEMAS.keys()) == EXTRACTABLE_TYPES
 
     def test_account_statement_fields(self):
         schema = EXTRACTION_SCHEMAS["account_statement"]
@@ -166,7 +167,7 @@ class TestAIExtractResponse:
         assert len(resp.extracted_fields) == 0
 
     def test_confidence_range(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AIExtractResponse(extracted_fields={}, confidence=1.5)
 
 
@@ -422,7 +423,6 @@ class TestAIRouteExists:
 
     def test_ai_route_module_importable(self):
         """AI route module should exist and define an extract endpoint."""
-        import ast
         from pathlib import Path
 
         route_file = Path(__file__).parents[2] / "app" / "api" / "v1" / "ai" / "__init__.py"
@@ -431,4 +431,3 @@ class TestAIRouteExists:
         source = route_file.read_text()
         assert "extract_document_data" in source
         assert "extract/{doc_id}" in source
-        assert "AIExtractResponse" in source

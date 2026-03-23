@@ -8,12 +8,12 @@ from uuid import uuid4
 import pytest
 
 from app.services.ai_rate_limiter import (
-    FIRM_LIMIT_PER_HOUR,
-    MATTER_LIMIT_PER_HOUR,
-    RateLimitExceeded,
     _FIRM_KEY_PREFIX,
     _MATTER_KEY_PREFIX,
     _WINDOW_SECONDS,
+    FIRM_LIMIT_PER_HOUR,
+    MATTER_LIMIT_PER_HOUR,
+    RateLimitExceededError,
     check_rate_limit,
     get_usage,
 )
@@ -36,16 +36,16 @@ class TestRateLimitConstants:
         assert _MATTER_KEY_PREFIX == "ai_rate:matter:"
 
 
-class TestRateLimitExceeded:
-    """Test the RateLimitExceeded exception."""
+class TestRateLimitExceededError:
+    """Test the RateLimitExceededError exception."""
 
     def test_exception_message(self):
-        exc = RateLimitExceeded(scope="test_scope", limit=100)
+        exc = RateLimitExceededError(scope="test_scope", limit=100)
         assert "test_scope" in str(exc)
         assert "100" in str(exc)
 
     def test_exception_attributes(self):
-        exc = RateLimitExceeded(scope="firm:123", limit=100, window_seconds=3600)
+        exc = RateLimitExceededError(scope="firm:123", limit=100, window_seconds=3600)
         assert exc.scope == "firm:123"
         assert exc.limit == 100
         assert exc.window_seconds == 3600
@@ -73,7 +73,7 @@ class TestCheckRateLimit:
         # Atomic script returns -1 when firm limit exceeded
         mock_redis.eval.return_value = -1
 
-        with pytest.raises(RateLimitExceeded):
+        with pytest.raises(RateLimitExceededError):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
 
     @patch("app.services.ai_rate_limiter._get_redis")
@@ -84,7 +84,7 @@ class TestCheckRateLimit:
         # Atomic script returns -2 when matter limit exceeded
         mock_redis.eval.return_value = -2
 
-        with pytest.raises(RateLimitExceeded):
+        with pytest.raises(RateLimitExceededError):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
 
     @patch("app.services.ai_rate_limiter._get_redis")

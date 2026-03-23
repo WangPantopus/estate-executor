@@ -6,8 +6,6 @@ When prompts are updated, bump the version so we can correlate accuracy changes.
 
 from __future__ import annotations
 
-from typing import Any
-
 # Current prompt versions — bump when prompt text changes
 PROMPT_VERSIONS: dict[str, str] = {
     "classify": "classify-v2",

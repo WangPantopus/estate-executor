@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import logging
 import time
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 import redis
 
 from app.core.config import settings
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +39,7 @@ def _get_redis() -> redis.Redis:
     return _redis_client
 
 
-class RateLimitExceeded(Exception):
+class RateLimitExceededError(Exception):
     """Raised when an AI rate limit is exceeded."""
 
     def __init__(self, scope: str, limit: int, window_seconds: int = _WINDOW_SECONDS):
@@ -71,7 +74,7 @@ return count + 1
 def _check_and_increment(key: str, limit: int) -> int:
     """Atomic sliding-window rate limit check using a Redis Lua script.
 
-    Returns the current count after incrementing. Raises RateLimitExceeded
+    Returns the current count after incrementing. Raises RateLimitExceededError
     if the limit would be exceeded.
     """
     r = _get_redis()
@@ -82,7 +85,7 @@ def _check_and_increment(key: str, limit: int) -> int:
     result = r.eval(_RATE_LIMIT_SCRIPT, 1, key, limit, now, window_start, ttl)
 
     if result == -1:
-        raise RateLimitExceeded(scope=key, limit=limit)
+        raise RateLimitExceededError(scope=key, limit=limit)
 
     return int(result)
 
@@ -141,10 +144,10 @@ def check_rate_limit(*, firm_id: UUID, matter_id: UUID) -> None:
         )
 
         if result == -1:
-            raise RateLimitExceeded(scope=firm_key, limit=FIRM_LIMIT_PER_HOUR)
+            raise RateLimitExceededError(scope=firm_key, limit=FIRM_LIMIT_PER_HOUR)
         if result == -2:
-            raise RateLimitExceeded(scope=matter_key, limit=MATTER_LIMIT_PER_HOUR)
-    except RateLimitExceeded:
+            raise RateLimitExceededError(scope=matter_key, limit=MATTER_LIMIT_PER_HOUR)
+    except RateLimitExceededError:
         raise
     except Exception:
         # Redis failures should not block AI processing — log and allow

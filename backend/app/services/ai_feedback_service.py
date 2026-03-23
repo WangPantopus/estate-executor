@@ -8,12 +8,14 @@ prompt improvement and fine-tuning data collection.
 from __future__ import annotations
 
 import logging
-from typing import Any
-from uuid import UUID
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import TYPE_CHECKING, Any
 
 from app.models.ai_feedback import AIFeedback
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

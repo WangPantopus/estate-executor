@@ -6,11 +6,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
 
 from app.schemas.ai import AIClassifyResponse
 from app.services.ai_classification_service import (
-    DOCUMENT_TYPES,
     _MODEL,
+    DOCUMENT_TYPES,
     _build_classification_prompt,
     _build_tool_schema,
     _estimate_cost,
@@ -151,7 +152,7 @@ class TestAIClassifyResponse:
         assert resp.confidence == 0.95
 
     def test_confidence_range_validation(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AIClassifyResponse(
                 doc_type="will",
                 confidence=1.5,  # Over max
@@ -159,7 +160,7 @@ class TestAIClassifyResponse:
             )
 
     def test_negative_confidence_rejected(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AIClassifyResponse(
                 doc_type="will",
                 confidence=-0.1,

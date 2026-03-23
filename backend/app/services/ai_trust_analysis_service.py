@@ -9,11 +9,9 @@ When a trust document is uploaded and extracted, this service:
 from __future__ import annotations
 
 import logging
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -24,8 +22,12 @@ from app.models.entities import Entity
 from app.models.enums import ActorType, EntityType, FundingStatus
 from app.models.matters import Matter
 from app.prompts import get_prompt_version
-from app.schemas.ai import AIExtractResponse
 from app.services.ai_rate_limiter import check_rate_limit
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

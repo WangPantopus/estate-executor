@@ -2,7 +2,7 @@
 
 All AI endpoints handle service unavailability gracefully:
 - ValueError → 404 (missing entity)
-- RateLimitExceeded → 429 (too many requests)
+- RateLimitExceededError → 429 (too many requests)
 - API/connection errors → 503 (AI service temporarily unavailable)
 """
 
@@ -22,13 +22,7 @@ from app.core.security import get_current_user, require_firm_member, require_sta
 from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
-from app.schemas.ai import (
-    AIAnomalyResponse,
-    AIExtractResponse,
-    AILetterDraftRequest,
-    AILetterDraftResponse,
-    AISuggestTasksResponse,
-)
+from app.schemas.ai import AILetterDraftRequest
 from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
@@ -44,13 +38,13 @@ _WRITE_ROLES = {
 
 def _handle_ai_error(exc: Exception, operation: str) -> JSONResponse:
     """Convert AI service errors to appropriate HTTP responses."""
-    from app.services.ai_rate_limiter import RateLimitExceeded
+    from app.services.ai_rate_limiter import RateLimitExceededError
 
-    if isinstance(exc, RateLimitExceeded):
+    if isinstance(exc, RateLimitExceededError):
         return JSONResponse(
             status_code=429,
             content={
-                "detail": f"AI rate limit exceeded. Please try again later.",
+                "detail": "AI rate limit exceeded. Please try again later.",
                 "error_type": "rate_limit_exceeded",
             },
         )

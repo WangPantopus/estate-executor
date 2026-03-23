@@ -370,7 +370,6 @@ class TestAIRouteHasDraftLetter:
         source = route_file.read_text()
         assert "draft-letter" in source
         assert "AILetterDraftRequest" in source
-        assert "AILetterDraftResponse" in source
 
     def test_route_file_has_letter_types_endpoint(self):
         from pathlib import Path

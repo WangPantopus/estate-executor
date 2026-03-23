@@ -6,18 +6,16 @@ API timeouts, malformed Claude responses, rate limit hits, and service errors.
 
 from __future__ import annotations
 
-import time
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
 
 from app.schemas.ai import AIClassifyResponse, AIExtractResponse
 from app.services.ai_rate_limiter import (
     FIRM_LIMIT_PER_HOUR,
-    MATTER_LIMIT_PER_HOUR,
-    RateLimitExceeded,
-    _check_and_increment,
+    RateLimitExceededError,
     check_rate_limit,
 )
 
@@ -74,10 +72,9 @@ class TestAPITimeout:
             patch(
                 "app.services.ai_classification_service._call_claude",
                 side_effect=TimeoutError("API request timed out after 120s"),
-            ),
+            ),pytest.raises(TimeoutError, match="timed out")
         ):
-            with pytest.raises(TimeoutError, match="timed out"):
-                await classify_document(mock_db, document_id=uuid4())
+            await classify_document(mock_db, document_id=uuid4())
 
     @pytest.mark.asyncio
     async def test_extraction_timeout_logs_error_and_raises(self):
@@ -110,10 +107,9 @@ class TestAPITimeout:
             patch(
                 "app.services.ai_extraction_service._call_claude",
                 side_effect=TimeoutError("API timeout"),
-            ),
+            ),pytest.raises(TimeoutError)
         ):
-            with pytest.raises(TimeoutError):
-                await extract_document_data(mock_db, document_id=mock_doc.id)
+            await extract_document_data(mock_db, document_id=mock_doc.id)
 
     @pytest.mark.asyncio
     async def test_letter_draft_timeout_logs_error_and_raises(self):
@@ -156,15 +152,14 @@ class TestAPITimeout:
             patch(
                 "app.services.ai_letter_service._call_claude",
                 side_effect=TimeoutError("API timeout"),
-            ),
+            ),pytest.raises(TimeoutError)
         ):
-            with pytest.raises(TimeoutError):
-                await draft_letter(
-                    mock_db,
-                    matter_id=mock_matter.id,
-                    asset_id=mock_asset.id,
-                    letter_type="institution_notification",
-                )
+            await draft_letter(
+                mock_db,
+                matter_id=mock_matter.id,
+                asset_id=mock_asset.id,
+                letter_type="institution_notification",
+            )
 
 
 # ─── Malformed Response Tests ─────────────────────────────────────────────────
@@ -186,9 +181,11 @@ class TestMalformedResponses:
         mock_client = MagicMock()
         mock_client.messages.create.return_value = mock_response
 
-        with patch("anthropic.Anthropic", return_value=mock_client):
-            with pytest.raises(ValueError, match="did not return a tool_use"):
-                _call_claude("test prompt")
+        with (
+            patch("anthropic.Anthropic", return_value=mock_client),
+            pytest.raises(ValueError, match="did not return a tool_use"),
+        ):
+            _call_claude("test prompt")
 
     @pytest.mark.asyncio
     async def test_extraction_no_tool_use_raises(self):
@@ -200,22 +197,24 @@ class TestMalformedResponses:
         mock_client = MagicMock()
         mock_client.messages.create.return_value = mock_response
 
-        with patch("anthropic.Anthropic", return_value=mock_client):
-            with pytest.raises(ValueError, match="did not return a tool_use"):
-                _call_claude("system", "user", {"name": "test", "input_schema": {}})
+        with (
+            patch("anthropic.Anthropic", return_value=mock_client),
+            pytest.raises(ValueError, match="did not return a tool_use"),
+        ):
+            _call_claude("system", "user", {"name": "test", "input_schema": {}})
 
     @pytest.mark.asyncio
     async def test_classification_missing_fields_in_tool_result(self):
         """If Claude tool result is missing required fields, Pydantic should reject."""
         incomplete_result = {"doc_type": "will"}  # Missing confidence and reasoning
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AIClassifyResponse(**incomplete_result)
 
     @pytest.mark.asyncio
     async def test_classification_invalid_confidence_type(self):
         """Non-numeric confidence should be rejected."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AIClassifyResponse(
                 doc_type="will",
                 confidence="high",  # type: ignore
@@ -225,7 +224,7 @@ class TestMalformedResponses:
     @pytest.mark.asyncio
     async def test_extraction_missing_extracted_fields(self):
         """AIExtractResponse requires extracted_fields dict."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             AIExtractResponse(confidence=0.5)  # type: ignore
 
 
@@ -242,7 +241,7 @@ class TestRateLimitEnforcement:
         mock_get_redis.return_value = mock_redis
         mock_redis.eval.return_value = -1  # Lua script returns -1 when limit exceeded
 
-        with pytest.raises(RateLimitExceeded) as exc_info:
+        with pytest.raises(RateLimitExceededError) as exc_info:
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
 
         assert exc_info.value.limit == FIRM_LIMIT_PER_HOUR
@@ -255,7 +254,7 @@ class TestRateLimitEnforcement:
         # Atomic script returns -2 when matter limit exceeded
         mock_redis.eval.return_value = -2
 
-        with pytest.raises(RateLimitExceeded):
+        with pytest.raises(RateLimitExceededError):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
 
     @patch("app.services.ai_rate_limiter._get_redis")
@@ -272,7 +271,7 @@ class TestRateLimitEnforcement:
         mock_redis.eval.return_value = -1
 
         firm_id = uuid4()
-        with pytest.raises(RateLimitExceeded) as exc_info:
+        with pytest.raises(RateLimitExceededError) as exc_info:
             check_rate_limit(firm_id=firm_id, matter_id=uuid4())
 
         assert str(firm_id) in exc_info.value.scope
@@ -287,7 +286,7 @@ class TestRateLimitEnforcement:
         with (
             patch(
                 "app.services.ai_classification_service.check_rate_limit",
-                side_effect=RateLimitExceeded(scope="test", limit=100),
+                side_effect=RateLimitExceededError(scope="test", limit=100),
             ),
             patch(
                 "app.services.ai_classification_service.text_extraction_service.extract_text",
@@ -297,7 +296,7 @@ class TestRateLimitEnforcement:
                 "app.services.ai_classification_service._call_claude",
             ) as mock_claude,
         ):
-            with pytest.raises(RateLimitExceeded):
+            with pytest.raises(RateLimitExceededError):
                 await classify_document(mock_db, document_id=uuid4())
 
             # Claude should NOT have been called

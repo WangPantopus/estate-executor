@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 
 from app.models.ai_usage_logs import AIUsageLog
 from app.models.matters import Matter
@@ -17,6 +15,11 @@ from app.services.ai_rate_limiter import (
     MATTER_LIMIT_PER_HOUR,
     get_usage,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +45,7 @@ async def get_usage_stats(
     """
     if since is None:
         # Default to current calendar month
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         since = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     base_filter = [

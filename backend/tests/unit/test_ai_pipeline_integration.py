@@ -11,7 +11,6 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.ai_classification_service import classify_document
 from app.services.ai_extraction_service import EXTRACTABLE_TYPES
 from app.services.ai_letter_service import LETTER_TYPES, draft_letter
 
@@ -74,7 +73,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks.extract_document_data"
             ) as mock_extract_task,
         ):
-            result = classify_task("doc-123", "matter-123")
+            classify_task("doc-123", "matter-123")
 
         mock_extract_task.delay.assert_not_called()
 
@@ -99,7 +98,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks.extract_document_data"
             ) as mock_extract_task,
         ):
-            result = classify_task("doc-123", "matter-123")
+            classify_task("doc-123", "matter-123")
 
         mock_extract_task.delay.assert_not_called()
 

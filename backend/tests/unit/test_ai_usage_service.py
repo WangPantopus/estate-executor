@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -132,7 +132,7 @@ class TestGetUsageStats:
             mock_empty,
         ]
 
-        custom_since = datetime(2025, 6, 1, tzinfo=timezone.utc)
+        custom_since = datetime(2025, 6, 1, tzinfo=UTC)
         with patch("app.services.ai_usage_service.get_usage", return_value={}):
             result = await get_usage_stats(mock_db, firm_id=uuid4(), since=custom_since)
 

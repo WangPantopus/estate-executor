@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.ai_rate_limiter import RateLimitExceeded
+from app.services.ai_rate_limiter import RateLimitExceededError
 
 
 class TestAPIErrorResponses:
@@ -41,7 +41,7 @@ class TestAPIErrorResponses:
         assert general_catches >= 5, f"Only {general_catches} general exception handlers found"
 
     def test_rate_limit_returns_429_message(self):
-        """RateLimitExceeded should produce a 429 response with helpful message."""
+        """RateLimitExceededError should produce a 429 response with helpful message."""
         # Import inline to avoid jwt chain
         route_file = Path(__file__).parents[2] / "app" / "api" / "v1" / "ai" / "__init__.py"
         source = route_file.read_text()
@@ -91,7 +91,7 @@ class TestManualClassificationFallback:
                 side_effect=Exception("AI service down"),
             ),
         ):
-            result = await confirm_doc_type(
+            await confirm_doc_type(
                 mock_db,
                 doc_id=mock_doc.id,
                 matter_id=mock_doc.matter_id,
@@ -132,7 +132,7 @@ class TestManualClassificationFallback:
                 new_callable=AsyncMock,
             ),
         ):
-            result = await confirm_doc_type(
+            await confirm_doc_type(
                 mock_db,
                 doc_id=mock_doc.id,
                 matter_id=mock_doc.matter_id,
@@ -268,14 +268,14 @@ class TestRateLimiterResilience:
 
     @patch("app.services.ai_rate_limiter._get_redis")
     def test_rate_limit_exceeded_still_propagates(self, mock_get_redis):
-        """RateLimitExceeded should still be raised (it's intentional, not an error)."""
+        """RateLimitExceededError should still be raised (it's intentional, not an error)."""
         from app.services.ai_rate_limiter import check_rate_limit
 
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
         mock_redis.eval.return_value = -1
 
-        with pytest.raises(RateLimitExceeded):
+        with pytest.raises(RateLimitExceededError):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
 
 

@@ -7,11 +7,9 @@ updates the document record, and logs the AI event.
 from __future__ import annotations
 
 import logging
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -20,15 +18,20 @@ from app.models.documents import Document
 from app.models.enums import ActorType
 from app.models.matters import Matter
 from app.prompts import get_prompt_version
+from app.prompts.classification import DOCUMENT_TYPES as DOCUMENT_TYPES
+from app.prompts.classification import SYSTEM_PROMPT as _SYSTEM_PROMPT
+from app.prompts.classification import build_tool_schema as _build_tool_schema
 from app.prompts.classification import (
-    DOCUMENT_TYPES,
-    SYSTEM_PROMPT as _SYSTEM_PROMPT,
-    build_tool_schema as _build_tool_schema,
     build_user_prompt as _build_classification_prompt,
 )
 from app.schemas.ai import AIClassifyResponse
 from app.services import text_extraction_service
 from app.services.ai_rate_limiter import check_rate_limit
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

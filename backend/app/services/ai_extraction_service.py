@@ -7,12 +7,10 @@ based on their type using Claude API with structured tool_use output.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -20,10 +18,15 @@ from app.models.ai_usage_logs import AIUsageLog
 from app.models.documents import Document
 from app.models.enums import ActorType
 from app.models.matters import Matter
-from app.schemas.ai import AIExtractResponse
 from app.prompts import get_prompt_version
+from app.schemas.ai import AIExtractResponse
 from app.services import text_extraction_service
 from app.services.ai_rate_limiter import check_rate_limit
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -444,7 +447,7 @@ async def extract_document_data(
             "confidence": confidence,
             "doc_type": doc.doc_type,
             "prompt_version": get_prompt_version("extract"),
-            "extracted_at": datetime.now(timezone.utc).isoformat(),
+            "extracted_at": datetime.now(UTC).isoformat(),
         },
     }
     await db.flush()

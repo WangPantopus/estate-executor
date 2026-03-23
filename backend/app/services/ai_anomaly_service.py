@@ -8,11 +8,10 @@ potential issues.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -26,6 +25,9 @@ from app.models.tasks import Task
 from app.prompts import get_prompt_version
 from app.schemas.ai import AIAnomalyResponse, Anomaly
 from app.services.ai_rate_limiter import check_rate_limit
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -261,4 +261,3 @@ class TestAPIRouteExists:
         route_file = Path(__file__).parents[2] / "app" / "api" / "v1" / "ai" / "__init__.py"
         source = route_file.read_text()
         assert "detect-anomalies" in source
-        assert "AIAnomalyResponse" in source

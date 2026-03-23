@@ -7,11 +7,9 @@ uses Claude to identify missing tasks beyond the standard checklist.
 from __future__ import annotations
 
 import logging
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -26,6 +24,11 @@ from app.models.tasks import Task
 from app.prompts import get_prompt_version
 from app.schemas.ai import AISuggestTasksResponse, TaskSuggestion
 from app.services.ai_rate_limiter import check_rate_limit
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +73,7 @@ def _build_user_prompt(
         f"  - {e['name']} ({e['type']})" for e in entities_summary
     ) or "  (no entities)"
 
-    doc_type_lines = "\n".join(f"  - {d}" for d in document_types) or "  (no documents)"
+    "\n".join(f"  - {d}" for d in document_types) or "  (no documents)"
 
     return f"""Analyze this estate profile and suggest additional tasks that may be needed:
 

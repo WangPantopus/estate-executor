@@ -10,10 +10,6 @@ Validates:
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
-
 import pytest
 
 
@@ -57,7 +53,12 @@ class TestPromptModulesExist:
     """Verify all prompt modules are properly created."""
 
     def test_classification_module(self):
-        from app.prompts.classification import SYSTEM_PROMPT, DOCUMENT_TYPES, build_user_prompt, build_tool_schema
+        from app.prompts.classification import (
+            DOCUMENT_TYPES,
+            SYSTEM_PROMPT,
+            build_tool_schema,
+            build_user_prompt,
+        )
 
         assert len(SYSTEM_PROMPT) > 50
         assert len(DOCUMENT_TYPES) == 11
@@ -65,35 +66,35 @@ class TestPromptModulesExist:
         assert callable(build_tool_schema)
 
     def test_extraction_module(self):
-        from app.prompts.extraction import build_system_prompt, build_user_prompt, build_tool_schema
+        from app.prompts.extraction import build_system_prompt, build_tool_schema, build_user_prompt
 
         assert callable(build_system_prompt)
         assert callable(build_user_prompt)
         assert callable(build_tool_schema)
 
     def test_letter_module(self):
-        from app.prompts.letter import SYSTEM_PROMPT, build_user_prompt, build_tool_schema
+        from app.prompts.letter import SYSTEM_PROMPT, build_tool_schema, build_user_prompt
 
         assert len(SYSTEM_PROMPT) > 30
         assert callable(build_user_prompt)
         assert callable(build_tool_schema)
 
     def test_suggestion_module(self):
-        from app.prompts.suggestion import SYSTEM_PROMPT, build_user_prompt, build_tool_schema
+        from app.prompts.suggestion import SYSTEM_PROMPT, build_tool_schema, build_user_prompt
 
         assert len(SYSTEM_PROMPT) > 30
         assert callable(build_user_prompt)
         assert callable(build_tool_schema)
 
     def test_anomaly_module(self):
-        from app.prompts.anomaly import SYSTEM_PROMPT, build_user_prompt, build_tool_schema
+        from app.prompts.anomaly import SYSTEM_PROMPT, build_tool_schema, build_user_prompt
 
         assert len(SYSTEM_PROMPT) > 30
         assert callable(build_user_prompt)
         assert callable(build_tool_schema)
 
     def test_trust_analysis_module(self):
-        from app.prompts.trust_analysis import SYSTEM_PROMPT, build_user_prompt, build_tool_schema
+        from app.prompts.trust_analysis import SYSTEM_PROMPT, build_tool_schema, build_user_prompt
 
         assert len(SYSTEM_PROMPT) > 30
         assert callable(build_user_prompt)
@@ -237,7 +238,7 @@ class TestClassificationAccuracyBenchmark:
     )
     def test_prompt_produces_correct_classification(self, text, expected_type):
         """Verify the optimized prompt includes all necessary context for classification."""
-        from app.prompts.classification import build_user_prompt, DOCUMENT_TYPES
+        from app.prompts.classification import build_user_prompt
 
         prompt = build_user_prompt(text, estate_type="testate_probate", jurisdiction="CA")
         # The prompt should contain the document text and all type options

@@ -7,11 +7,9 @@ Claude to draft professional notification and claim letters.
 from __future__ import annotations
 
 import logging
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -23,6 +21,11 @@ from app.models.stakeholders import Stakeholder
 from app.prompts import get_prompt_version
 from app.schemas.ai import AILetterDraftResponse
 from app.services.ai_rate_limiter import check_rate_limit
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
