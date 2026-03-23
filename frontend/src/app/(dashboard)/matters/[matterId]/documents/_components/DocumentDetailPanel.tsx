@@ -318,9 +318,54 @@ export function DocumentDetailPanel({
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Not yet classified. Classification may still be processing.
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Not yet classified. AI classification may still be processing.
+                </p>
+                {/* Manual classification fallback */}
+                <div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedType("");
+                      setChangingType(true);
+                    }}
+                  >
+                    Classify Manually
+                  </Button>
+                  {changingType && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Select value={selectedType} onValueChange={setSelectedType}>
+                        <SelectTrigger className="h-8 flex-1">
+                          <SelectValue placeholder="Select type..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(DOC_TYPE_LABELS).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        className="h-8"
+                        onClick={() => handleConfirmType(selectedType)}
+                        disabled={!selectedType || confirmDocType.isPending}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => setChangingType(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -399,6 +444,11 @@ export function DocumentDetailPanel({
                   )}
                   Extract Data with AI
                 </Button>
+                {extractData.error && (
+                  <p className="text-[10px] text-warning mt-1">
+                    AI extraction unavailable. You can enter data manually on the asset.
+                  </p>
+                )}
               </div>
             </>
           )}

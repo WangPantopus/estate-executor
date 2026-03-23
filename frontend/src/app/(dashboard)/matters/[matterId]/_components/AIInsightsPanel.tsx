@@ -254,10 +254,18 @@ export function AIInsightsPanel({ firmId, matterId }: AIInsightsPanelProps) {
 
         {/* Errors */}
         {suggestTasks.error && (
-          <p className="text-xs text-danger">Failed to get suggestions. Try again.</p>
+          <div className="rounded-md border border-warning/30 bg-warning-light/30 px-3 py-2">
+            <p className="text-xs text-warning">
+              AI suggestions unavailable right now. You can still create tasks manually.
+            </p>
+          </div>
         )}
         {detectAnomalies.error && (
-          <p className="text-xs text-danger">Failed to detect anomalies. Try again.</p>
+          <div className="rounded-md border border-warning/30 bg-warning-light/30 px-3 py-2">
+            <p className="text-xs text-warning">
+              AI anomaly detection unavailable right now. You can review documents and assets manually.
+            </p>
+          </div>
         )}
 
         {/* Suggestions */}

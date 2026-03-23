@@ -209,9 +209,12 @@ export function DraftLetterDialog({
             )}
 
             {draftLetter.error && (
-              <p className="text-sm text-danger">
-                Failed to generate letter. Please try again.
-              </p>
+              <div className="rounded-md border border-warning/30 bg-warning-light/30 px-3 py-2">
+                <p className="text-xs text-warning">
+                  AI letter drafting is temporarily unavailable. You can write the letter manually
+                  or try again later.
+                </p>
+              </div>
             )}
 
             <DialogFooter>
