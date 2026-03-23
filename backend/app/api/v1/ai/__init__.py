@@ -14,7 +14,7 @@ from app.core.security import get_current_user, require_firm_member, require_sta
 from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
-from app.schemas.ai import AIExtractResponse
+from app.schemas.ai import AIExtractResponse, AILetterDraftRequest, AILetterDraftResponse
 from app.schemas.auth import CurrentUser
 
 router = APIRouter()
@@ -57,3 +57,62 @@ async def extract_document_data(
         raise NotFoundError(detail=str(exc)) from exc
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# POST .../ai/draft-letter — Draft an estate administration letter
+# ---------------------------------------------------------------------------
+
+
+@router.post("/draft-letter", response_model=AILetterDraftResponse)
+async def draft_letter(
+    firm_id: UUID,
+    matter_id: UUID,
+    body: AILetterDraftRequest,
+    _membership: FirmMembership = Depends(require_firm_member),
+    stakeholder: Stakeholder = Depends(require_stakeholder),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AILetterDraftResponse:
+    """Draft a formal notification or claim letter for an asset.
+
+    Uses AI to generate a professional letter based on matter context,
+    asset details, and the specified letter type.
+    """
+    if stakeholder.role not in _WRITE_ROLES:
+        raise PermissionDeniedError(detail="Insufficient permissions for AI letter drafting")
+
+    from app.services.ai_letter_service import draft_letter as do_draft
+
+    try:
+        result = await do_draft(
+            db,
+            matter_id=matter_id,
+            asset_id=body.asset_id,
+            letter_type=body.letter_type,
+        )
+    except ValueError as exc:
+        raise NotFoundError(detail=str(exc)) from exc
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# GET .../ai/letter-types — List available letter types
+# ---------------------------------------------------------------------------
+
+
+@router.get("/letter-types")
+async def list_letter_types(
+    firm_id: UUID,
+    matter_id: UUID,
+    _membership: FirmMembership = Depends(require_firm_member),
+    _stakeholder: Stakeholder = Depends(require_stakeholder),
+) -> list[dict[str, str]]:
+    """List available letter types for drafting."""
+    from app.services.ai_letter_service import LETTER_TYPES
+
+    return [
+        {"key": key, "label": val["label"], "description": val["description"]}
+        for key, val in LETTER_TYPES.items()
+    ]

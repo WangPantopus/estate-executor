@@ -10,6 +10,7 @@ import {
   Sparkles,
   Pencil,
   Loader2,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ import { useAsset, useUpdateAsset, useAddValuation } from "@/hooks";
 import type { AssetListItem, AssetDetail, AssetStatus, Entity } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ASSET_TYPE_ICONS, ASSET_TYPE_COLORS } from "./AssetCard";
+import { DraftLetterDialog } from "./DraftLetterDialog";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -202,6 +204,7 @@ export function AssetDetailPanel({
 }: AssetDetailPanelProps) {
   const { data: assetDetail, isLoading } = useAsset(firmId, matterId, assetId);
   const updateAsset = useUpdateAsset(firmId, matterId);
+  const [draftLetterOpen, setDraftLetterOpen] = useState(false);
 
   // Fallback to list item while detail loads
   const asset: AssetListItem | AssetDetail | undefined =
@@ -420,6 +423,14 @@ export function AssetDetailPanel({
                 <Link2 className="size-3.5 mr-1" />
                 Link existing
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDraftLetterOpen(true)}
+              >
+                <Mail className="size-3.5 mr-1" />
+                Draft Letter
+              </Button>
             </div>
           </div>
 
@@ -496,6 +507,17 @@ export function AssetDetailPanel({
           </p>
         )}
       </div>
+
+      {/* Draft Letter Dialog */}
+      <DraftLetterDialog
+        open={draftLetterOpen}
+        onOpenChange={setDraftLetterOpen}
+        firmId={firmId}
+        matterId={matterId}
+        assetId={asset.id}
+        assetTitle={asset.title}
+        institution={asset.institution}
+      />
     </div>
   );
 }

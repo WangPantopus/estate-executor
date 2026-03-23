@@ -227,27 +227,45 @@ def extract_document_data(self: Any, document_id: str, matter_id: str = "") -> d
     time_limit=300,
 )
 def draft_letter(self: Any, matter_id: str, asset_id: str, letter_type: str) -> dict[str, Any]:
-    """Draft a letter using AI (e.g., notification to creditors, beneficiary communication).
+    """Draft a letter using AI for estate administration.
 
-    Placeholder: In production, this would generate a letter draft
-    based on matter context, asset details, and letter type template.
+    Gathers matter context, asset details, and executor info, then calls
+    Claude to generate a professional notification or claim letter.
     """
     try:
         logger.info(
-            "draft_letter_placeholder",
+            "draft_letter_started",
             extra={
                 "matter_id": matter_id,
                 "asset_id": asset_id,
                 "letter_type": letter_type,
             },
         )
-        return {
-            "matter_id": matter_id,
-            "asset_id": asset_id,
-            "letter_type": letter_type,
-            "status": "drafted",
-            "draft_content": None,
-        }
+
+        async def _draft() -> dict[str, Any]:
+            from app.core.database import async_session_factory
+            from app.services.ai_letter_service import draft_letter as do_draft
+
+            async with async_session_factory() as session:
+                result = await do_draft(
+                    session,
+                    matter_id=UUID(matter_id),
+                    asset_id=UUID(asset_id),
+                    letter_type=letter_type,
+                )
+                await session.commit()
+
+                return {
+                    "matter_id": matter_id,
+                    "asset_id": asset_id,
+                    "letter_type": letter_type,
+                    "status": "drafted",
+                    "subject": result.subject,
+                    "recipient_institution": result.recipient_institution,
+                }
+
+        return _run_async(_draft())
+
     except Exception as exc:
         logger.exception("draft_letter failed")
         raise self.retry(exc=exc) from exc

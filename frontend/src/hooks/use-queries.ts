@@ -771,3 +771,11 @@ export function useExtractData(firmId: string, matterId: string) {
     },
   });
 }
+
+export function useDraftLetter(firmId: string, matterId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data: { asset_id: string; letter_type: string }) =>
+      api.draftLetter(firmId, matterId, data),
+  });
+}
