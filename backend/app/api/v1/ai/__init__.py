@@ -186,3 +186,36 @@ async def detect_anomalies(
         raise NotFoundError(detail=str(exc)) from exc
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# POST .../ai/analyze-trust/{doc_id} — AI trust document analysis
+# ---------------------------------------------------------------------------
+
+
+@router.post("/analyze-trust/{doc_id}")
+async def analyze_trust_document(
+    firm_id: UUID,
+    matter_id: UUID,
+    doc_id: UUID,
+    _membership: FirmMembership = Depends(require_firm_member),
+    stakeholder: Stakeholder = Depends(require_stakeholder),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Analyze a trust document for entity creation and funding suggestions.
+
+    Automatically creates an entity from extracted trust details if none exists,
+    then analyzes which assets should be funded into the trust.
+    """
+    if stakeholder.role not in _WRITE_ROLES:
+        raise PermissionDeniedError(detail="Insufficient permissions for trust analysis")
+
+    from app.services.ai_trust_analysis_service import analyze_trust_document as do_analyze
+
+    try:
+        result = await do_analyze(db, document_id=doc_id, matter_id=matter_id)
+    except ValueError as exc:
+        raise NotFoundError(detail=str(exc)) from exc
+
+    return result

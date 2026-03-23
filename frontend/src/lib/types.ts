@@ -488,10 +488,19 @@ export interface Entity {
   updated_at: string;
 }
 
+export interface FundingDetail {
+  entity_id: string;
+  entity_name: string;
+  funding_status: FundingStatus;
+  funded_count: number;
+  total_value: number | null;
+}
+
 export interface EntityMapResponse {
   entities: Entity[];
   unassigned_assets: AssetBrief[];
   pour_over_candidates: AssetBrief[];
+  funding_summary: FundingDetail[];
 }
 
 // ─── Documents ───────────────────────────────────────────────────────────────
