@@ -787,6 +787,51 @@ export interface MatterFilters extends PaginationParams {
   search?: string;
 }
 
+// ─── Portfolio ────────────────────────────────────────────────────────────────
+
+export type RiskLevel = 'green' | 'amber' | 'red';
+
+export interface PortfolioMatterItem {
+  matter: Matter;
+  total_task_count: number;
+  complete_task_count: number;
+  open_task_count: number;
+  overdue_task_count: number;
+  approaching_deadline_count: number;
+  next_deadline: string | null;
+  has_dispute: boolean;
+  oldest_blocked_task_days: number | null;
+  risk_level: RiskLevel;
+}
+
+export interface PortfolioSummary {
+  total_active_matters: number;
+  total_overdue_tasks: number;
+  approaching_deadlines_this_week: number;
+  matters_by_phase: Record<string, number>;
+}
+
+export interface PortfolioResponse {
+  summary: PortfolioSummary;
+  data: PortfolioMatterItem[];
+  meta: PaginationMeta;
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+export interface ReportType {
+  type: string;
+  label: string;
+  formats: string[];
+}
+
+export interface ReportJobStatus {
+  job_id: string;
+  status: 'processing' | 'completed' | 'failed';
+  download_url?: string | null;
+  filename?: string | null;
+}
+
 export interface TaskFilters extends PaginationParams {
   phase?: TaskPhase;
   status?: TaskStatus;

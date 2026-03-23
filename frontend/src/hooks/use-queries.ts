@@ -196,6 +196,15 @@ export function useMatters(firmId: string, filters?: MatterFilters) {
   });
 }
 
+export function usePortfolio(firmId: string, filters?: MatterFilters) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "portfolio", filters] as const,
+    queryFn: () => api.getPortfolio(firmId, filters),
+    enabled: !!firmId,
+  });
+}
+
 export function useMatterDashboard(firmId: string, matterId: string) {
   const api = useApi();
   return useQuery({

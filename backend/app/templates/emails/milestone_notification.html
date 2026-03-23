@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Milestone reached — Estate Executor{% endblock %}
+
+{% block preheader %}Good news: The Estate of {{ decedent_name }} has reached a milestone — {{ milestone }}.{% endblock %}
+
+{% block body %}
+<!-- Success banner -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 24px;">
+  <tr>
+    <td style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px 16px; text-align: center;">
+      <span style="font-size: 14px; font-weight: 600; color: #166534; letter-spacing: 0.3px;">
+        MILESTONE ACHIEVED
+      </span>
+    </td>
+  </tr>
+</table>
+
+<h1 style="margin: 0 0 24px; font-size: 24px; font-weight: 700; color: #1a2332; line-height: 1.3;">
+  Milestone Reached
+</h1>
+
+<p style="margin: 0 0 20px; font-size: 15px; color: #4a5568; line-height: 1.7;">
+  Hello {{ recipient_name }},
+</p>
+
+<p style="margin: 0 0 24px; font-size: 15px; color: #4a5568; line-height: 1.7;">
+  The <strong style="color: #1a2332;">Estate of {{ decedent_name }}</strong> has reached an important milestone:
+</p>
+
+<!-- Milestone card -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 28px;">
+  <tr>
+    <td style="background-color: #f8f7f4; border-left: 3px solid #c9a84c; padding: 20px 24px; border-radius: 0 6px 6px 0;">
+      <p style="margin: 0 0 4px; font-size: 17px; font-weight: 600; color: #1a2332;">
+        {{ milestone }}
+      </p>
+      {% if milestone_description %}
+      <p style="margin: 0 0 12px; font-size: 14px; color: #64748b; line-height: 1.6;">
+        {{ milestone_description }}
+      </p>
+      {% endif %}
+      {% if progress_summary %}
+      <p style="margin: 12px 0 0; font-size: 13px; color: #94a3b8;">
+        Overall progress: {{ progress_summary }}
+      </p>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<!-- CTA Button -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+  <tr>
+    <td style="text-align: center; padding: 4px 0;">
+      <a href="{{ matter_url }}" target="_blank"
+         style="display: inline-block; padding: 14px 36px; background-color: #1a2332; color: #ffffff;
+                font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 6px;
+                letter-spacing: 0.3px;">
+        <span style="mso-text-raise: 10pt;">View Progress</span>
+      </a>
+    </td>
+  </tr>
+</table>
+{% endblock %}

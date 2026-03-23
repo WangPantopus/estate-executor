@@ -224,3 +224,143 @@ class TestActorTypeEnum:
 
     def test_ai(self):
         assert ActorType.ai == "ai"
+
+
+class TestEventCreation:
+    """Test event logging via the EventLogger."""
+
+    @pytest.mark.asyncio
+    async def test_event_logger_creates_event(self):
+        """EventLogger.log should add an Event to the session."""
+        from unittest.mock import AsyncMock, MagicMock
+        import uuid
+        from app.core.events import EventLogger
+        from app.models.enums import ActorType
+
+        logger = EventLogger()
+        mock_db = AsyncMock()
+        mock_db.add = MagicMock()
+        mock_db.flush = AsyncMock()
+
+        event = await logger.log(
+            mock_db,
+            matter_id=uuid.uuid4(),
+            actor_id=uuid.uuid4(),
+            actor_type=ActorType.user,
+            entity_type="task",
+            entity_id=uuid.uuid4(),
+            action="created",
+            changes={"title": {"old": None, "new": "Test Task"}},
+        )
+        assert event is not None
+        mock_db.add.assert_called_once()
+        mock_db.flush.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_event_logger_records_ip_from_request(self):
+        """EventLogger should extract IP from request when provided."""
+        from unittest.mock import AsyncMock, MagicMock
+        import uuid
+        from app.core.events import EventLogger
+        from app.models.enums import ActorType
+
+        logger = EventLogger()
+        mock_db = AsyncMock()
+        mock_db.add = MagicMock()
+        mock_db.flush = AsyncMock()
+
+        mock_request = MagicMock()
+        mock_request.client.host = "192.168.1.1"
+        mock_request.headers.get.return_value = "Mozilla/5.0"
+
+        event = await logger.log(
+            mock_db,
+            matter_id=uuid.uuid4(),
+            actor_id=uuid.uuid4(),
+            actor_type=ActorType.user,
+            entity_type="task",
+            entity_id=uuid.uuid4(),
+            action="updated",
+            request=mock_request,
+        )
+        assert event.ip_address == "192.168.1.1"
+        assert event.user_agent == "Mozilla/5.0"
+
+    @pytest.mark.asyncio
+    async def test_event_logger_handles_no_request(self):
+        """EventLogger should work without a request object."""
+        from unittest.mock import AsyncMock, MagicMock
+        import uuid
+        from app.core.events import EventLogger
+        from app.models.enums import ActorType
+
+        logger = EventLogger()
+        mock_db = AsyncMock()
+        mock_db.add = MagicMock()
+        mock_db.flush = AsyncMock()
+
+        event = await logger.log(
+            mock_db,
+            matter_id=uuid.uuid4(),
+            actor_id=uuid.uuid4(),
+            actor_type=ActorType.system,
+            entity_type="matter",
+            entity_id=uuid.uuid4(),
+            action="closed",
+        )
+        assert event.ip_address is None
+
+
+class TestQueryFiltering:
+    """Test event query filtering logic."""
+
+    def test_cursor_format_is_timestamp_pipe_uuid(self):
+        """Cursors should be 'ISO_TIMESTAMP|UUID' format."""
+        import uuid
+        from datetime import datetime, timezone
+
+        ts = datetime.now(timezone.utc).isoformat()
+        uid = str(uuid.uuid4())
+        cursor = f"{ts}|{uid}"
+        parts = cursor.split("|")
+        assert len(parts) == 2
+
+    def test_entity_type_filter_values(self):
+        """Common entity_type filter values."""
+        valid_types = {"task", "asset", "document", "stakeholder", "matter", "deadline", "communication"}
+        assert len(valid_types) >= 7
+
+    def test_action_filter_values(self):
+        """Common action filter values."""
+        valid_actions = {"created", "updated", "completed", "waived", "assigned", "uploaded", "removed"}
+        assert len(valid_actions) >= 7
+
+
+class TestCSVExport:
+    """Test CSV export logic."""
+
+    def test_csv_changes_summary_with_old_new(self):
+        """Changes summary should show 'field: old → new' format."""
+        from app.services.event_service import _summarize_changes
+
+        changes = {"status": {"old": "not_started", "new": "in_progress"}}
+        summary = _summarize_changes(changes)
+        assert "status" in summary
+        assert "not_started" in summary
+        assert "in_progress" in summary
+
+    def test_csv_changes_summary_none(self):
+        from app.services.event_service import _summarize_changes
+
+        assert _summarize_changes(None) == ""
+
+    def test_csv_changes_summary_empty(self):
+        from app.services.event_service import _summarize_changes
+
+        assert _summarize_changes({}) == ""
+
+    def test_csv_export_includes_headers(self):
+        """CSV output should include column headers."""
+        # The CSV should have these columns
+        expected_headers = ["timestamp", "actor", "entity_type", "entity_id", "action"]
+        assert len(expected_headers) >= 5

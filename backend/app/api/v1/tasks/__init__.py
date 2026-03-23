@@ -61,14 +61,29 @@ async def list_tasks(
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> TaskListResponse:
-    """List tasks with filters, sorting, and pagination."""
+    """List tasks with filters, sorting, and pagination.
+
+    Role-based filtering:
+    - beneficiary: only milestone/informational tasks
+    - read_only: only milestone/informational tasks
+    - executor_trustee: only tasks assigned to them
+    - matter_admin/professional: all tasks
+    """
+    # Beneficiary and read_only only see milestones
+    if stakeholder.role in (StakeholderRole.beneficiary, StakeholderRole.read_only):
+        phase = TaskPhase.family_communication if phase is None else phase
+    # Executor/trustee only see their assigned tasks
+    effective_assigned_to = assigned_to
+    if stakeholder.role == StakeholderRole.executor_trustee and stakeholder.id is not None:
+        effective_assigned_to = stakeholder.id
+
     items, total = await task_service.list_tasks(
         db,
         matter_id=matter_id,
         phase=phase,
         status=status,
         priority=priority,
-        assigned_to=assigned_to,
+        assigned_to=effective_assigned_to,
         search=search,
         sort_by=sort_by,
         page=pagination.page,
@@ -231,8 +246,25 @@ async def get_task_detail(
     stakeholder: Stakeholder = Depends(require_stakeholder),
     db: AsyncSession = Depends(get_db),
 ) -> TaskDetailResponse:
-    """Get full task detail with documents, dependencies, dependents, and comments."""
+    """Get full task detail with documents, dependencies, dependents, and comments.
+
+    Beneficiaries and read_only users cannot access task detail.
+    Executor/trustees can only access tasks assigned to them.
+    """
+    from app.core.exceptions import NotFoundError
+
+    if stakeholder.role in (StakeholderRole.beneficiary, StakeholderRole.read_only):
+        raise NotFoundError(detail="Task not found")
+
     detail = await task_service.get_task_detail(db, task_id=task_id, matter_id=matter_id)
+
+    # Executor/trustee can only see assigned tasks
+    if (
+        stakeholder.role == StakeholderRole.executor_trustee
+        and stakeholder.id is not None
+        and detail.get("assigned_to") != stakeholder.id
+    ):
+        raise NotFoundError(detail="Task not found")
     return TaskDetailResponse(
         id=detail["id"],
         matter_id=detail["matter_id"],
@@ -396,7 +428,9 @@ async def link_document(
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Link a document to a task."""
+    """Link a document to a task. Requires at least executor_trustee role."""
+    if stakeholder.role in (StakeholderRole.beneficiary, StakeholderRole.read_only):
+        raise PermissionDeniedError(detail="Insufficient permissions")
     await task_service.link_document(
         db,
         task_id=task_id,

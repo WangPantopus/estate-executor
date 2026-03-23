@@ -76,7 +76,8 @@ async def _check_deadlines_async() -> dict[str, int]:
 def check_overdue_tasks(self):
     """Periodic task: find tasks past due_date still in not_started or in_progress.
 
-    Sends notifications to the assignee and matter admins.
+    Sends overdue notifications to the assignee and matter admins using
+    the premium task_overdue email template.
     """
     try:
         stats = _run_async(_check_overdue_tasks_async())
@@ -89,6 +90,7 @@ def check_overdue_tasks(self):
 
 async def _check_overdue_tasks_async() -> dict[str, int]:
     from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
 
     from app.core.database import async_session_factory
     from app.models.enums import MatterStatus, StakeholderRole, TaskStatus
@@ -110,36 +112,50 @@ async def _check_overdue_tasks_async() -> dict[str, int]:
             if not matter_ids:
                 return stats
 
-            # Find overdue tasks
-            overdue_q = select(Task).where(
-                Task.matter_id.in_(matter_ids),
-                Task.status.in_([TaskStatus.not_started, TaskStatus.in_progress]),
-                Task.due_date < today,
-                Task.due_date.isnot(None),
+            # Find overdue tasks with matter info
+            overdue_q = (
+                select(Task)
+                .options(
+                    selectinload(Task.matter).selectinload(Matter.firm),
+                    selectinload(Task.assignee),
+                )
+                .where(
+                    Task.matter_id.in_(matter_ids),
+                    Task.status.in_([TaskStatus.not_started, TaskStatus.in_progress]),
+                    Task.due_date < today,
+                    Task.due_date.isnot(None),
+                )
             )
             result = await session.execute(overdue_q)
             overdue_tasks = result.scalars().all()
 
             for task in overdue_tasks:
                 stats["overdue_tasks_found"] += 1
+                from app.workers.notification_tasks import send_task_overdue_notification
+
+                matter = task.matter
+                firm = matter.firm if matter else None
+                status_val = task.status.value if hasattr(task.status, "value") else task.status
+
+                base_kwargs = {
+                    "task_id": str(task.id),
+                    "task_title": task.title,
+                    "due_date": str(task.due_date),
+                    "status": status_val,
+                    "decedent_name": matter.decedent_name if matter else "Unknown",
+                    "firm_name": firm.name if firm else None,
+                    "matter_id": str(task.matter_id),
+                }
 
                 # Notify assignee
-                if task.assigned_to is not None:
-                    from app.workers.notification_tasks import send_email
-
-                    assignee_result = await session.execute(
-                        select(Stakeholder).where(Stakeholder.id == task.assigned_to)
+                if task.assignee is not None:
+                    send_task_overdue_notification.delay(
+                        to=task.assignee.email,
+                        recipient_name=task.assignee.full_name,
+                        assigned_to_name=task.assignee.full_name,
+                        **base_kwargs,
                     )
-                    assignee = assignee_result.scalar_one_or_none()
-                    if assignee:
-                        send_email.delay(
-                            to=assignee.email,
-                            subject=f"Overdue task: {task.title}",
-                            html_body=f"<p>Hello {assignee.full_name},</p>"
-                            f"<p>The task <strong>{task.title}</strong> was due on "
-                            f"{task.due_date} and is still {task.status.value}.</p>",
-                        )
-                        stats["notifications_sent"] += 1
+                    stats["notifications_sent"] += 1
 
                 # Notify matter admins
                 admin_result = await session.execute(
@@ -149,15 +165,18 @@ async def _check_overdue_tasks_async() -> dict[str, int]:
                     )
                 )
                 admins = admin_result.scalars().all()
-                for admin in admins:
-                    from app.workers.notification_tasks import send_email
+                assignee_name = task.assignee.full_name if task.assignee else None
 
-                    send_email.delay(
+                for admin in admins:
+                    # Skip if admin is the same as assignee
+                    if task.assignee and admin.email == task.assignee.email:
+                        continue
+
+                    send_task_overdue_notification.delay(
                         to=admin.email,
-                        subject=f"Overdue task alert: {task.title}",
-                        html_body=f"<p>Hello {admin.full_name},</p>"
-                        f"<p>The task <strong>{task.title}</strong> is overdue "
-                        f"(due: {task.due_date}, status: {task.status.value}).</p>",
+                        recipient_name=admin.full_name,
+                        assigned_to_name=assignee_name,
+                        **base_kwargs,
                     )
                     stats["notifications_sent"] += 1
 

@@ -44,9 +44,26 @@ class PortfolioMatterItem(BaseModel):
     model_config = ConfigDict(strict=True)
 
     matter: MatterResponse
+    total_task_count: int
+    complete_task_count: int
     open_task_count: int
     overdue_task_count: int
+    approaching_deadline_count: int
     next_deadline: date | None
+    has_dispute: bool
+    oldest_blocked_task_days: int | None
+    risk_level: str  # "green" | "amber" | "red"
+
+
+class PortfolioSummary(BaseModel):
+    """Cross-matter aggregate summary for the portfolio header."""
+
+    model_config = ConfigDict(strict=True)
+
+    total_active_matters: int
+    total_overdue_tasks: int
+    approaching_deadlines_this_week: int
+    matters_by_phase: dict[str, int]
 
 
 class PortfolioResponse(BaseModel):
@@ -54,6 +71,7 @@ class PortfolioResponse(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
+    summary: PortfolioSummary
     data: list[PortfolioMatterItem]
     meta: PaginationMeta
 
@@ -118,19 +136,34 @@ async def list_matters(
                 detail="Portfolio view requires firm admin access"
             )
 
-        items, total = await matter_service.get_portfolio(
+        portfolio_data = await matter_service.get_portfolio(
             db,
             firm_id=firm_id,
+            status=status,
+            phase=phase,
+            search=search,
+            jurisdiction_state=jurisdiction_state,
             page=pagination.page,
             per_page=pagination.per_page,
         )
+        items = portfolio_data["items"]
+        total = portfolio_data["total"]
+        summary = portfolio_data["summary"]
+
         return PortfolioResponse(
+            summary=PortfolioSummary(**summary),
             data=[
                 PortfolioMatterItem(
                     matter=MatterResponse.model_validate(item["matter"]),
+                    total_task_count=item["total_task_count"],
+                    complete_task_count=item["complete_task_count"],
                     open_task_count=item["open_task_count"],
                     overdue_task_count=item["overdue_task_count"],
+                    approaching_deadline_count=item["approaching_deadline_count"],
                     next_deadline=item["next_deadline"],
+                    has_dispute=item["has_dispute"],
+                    oldest_blocked_task_days=item["oldest_blocked_task_days"],
+                    risk_level=item["risk_level"],
                 )
                 for item in items
             ],
@@ -251,12 +284,15 @@ async def close_matter(
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MatterResponse:
-    """Close a matter. All critical tasks must be complete or waived."""
-    if stakeholder.role not in (StakeholderRole.matter_admin, StakeholderRole.professional):
+    """Close a matter. All critical tasks must be complete or waived.
+
+    Only matter_admin can close a matter (per permission model §7.2).
+    """
+    if stakeholder.role != StakeholderRole.matter_admin:
         from app.core.exceptions import PermissionDeniedError
 
         raise PermissionDeniedError(
-            detail="Only matter admins and professionals can close matters"
+            detail="Only matter admins can close matters"
         )
 
     matter = await matter_service.close_matter(

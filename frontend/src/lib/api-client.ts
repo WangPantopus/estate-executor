@@ -57,6 +57,9 @@ import type {
   MatterFilters,
   MatterUpdate,
   PaginatedResponse,
+  PortfolioResponse,
+  ReportJobStatus,
+  ReportType,
   RegisterVersionRequest,
   Stakeholder,
   StakeholderInvite,
@@ -299,6 +302,14 @@ export class ApiClient {
     params?: MatterFilters,
   ): Promise<PaginatedResponse<Matter>> {
     return this.get(`/firms/${firmId}/matters${buildQueryString(params)}`);
+  }
+
+  async getPortfolio(
+    firmId: string,
+    params?: MatterFilters,
+  ): Promise<PortfolioResponse> {
+    const qs = buildQueryString({ ...params, view: "portfolio" });
+    return this.get(`/firms/${firmId}/matters${qs}`);
   }
 
   async getMatterDashboard(
@@ -799,6 +810,51 @@ export class ApiClient {
   ): Promise<CursorPaginatedResponse<EventResponse>> {
     return this.get(
       `/firms/${firmId}/matters/${matterId}/events${buildQueryString(params)}`,
+    );
+  }
+
+  // ─── Reports ────────────────────────────────────────────────────────
+
+  private reportBase(firmId: string, matterId: string) {
+    return `/firms/${firmId}/matters/${matterId}/reports`;
+  }
+
+  async getReportTypes(
+    firmId: string,
+    matterId: string,
+  ): Promise<ReportType[]> {
+    return this.get(this.reportBase(firmId, matterId));
+  }
+
+  generateReportUrl(
+    firmId: string,
+    matterId: string,
+    reportType: string,
+    format: string = "pdf",
+  ): string {
+    const base = this.baseUrl || process.env.NEXT_PUBLIC_API_URL || "";
+    return `${base}/api/v1${this.reportBase(firmId, matterId)}/${reportType}?format=${format}`;
+  }
+
+  async generateReportAsync(
+    firmId: string,
+    matterId: string,
+    reportType: string,
+    format: string = "pdf",
+  ): Promise<ReportJobStatus> {
+    return this.post(
+      `${this.reportBase(firmId, matterId)}/${reportType}/async?format=${format}`,
+      {},
+    );
+  }
+
+  async getReportJobStatus(
+    firmId: string,
+    matterId: string,
+    jobId: string,
+  ): Promise<ReportJobStatus> {
+    return this.get(
+      `${this.reportBase(firmId, matterId)}/jobs/${jobId}`,
     );
   }
 

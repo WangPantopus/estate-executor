@@ -1,5 +1,6 @@
 from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
+from app.models.email_logs import EmailLog
 from app.models.base import BaseModel
 from app.models.communications import Communication
 from app.models.deadlines import Deadline
@@ -87,4 +88,5 @@ __all__ = [
     "Deadline",
     "Communication",
     "Event",
+    "EmailLog",
 ]

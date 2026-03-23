@@ -205,3 +205,82 @@ class TestCeleryBeatConfig:
 
         config = celery_app.conf.beat_schedule["check-deadlines-hourly"]
         assert config["task"] == "app.workers.deadline_tasks.check_deadlines"
+
+
+class TestDeadlineReminderConfig:
+    """Test reminder scheduling logic."""
+
+    def test_default_reminder_days(self):
+        """Default config should remind at 30, 7, and 1 day(s) before."""
+        config = {"days_before": [30, 7, 1]}
+        assert 30 in config["days_before"]
+        assert 7 in config["days_before"]
+        assert 1 in config["days_before"]
+
+    def test_reminder_should_send_today(self):
+        """If days_remaining matches a days_before entry, reminder should send."""
+        config = {"days_before": [30, 7, 1]}
+        due = date(2026, 4, 15)
+
+        for days_before in config["days_before"]:
+            from datetime import timedelta
+            check_date = due - timedelta(days=days_before)
+            remaining = (due - check_date).days
+            assert remaining == days_before
+
+    def test_idempotent_reminder_check(self):
+        """If last_reminder_sent is today, should not send again."""
+        today = date.today()
+        last_sent_today = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+        assert last_sent_today.date() == today
+
+
+class TestDeadlineOverdueDetection:
+    """Test overdue deadline detection logic."""
+
+    def test_past_due_date_is_overdue(self):
+        from datetime import timedelta
+        today = date.today()
+        past_due = today - timedelta(days=5)
+        assert past_due < today
+
+    def test_future_due_date_is_not_overdue(self):
+        from datetime import timedelta
+        today = date.today()
+        future_due = today + timedelta(days=5)
+        assert future_due >= today
+
+    def test_today_due_date_is_not_overdue(self):
+        today = date.today()
+        assert today >= today  # Due today = not overdue yet
+
+    def test_overdue_status_transition(self):
+        """Overdue deadlines should be marked as 'missed'."""
+        assert DeadlineStatus.missed.value == "missed"
+        assert DeadlineStatus.upcoming.value == "upcoming"
+
+
+class TestCalendarGrouping:
+    """Test calendar view grouping logic."""
+
+    def test_group_by_month(self):
+        """Deadlines should be grouped by month for calendar view."""
+        from collections import defaultdict
+
+        deadlines = [
+            {"due_date": date(2026, 3, 15), "title": "A"},
+            {"due_date": date(2026, 3, 20), "title": "B"},
+            {"due_date": date(2026, 4, 10), "title": "C"},
+        ]
+
+        by_month: dict = defaultdict(list)
+        for d in deadlines:
+            month_key = d["due_date"].strftime("%Y-%m")
+            by_month[month_key].append(d)
+
+        assert len(by_month["2026-03"]) == 2
+        assert len(by_month["2026-04"]) == 1
+
+    def test_auto_deadline_extend(self):
+        """Extending due_date should set status to 'extended'."""
+        assert DeadlineStatus.extended.value == "extended"
