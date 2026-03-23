@@ -150,10 +150,10 @@ class MatterNamespace(socketio.AsyncNamespace):  # type: ignore[misc]
             },
         )
 
-    async def on_disconnect(self, sid: str):
+    async def on_disconnect(self, sid: str) -> None:
         logger.info("websocket_disconnected", extra={"sid": sid})
 
-    async def on_join_matter(self, sid: str, data: dict[str, Any]):
+    async def on_join_matter(self, sid: str, data: dict[str, Any]) -> None:
         """Join a matter room. Validates the user is authorized for this matter."""
         matter_id = data.get("matter_id", "")
 
