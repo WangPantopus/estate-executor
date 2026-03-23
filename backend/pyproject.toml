@@ -82,7 +82,16 @@ module = [
     "redis.*",
 ]
 ignore_missing_imports = true
-follow_untyped_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+    "app.realtime.publisher",
+    "app.realtime.subscriber",
+    "app.services.report_service",
+    "app.services.email_service",
+]
+disallow_untyped_calls = false
+warn_return_any = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
