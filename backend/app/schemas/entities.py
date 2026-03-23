@@ -141,7 +141,7 @@ class FundingDetail(BaseModel):
     entity_name: str
     funding_status: FundingStatus
     funded_count: int
-    total_value: Any | None = None
+    total_value: float | None = None
 
 
 class EntityMapResponse(BaseModel):

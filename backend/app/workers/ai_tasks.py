@@ -269,5 +269,8 @@ def draft_letter(self: Any, matter_id: str, asset_id: str, letter_type: str) -> 
         return _run_async(_draft())
 
     except Exception as exc:
-        logger.exception("draft_letter failed")
+        logger.exception(
+            "draft_letter failed",
+            extra={"matter_id": matter_id, "asset_id": asset_id, "letter_type": letter_type},
+        )
         raise self.retry(exc=exc) from exc

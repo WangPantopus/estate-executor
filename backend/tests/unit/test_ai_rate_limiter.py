@@ -59,9 +59,8 @@ class TestCheckRateLimit:
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
 
-        # Lua script returns count (positive = success)
-        # First call (firm), second call (matter)
-        mock_redis.eval.side_effect = [6, 4]
+        # Atomic Lua script returns positive count when both limits pass
+        mock_redis.eval.return_value = 6
 
         # Should not raise
         check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
@@ -71,7 +70,7 @@ class TestCheckRateLimit:
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
 
-        # Lua script returns -1 when limit exceeded
+        # Atomic script returns -1 when firm limit exceeded
         mock_redis.eval.return_value = -1
 
         with pytest.raises(RateLimitExceeded):
@@ -82,8 +81,8 @@ class TestCheckRateLimit:
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
 
-        # Firm check passes (returns count), matter check fails (returns -1)
-        mock_redis.eval.side_effect = [6, -1]
+        # Atomic script returns -2 when matter limit exceeded
+        mock_redis.eval.return_value = -2
 
         with pytest.raises(RateLimitExceeded):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())

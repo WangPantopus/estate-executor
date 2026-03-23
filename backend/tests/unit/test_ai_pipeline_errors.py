@@ -252,8 +252,8 @@ class TestRateLimitEnforcement:
         """Matter limit should be enforced even if firm limit passes."""
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
-        # First call (firm) passes, second call (matter) fails
-        mock_redis.eval.side_effect = [50, -1]
+        # Atomic script returns -2 when matter limit exceeded
+        mock_redis.eval.return_value = -2
 
         with pytest.raises(RateLimitExceeded):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())

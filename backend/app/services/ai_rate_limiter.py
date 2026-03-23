@@ -87,17 +87,63 @@ def _check_and_increment(key: str, limit: int) -> int:
     return int(result)
 
 
-def check_rate_limit(*, firm_id: UUID, matter_id: UUID) -> None:
-    """Check both firm-level and matter-level rate limits.
+_CHECK_BOTH_SCRIPT = """
+local firm_key = KEYS[1]
+local matter_key = KEYS[2]
+local firm_limit = tonumber(ARGV[1])
+local matter_limit = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+local window_start = tonumber(ARGV[4])
+local ttl = tonumber(ARGV[5])
 
-    Raises RateLimitExceeded if either limit is exceeded.
+-- Clean and check both limits BEFORE incrementing either
+redis.call('ZREMRANGEBYSCORE', firm_key, 0, window_start)
+redis.call('ZREMRANGEBYSCORE', matter_key, 0, window_start)
+
+local firm_count = redis.call('ZCARD', firm_key)
+local matter_count = redis.call('ZCARD', matter_key)
+
+if firm_count >= firm_limit then
+    return -1
+end
+if matter_count >= matter_limit then
+    return -2
+end
+
+-- Both passed — now increment both atomically
+redis.call('ZADD', firm_key, now, tostring(now) .. ':f')
+redis.call('EXPIRE', firm_key, ttl)
+redis.call('ZADD', matter_key, now, tostring(now) .. ':m')
+redis.call('EXPIRE', matter_key, ttl)
+return firm_count + 1
+"""
+
+
+def check_rate_limit(*, firm_id: UUID, matter_id: UUID) -> None:
+    """Atomically check both firm-level and matter-level rate limits.
+
+    Uses a single Lua script to check both limits before incrementing either,
+    preventing asymmetric state on partial failures.
     """
     firm_key = f"{_FIRM_KEY_PREFIX}{firm_id}"
     matter_key = f"{_MATTER_KEY_PREFIX}{matter_id}"
 
     try:
-        _check_and_increment(firm_key, FIRM_LIMIT_PER_HOUR)
-        _check_and_increment(matter_key, MATTER_LIMIT_PER_HOUR)
+        r = _get_redis()
+        now = time.time()
+        window_start = now - _WINDOW_SECONDS
+        ttl = _WINDOW_SECONDS + 60
+
+        result = r.eval(
+            _CHECK_BOTH_SCRIPT, 2, firm_key, matter_key,
+            FIRM_LIMIT_PER_HOUR, MATTER_LIMIT_PER_HOUR,
+            now, window_start, ttl,
+        )
+
+        if result == -1:
+            raise RateLimitExceeded(scope=firm_key, limit=FIRM_LIMIT_PER_HOUR)
+        if result == -2:
+            raise RateLimitExceeded(scope=matter_key, limit=MATTER_LIMIT_PER_HOUR)
     except RateLimitExceeded:
         raise
     except Exception:

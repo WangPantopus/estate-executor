@@ -106,10 +106,16 @@ export function DraftLetterDialog({
   };
 
   const handleCopy = async () => {
-    const text = `Subject: ${editedSubject}\n\n${editedBody}`;
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const text = `Subject: ${editedSubject}\n\n${editedBody}`;
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      const timer = setTimeout(() => setCopied(false), 2000);
+      // Cleanup handled by dialog close resetting state
+      return () => clearTimeout(timer);
+    } catch {
+      // Clipboard API may fail in some browsers/contexts
+    }
   };
 
   const handleDownloadPdf = () => {

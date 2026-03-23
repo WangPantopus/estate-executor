@@ -797,8 +797,9 @@ export function useDetectAnomalies(firmId: string, matterId: string) {
 export function useAIUsageStats(firmId: string, matterId: string) {
   const api = useApi();
   return useQuery({
-    queryKey: [...queryKeys.matters(firmId), "ai-usage-stats"] as const,
+    queryKey: ["firms", firmId, "matters", matterId, "ai-usage-stats"] as const,
     queryFn: () => api.getAIUsageStats(firmId, matterId),
     staleTime: 60_000, // Cache for 1 minute
+    enabled: !!firmId && !!matterId,
   });
 }
