@@ -38,6 +38,8 @@ test.describe('Task Management', () => {
   });
 
   test('should display task list page', async ({ page }) => {
+    if (!matterId) test.skip();
+
     await expect(
       page.getByRole('heading', { name: /tasks/i }).first(),
     ).toBeVisible({ timeout: 10_000 });

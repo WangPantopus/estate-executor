@@ -20,10 +20,8 @@ test.describe('Responsive — Mobile Viewport', () => {
     await page.goto('/matters');
     await page.waitForLoadState('networkidle');
 
-    // Hamburger menu button should be visible
-    const menuBtn = page.locator('button[aria-label*="menu"], button').filter({
-      has: page.locator('svg'),
-    }).first();
+    // Hamburger menu button (aria-label="Open menu", hidden on md+)
+    const menuBtn = page.getByRole('button', { name: /open menu/i });
 
     // On mobile the sidebar is a Sheet triggered by hamburger
     await expect(menuBtn).toBeVisible({ timeout: 10_000 });
@@ -34,7 +32,7 @@ test.describe('Responsive — Mobile Viewport', () => {
     await page.waitForLoadState('networkidle');
 
     // Click hamburger menu
-    const menuBtn = page.locator('button').first();
+    const menuBtn = page.getByRole('button', { name: /open menu/i });
     await menuBtn.click();
     await page.waitForTimeout(500);
 
