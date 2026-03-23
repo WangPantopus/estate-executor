@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { UserCircle, GripVertical } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TASK_STATUS_LABELS } from "@/lib/constants";

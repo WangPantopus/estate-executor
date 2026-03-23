@@ -4,7 +4,6 @@ import { MATTER_DATA } from './fixtures/test-data';
 import {
   dialogByTitle,
   waitForDialogClosed,
-  expectPageHeading,
 } from './helpers/selectors';
 
 test.describe('Matter Creation', () => {

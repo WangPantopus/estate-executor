@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -14,7 +14,6 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 // ─── Quick Actions ────────────────────────────────────────────────────────────
@@ -60,7 +59,7 @@ export function CommandPalette() {
   // Reset on open
   useEffect(() => {
     if (open) {
-      setQuery("");
+      setQuery(""); // eslint-disable-line react-hooks/set-state-in-effect -- reset form on open
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
@@ -156,7 +155,7 @@ export function CommandPalette() {
                   <p className="px-4 py-1 text-xs font-medium text-muted-foreground">Actions</p>
                   {filtered
                     .filter((c) => c.category === "action")
-                    .map((cmd, idx) => {
+                    .map((cmd) => {
                       const globalIdx = filtered.indexOf(cmd);
                       return (
                         <button

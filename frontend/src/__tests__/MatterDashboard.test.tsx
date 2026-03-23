@@ -3,14 +3,12 @@ import { screen } from "@testing-library/react";
 import { renderWithProviders } from "./test-utils";
 import {
   mockDashboard,
-  mockMatter,
   mockTaskSummary,
   mockAssetSummary,
   mockDeadline1,
   mockDeadline2,
   mockUser,
   mockStakeholders,
-  mockEvents,
 } from "./fixtures";
 
 // ─── Mock hooks ──────────────────────────────────────────────────────────────
@@ -182,6 +180,7 @@ describe("StatusBadge", () => {
   });
 
   it("handles unknown status gracefully", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentionally testing unknown status
     renderWithProviders(<StatusBadge status={"unknown" as any} />);
     expect(screen.getByText("unknown")).toBeInTheDocument();
   });

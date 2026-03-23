@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   Home,
   Landmark,
@@ -21,12 +21,11 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  GripHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ENTITY_TYPE_LABELS, FUNDING_STATUS_LABELS, ASSET_TYPE_LABELS } from "@/lib/constants";
+import { ENTITY_TYPE_LABELS, FUNDING_STATUS_LABELS } from "@/lib/constants";
 import type { Entity, AssetBrief, AssetType, EntityType, FundingStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

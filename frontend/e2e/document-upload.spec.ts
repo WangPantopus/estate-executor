@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { loginAs, getTestApiToken } from './helpers/auth';
 import { seedTestData } from './helpers/api';
-import { navigateToMatterSection, dialogByTitle } from './helpers/selectors';
+import { navigateToMatterSection } from './helpers/selectors';
 import path from 'path';
 import fs from 'fs';
 
-let firmId: string;
 let matterId: string;
 
 test.describe('Document Upload & Management', () => {
@@ -17,7 +16,6 @@ test.describe('Document Upload & Management', () => {
     const token = await getTestApiToken(context, 'admin');
     try {
       const data = await seedTestData(page.request, { token });
-      firmId = data.firmId;
       matterId = data.matterId;
     } catch {
       // May fail without real backend

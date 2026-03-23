@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -99,9 +100,9 @@ export default function InviteAcceptPage() {
             Unable to Accept Invitation
           </h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <a href="/" className="text-blue-600 hover:underline">
+          <Link href="/" className="text-blue-600 hover:underline">
             Go to Home
-          </a>
+          </Link>
         </div>
       </div>
     );

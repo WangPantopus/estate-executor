@@ -3,12 +3,10 @@ import { loginAs, getTestApiToken } from './helpers/auth';
 import { seedTestData } from './helpers/api';
 import {
   navigateToMatterSection,
-  dialogByTitle,
   waitForDialogClosed,
 } from './helpers/selectors';
 import { DEADLINE_DATA } from './fixtures/test-data';
 
-let firmId: string;
 let matterId: string;
 
 test.describe('Deadline Management', () => {
@@ -20,7 +18,6 @@ test.describe('Deadline Management', () => {
     const token = await getTestApiToken(context, 'admin');
     try {
       const data = await seedTestData(page.request, { token });
-      firmId = data.firmId;
       matterId = data.matterId;
     } catch {
       // May fail without real backend
@@ -83,8 +80,6 @@ test.describe('Deadline Management', () => {
       const overdueItems = page.locator(
         '[class*="destructive"], [class*="red"], [class*="overdue"]',
       );
-      // Check if any overdue items exist
-      const count = await overdueItems.count();
       // At least verify the filter was applied
       const filterIndicator = page.getByText(/showing.*deadline/i);
       if (await filterIndicator.isVisible({ timeout: 3_000 }).catch(() => false)) {

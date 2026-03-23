@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, MoreHorizontal, Pause, X, Archive, Pencil } from "lucide-react";
+import { Check, MoreHorizontal, Pause, X, Archive, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

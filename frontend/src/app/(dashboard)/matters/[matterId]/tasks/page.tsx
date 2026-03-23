@@ -34,7 +34,7 @@ import {
   useAssignTask,
 } from "@/hooks";
 import { usePermissions } from "@/hooks/use-permissions";
-import type { Task, TaskStatus, TaskPriority } from "@/lib/types";
+import type { TaskStatus, TaskPriority } from "@/lib/types";
 
 import {
   TaskFilterPanel,
@@ -63,7 +63,7 @@ export default function TasksPage({
   const { matterId } = use(params);
 
   // ─── Permissions ──────────────────────────────────────────────────────────
-  const { can, canWrite, isReadOnly, isBeneficiary } = usePermissions(matterId);
+  const { canWrite, can: _can, isReadOnly: _isReadOnly, isBeneficiary: _isBeneficiary } = usePermissions(matterId);
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
   const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useTasks(

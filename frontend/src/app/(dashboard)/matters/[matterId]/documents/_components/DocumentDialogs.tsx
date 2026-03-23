@@ -11,7 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -23,7 +22,6 @@ import {
 } from "@/components/ui/select";
 import { DOC_TYPE_LABELS } from "@/lib/constants";
 import { useRequestDocument, useApi } from "@/hooks";
-import { queryKeys } from "@/hooks";
 import type { Stakeholder, Task, DocumentResponse } from "@/lib/types";
 
 // ─── Document Request Dialog ──────────────────────────────────────────────────
@@ -196,8 +194,6 @@ export function BulkDownloadDialog({
   const [filterType, setFilterType] = useState<string>("all");
   const [status, setStatus] = useState<"idle" | "generating" | "ready" | "error">("idle");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
-
   const filteredDocs = filterType === "all"
     ? documents
     : documents.filter((d) => d.doc_type === filterType);
@@ -208,8 +204,6 @@ export function BulkDownloadDialog({
       const result = await api.bulkDownload(firmId, matterId, {
         document_ids: filteredDocs.map((d) => d.id),
       });
-      setJobId(result.job_id);
-
       // Poll for completion
       const pollInterval = setInterval(async () => {
         try {
@@ -245,7 +239,6 @@ export function BulkDownloadDialog({
   const handleClose = () => {
     setStatus("idle");
     setDownloadUrl(null);
-    setJobId(null);
     setFilterType("all");
     onOpenChange(false);
   };

@@ -41,7 +41,6 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/layout/StatusBadge";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { LoadingState } from "@/components/layout/LoadingState";
@@ -51,7 +50,6 @@ import {
   Download,
   Search,
   FileText,
-  Briefcase,
   ArrowRight,
 } from "lucide-react";
 

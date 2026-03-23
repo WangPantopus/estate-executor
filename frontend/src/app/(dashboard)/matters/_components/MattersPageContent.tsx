@@ -162,13 +162,7 @@ export function MattersPageContent() {
   const hasFilters =
     statusFilter || searchQuery || phaseFilter || jurisdictionFilter;
 
-  const SortHeader = ({
-    field,
-    children,
-  }: {
-    field: string;
-    children: React.ReactNode;
-  }) => (
+  const renderSortHeader = (field: string, children: React.ReactNode) => (
     <button
       onClick={() => toggleSort(field)}
       className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
@@ -375,17 +369,17 @@ export function MattersPageContent() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <SortHeader field="title">Matter</SortHeader>
+                    {renderSortHeader("title", "Matter")}
                   </TableHead>
                   <TableHead>
-                    <SortHeader field="decedent_name">Decedent</SortHeader>
+                    {renderSortHeader("decedent_name", "Decedent")}
                   </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Jurisdiction</TableHead>
                   <TableHead>Phase</TableHead>
                   <TableHead>Progress</TableHead>
                   <TableHead>
-                    <SortHeader field="created_at">Created</SortHeader>
+                    {renderSortHeader("created_at", "Created")}
                   </TableHead>
                 </TableRow>
               </TableHeader>

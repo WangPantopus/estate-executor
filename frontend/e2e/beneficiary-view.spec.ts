@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, TEST_USERS } from './helpers/auth';
-import { navigateToMatter, navigateToMatterSection } from './helpers/selectors';
+import { loginAs } from './helpers/auth';
 
 /**
  * Beneficiary view tests verify that users with the "beneficiary" role
@@ -110,8 +109,6 @@ test.describe('Beneficiary View — Limited Access', () => {
         await page.goto(`${href}/communications`);
         await page.waitForLoadState('networkidle');
 
-        // Should be able to view communications
-        const heading = page.getByRole('heading', { name: /communication/i }).first();
         // Beneficiary may or may not see this page depending on permissions
       }
     }

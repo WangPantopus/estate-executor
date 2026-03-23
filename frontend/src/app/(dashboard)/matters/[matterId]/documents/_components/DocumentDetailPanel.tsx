@@ -163,7 +163,7 @@ export function DocumentDetailPanel({
             <div className="rounded-lg border border-border overflow-hidden bg-surface-elevated">
               {doc.mime_type.startsWith("image/") ? (
                 <div className="flex items-center justify-center p-4 min-h-[200px]">
-                  <Image className="size-16 text-muted-foreground/30" />
+                  <Image alt="" className="size-16 text-muted-foreground/30" />
                   <p className="text-xs text-muted-foreground ml-2">
                     Image preview (download to view)
                   </p>

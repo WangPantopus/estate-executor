@@ -28,7 +28,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { TASK_PHASE_LABELS, TASK_PHASE_ORDER, TASK_STATUS_LABELS } from "@/lib/constants";
-import type { Task, Stakeholder, TaskPhase, TaskStatus } from "@/lib/types";
+import type { Task, Stakeholder, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -168,7 +168,6 @@ function TaskRow({
   onTaskClick,
   onComplete,
   onWaive,
-  onAssign,
   onEdit,
   onDelete,
 }: {
@@ -179,7 +178,6 @@ function TaskRow({
   onTaskClick: () => void;
   onComplete: () => void;
   onWaive: () => void;
-  onAssign: (stakeholderId: string) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -388,7 +386,6 @@ export function TaskListView({
   groupBy,
   selectedIds,
   onToggleSelect,
-  onSelectAll,
   onTaskClick,
   onComplete,
   onWaive,

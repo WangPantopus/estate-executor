@@ -573,7 +573,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 // ─── Success View ────────────────────────────────────────────────────────────
 
 function SuccessView({
-  matterId,
+  matterId: _matterId,
   onClose,
 }: {
   matterId: string;

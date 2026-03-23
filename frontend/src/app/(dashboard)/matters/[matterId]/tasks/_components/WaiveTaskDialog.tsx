@@ -32,7 +32,7 @@ export function WaiveTaskDialog({
   const [reason, setReason] = useState("");
 
   useEffect(() => {
-    if (!open) setReason("");
+    if (!open) setReason(""); // eslint-disable-line react-hooks/set-state-in-effect -- reset form on close
   }, [open]);
 
   const handleConfirm = () => {

@@ -26,8 +26,7 @@ vi.mock("next/link", () => ({
     href: string;
     [key: string]: unknown;
   }) => {
-    // eslint-disable-next-line @next/next/no-html-link-for-pages
-    return <a href={href} {...props}>{children}</a>;
+    return <a href={href} {...props}>{children}</a>; // eslint-disable-line @next/next/no-html-link-for-pages
   },
 }));
 
@@ -128,7 +127,7 @@ vi.mock("@/components/ui/collapsible", () => ({
   Collapsible: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
     <div data-testid="collapsible" {...props}>{children}</div>
   ),
-  CollapsibleTrigger: ({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean; [key: string]: unknown }) => (
+  CollapsibleTrigger: ({ children, asChild: _, ...props }: { children: React.ReactNode; asChild?: boolean; [key: string]: unknown }) => ( // eslint-disable-line @typescript-eslint/no-unused-vars
     <div data-testid="collapsible-trigger" {...props}>{children}</div>
   ),
   CollapsibleContent: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (

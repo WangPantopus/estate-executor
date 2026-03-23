@@ -3,11 +3,9 @@
 import { useMemo } from "react";
 import {
   MessageSquare,
-  Flag,
   Bell,
   FileText,
   AlertTriangle,
-  UserCircle,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";

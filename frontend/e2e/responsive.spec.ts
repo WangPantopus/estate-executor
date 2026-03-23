@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { loginAs } from './helpers/auth';
 
 /**
@@ -19,11 +19,6 @@ test.describe('Responsive — Mobile Viewport', () => {
   test('should show mobile hamburger menu', async ({ page }) => {
     await page.goto('/matters');
     await page.waitForLoadState('networkidle');
-
-    // Desktop sidebar should be hidden on mobile
-    const desktopSidebar = page.locator('nav').filter({
-      has: page.getByText(/estate executor/i),
-    });
 
     // Hamburger menu button should be visible
     const menuBtn = page.locator('button[aria-label*="menu"], button').filter({

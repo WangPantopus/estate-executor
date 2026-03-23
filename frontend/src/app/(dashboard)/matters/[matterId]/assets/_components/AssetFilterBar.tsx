@@ -100,7 +100,7 @@ export function AssetFilterBar({ filters, onChange }: AssetFilterBarProps) {
   const [searchInput, setSearchInput] = useState(filters.search);
 
   useEffect(() => {
-    setSearchInput(filters.search);
+    setSearchInput(filters.search); // eslint-disable-line react-hooks/set-state-in-effect -- sync local input from parent filter reset
   }, [filters.search]);
 
   const update = (patch: Partial<AssetFilterState>) => {

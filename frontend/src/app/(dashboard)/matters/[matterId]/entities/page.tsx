@@ -59,7 +59,8 @@ export default function EntitiesPage({
   );
 
   const handleAssetClick = useCallback(
-    (assetId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_assetId: string) => {
       router.push(`/matters/${matterId}/assets`);
     },
     [router, matterId],

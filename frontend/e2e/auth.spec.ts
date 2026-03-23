@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, logout, TEST_USERS } from './helpers/auth';
+import { loginAs, logout } from './helpers/auth';
 
 test.describe('Authentication Flow', () => {
   test('should redirect unauthenticated users to login', async ({ page }) => {

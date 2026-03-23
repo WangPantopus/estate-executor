@@ -5,7 +5,6 @@ import {
   Image,
   FileSpreadsheet,
   File,
-  Paperclip,
   Sparkles,
   Check,
 } from "lucide-react";
@@ -26,7 +25,7 @@ import { cn } from "@/lib/utils";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getFileIcon(mimeType: string) {
-  if (mimeType.startsWith("image/")) return <Image className="size-5" />;
+  if (mimeType.startsWith("image/")) return <Image alt="" className="size-5" />;
   if (mimeType === "application/pdf") return <FileText className="size-5" />;
   if (
     mimeType.includes("spreadsheet") ||

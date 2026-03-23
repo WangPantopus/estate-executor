@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   Loader2,
-  Plus,
   UserPlus,
   Trash2,
   Building2,
@@ -56,7 +55,6 @@ import {
   useRemoveFirmMember,
 } from "@/hooks";
 import type { FirmRole } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -106,7 +104,6 @@ export default function SettingsPage() {
   const { data: firm, isLoading: firmLoading } = useFirm(FIRM_ID);
   const { data: membersData, isLoading: membersLoading } = useFirmMembers(FIRM_ID);
   const updateFirm = useUpdateFirm(FIRM_ID);
-  const inviteMember = useInviteFirmMember(FIRM_ID);
   const updateMember = useUpdateFirmMember(FIRM_ID);
   const removeMember = useRemoveFirmMember(FIRM_ID);
 

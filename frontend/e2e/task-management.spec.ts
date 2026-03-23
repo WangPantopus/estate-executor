@@ -5,11 +5,9 @@ import { getTestApiToken } from './helpers/auth';
 import { TASK_DATA } from './fixtures/test-data';
 import {
   navigateToMatterSection,
-  dialogByTitle,
   waitForDialogClosed,
 } from './helpers/selectors';
 
-let firmId: string;
 let matterId: string;
 
 test.describe('Task Management', () => {
@@ -21,7 +19,6 @@ test.describe('Task Management', () => {
     const token = await getTestApiToken(context, 'admin');
     try {
       const data = await seedTestData(page.request, { token });
-      firmId = data.firmId;
       matterId = data.matterId;
     } catch {
       // Seed might fail without real backend — tests will use UI seeding
@@ -176,19 +173,12 @@ test.describe('Task Management', () => {
   test('should switch between list and board view', async ({ page }) => {
     if (!matterId) test.skip();
 
-    // Look for view toggle buttons (grid/list icons)
-    const viewButtons = page.getByRole('button').filter({
-      has: page.locator('svg'),
-    });
-
-    // Find the kanban/board toggle (usually second icon button in the group)
+    // Find the kanban/board toggle
     const boardBtn = page.locator('button[aria-label*="board"], button[aria-label*="grid"]').first();
     if (await boardBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await boardBtn.click();
       await page.waitForTimeout(500);
 
-      // Board view should show columns
-      const columns = page.locator('[class*="column"], [class*="board"], [class*="kanban"]');
       // Switch back to list
       const listBtn = page.locator('button[aria-label*="list"]').first();
       if (await listBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Loader2, Send, X, Bold, Italic, List as ListIcon, Link2 } from "lucide-react";
+import { Loader2, Send, Bold, Italic, List as ListIcon, Link2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,

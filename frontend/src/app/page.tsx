@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth0 } from "@/lib/auth0";
 
 export default async function Home() {
@@ -19,12 +20,12 @@ export default async function Home() {
               <span className="text-sm text-muted-foreground">
                 Signed in as {session.user.email}
               </span>
-              <a
+              <Link
                 href="/matters"
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
                 Go to Dashboard
-              </a>
+              </Link>
               <a
                 href="/auth/logout"
                 className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"

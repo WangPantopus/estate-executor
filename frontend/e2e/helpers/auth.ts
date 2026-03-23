@@ -34,8 +34,6 @@ export const TEST_USERS = {
 
 export type TestUserKey = keyof typeof TEST_USERS;
 
-const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:8000/api/v1';
-
 /**
  * Authenticate via Auth0 test user login flow.
  * If E2E_MOCK_AUTH is set, bypasses Auth0 by injecting a mock session cookie.

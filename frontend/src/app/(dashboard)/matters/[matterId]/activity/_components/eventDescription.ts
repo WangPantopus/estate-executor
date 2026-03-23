@@ -104,7 +104,8 @@ function describeDocumentEvent(
   action: string,
   title: string,
   meta: Record<string, unknown>,
-  changes: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _changes: Record<string, unknown>,
 ): string {
   const ref = title ? ` '${title}'` : "";
   switch (action) {
@@ -180,7 +181,8 @@ function describeDeadlineEvent(
   actor: string,
   action: string,
   title: string,
-  changes: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _changes: Record<string, unknown>,
 ): string {
   const ref = title ? ` '${title}'` : "";
   switch (action) {
@@ -219,7 +221,8 @@ function describeEntityEvent(
   actor: string,
   action: string,
   title: string,
-  meta: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _meta: Record<string, unknown>,
 ): string {
   const ref = title ? ` '${title}'` : "";
   switch (action) {

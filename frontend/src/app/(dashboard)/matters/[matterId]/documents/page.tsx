@@ -19,7 +19,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { LoadingState } from "@/components/layout/LoadingState";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { useDocuments, useStakeholders, useTasks } from "@/hooks";
-import type { DocumentResponse } from "@/lib/types";
 
 import { DocumentUploadZone } from "./_components/DocumentUploadZone";
 import { DocumentCard, DocumentListView } from "./_components/DocumentViews";

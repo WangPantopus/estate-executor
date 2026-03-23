@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, getTestApiToken, TEST_USERS } from './helpers/auth';
-import { seedTestData, inviteStakeholder } from './helpers/api';
-import { navigateToMatter, dialogByTitle } from './helpers/selectors';
+import { loginAs, getTestApiToken } from './helpers/auth';
+import { seedTestData } from './helpers/api';
+import { navigateToMatter } from './helpers/selectors';
 import { STAKEHOLDER_DATA } from './fixtures/test-data';
 
-let firmId: string;
 let matterId: string;
 
 test.describe('Stakeholder Invitation', () => {
@@ -16,7 +15,6 @@ test.describe('Stakeholder Invitation', () => {
     const token = await getTestApiToken(context, 'admin');
     try {
       const data = await seedTestData(page.request, { token });
-      firmId = data.firmId;
       matterId = data.matterId;
     } catch {
       // May fail without real backend

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useCurrentUser, useStakeholders } from "./use-queries";
 import type { StakeholderRole } from "@/lib/types";
 
@@ -108,10 +108,10 @@ export function usePermissions(matterId: string): PermissionInfo {
     return match?.role ?? "matter_admin"; // fallback for firm members
   }, [currentUser, stakeholders]);
 
-  const can = useMemo(() => {
-    if (!role) return () => false;
-    return (permission: string) => hasPermission(role, permission);
-  }, [role]);
+  const can = useCallback(
+    (permission: string) => (role ? hasPermission(role, permission) : false),
+    [role],
+  );
 
   return {
     role,

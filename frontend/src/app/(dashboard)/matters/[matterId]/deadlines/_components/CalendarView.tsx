@@ -3,8 +3,7 @@
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import type { DeadlineResponse, DeadlineStatus } from "@/lib/types";
+import type { DeadlineResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,12 +78,10 @@ const MONTH_NAMES = [
 function DayPopover({
   deadlines,
   onDeadlineClick,
-  onClose,
   alignRight,
 }: {
   deadlines: DeadlineResponse[];
   onDeadlineClick: (id: string) => void;
-  onClose: () => void;
   alignRight?: boolean;
 }) {
   return (
