@@ -5,7 +5,6 @@ import {
   Image,
   FileSpreadsheet,
   File,
-  Paperclip,
   Sparkles,
   Check,
 } from "lucide-react";

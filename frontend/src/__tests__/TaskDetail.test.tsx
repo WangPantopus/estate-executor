@@ -81,11 +81,9 @@ const stakeholders: Stakeholder[] = [
     email: "admin@example.com",
     full_name: "Test Admin",
     role: "matter_admin",
+    relationship: null,
     invite_status: "accepted",
-    invited_by: null,
-    accepted_at: "2025-12-15T10:00:00Z",
     created_at: "2025-12-15T10:00:00Z",
-    updated_at: "2025-12-15T10:00:00Z",
   },
 ];
 

@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     loop = asyncio.new_event_loop()
     try:
         return loop.run_until_complete(coro)
@@ -27,7 +28,7 @@ def _run_async(coro):
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_email",
     bind=True,
     max_retries=3,
@@ -35,20 +36,21 @@ def _run_async(coro):
     retry_backoff_max=900,
 )
 def send_email(
-    self,
+    self: Any,
     *,
     to: str,
     subject: str,
     html_body: str,
     text_body: str | None = None,
     template_name: str | None = None,
-):
+) -> dict[str, str]:
     """Send an email via the email service (Resend in prod, Mailpit in dev).
 
     Retries on transient failures with exponential backoff.
     Logs every send attempt to the email_logs table.
     """
-    from app.services.email_service import log_email_sync, send_email as _send
+    from app.services.email_service import log_email_sync
+    from app.services.email_service import send_email as _send
 
     try:
         result = _send(
@@ -76,7 +78,7 @@ def send_email(
             status="failed",
             error=str(exc)[:500],
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -84,14 +86,21 @@ def send_email(
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_templated_email",
     bind=True,
     max_retries=3,
     retry_backoff=True,
     retry_backoff_max=900,
 )
-def send_templated_email(self, *, to: str, subject: str, template_name: str, context: dict):
+def send_templated_email(
+    self: Any,
+    *,
+    to: str,
+    subject: str,
+    template_name: str,
+    context: dict[str, Any],
+) -> dict[str, str]:
     """Render a Jinja2 template and send the email.
 
     This is the preferred entry point for all notification tasks.
@@ -99,7 +108,7 @@ def send_templated_email(self, *, to: str, subject: str, template_name: str, con
     from app.services.email_service import send_templated_email as _send_templated
 
     try:
-        result = _send_templated(
+        _send_templated(
             to=to,
             subject=subject,
             template_name=template_name,
@@ -112,7 +121,7 @@ def send_templated_email(self, *, to: str, subject: str, template_name: str, con
             "send_templated_email failed",
             extra={"to": to, "subject": subject, "template": template_name},
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -120,17 +129,17 @@ def send_templated_email(self, *, to: str, subject: str, template_name: str, con
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_stakeholder_invitation",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
-def send_stakeholder_invitation(self, stakeholder_id: str):
+def send_stakeholder_invitation(self: Any, stakeholder_id: str) -> dict[str, str]:
     """Send invitation email to a new stakeholder."""
     try:
 
-        async def _fetch():
+        async def _fetch() -> dict[str, Any] | None:
             from sqlalchemy import select
             from sqlalchemy.orm import selectinload
 
@@ -198,7 +207,7 @@ def send_stakeholder_invitation(self, stakeholder_id: str):
 
     except Exception as exc:
         logger.exception("send_stakeholder_invitation failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -206,17 +215,21 @@ def send_stakeholder_invitation(self, stakeholder_id: str):
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_task_assignment_notification",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
-def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_id: str):
+def send_task_assignment_notification(
+    self: Any,
+    task_id: str,
+    assignee_stakeholder_id: str,
+) -> dict[str, str]:
     """Notify a stakeholder that a task has been assigned to them."""
     try:
 
-        async def _fetch():
+        async def _fetch() -> dict[str, Any] | None:
             from sqlalchemy import select
             from sqlalchemy.orm import selectinload
 
@@ -244,7 +257,7 @@ def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_i
 
                 matter = task.matter
                 firm = matter.firm if matter else None
-                firm_id = str(firm.id) if firm else ""
+                str(firm.id) if firm else ""
                 matter_id = str(matter.id) if matter else ""
 
                 phase_labels = {
@@ -304,7 +317,7 @@ def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_i
 
     except Exception as exc:
         logger.exception("send_task_assignment_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -312,18 +325,26 @@ def send_task_assignment_notification(self, task_id: str, assignee_stakeholder_i
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_task_overdue_notification",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
 def send_task_overdue_notification(
-    self, *, task_id: str, to: str, recipient_name: str, task_title: str,
-    due_date: str, status: str, assigned_to_name: str | None = None,
-    decedent_name: str = "Unknown", firm_name: str | None = None,
+    self: Any,
+    *,
+    task_id: str,
+    to: str,
+    recipient_name: str,
+    task_title: str,
+    due_date: str,
+    status: str,
+    assigned_to_name: str | None = None,
+    decedent_name: str = "Unknown",
+    firm_name: str | None = None,
     matter_id: str = "",
-):
+) -> dict[str, str]:
     """Send overdue task notification using the premium template."""
     from app.core.config import settings
 
@@ -349,7 +370,7 @@ def send_task_overdue_notification(
 
     except Exception as exc:
         logger.exception("send_task_overdue_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -357,17 +378,17 @@ def send_task_overdue_notification(
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_deadline_reminder",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
-def send_deadline_reminder(self, deadline_id: str):
+def send_deadline_reminder(self: Any, deadline_id: str) -> dict[str, str]:
     """Send a reminder email for an approaching deadline."""
     try:
 
-        async def _fetch():
+        async def _fetch() -> dict[str, Any] | None:
             from datetime import date
 
             from sqlalchemy import select
@@ -407,9 +428,7 @@ def send_deadline_reminder(self, deadline_id: str):
                     "linked_task": deadline.task.title if deadline.task else None,
                     "decedent_name": matter.decedent_name if matter else "Unknown",
                     "firm_name": firm.name if firm else None,
-                    "calendar_url": (
-                        f"{settings.frontend_url}/matters/{matter_id}/deadlines"
-                    ),
+                    "calendar_url": (f"{settings.frontend_url}/matters/{matter_id}/deadlines"),
                 }
 
         info = _run_async(_fetch())
@@ -428,7 +447,7 @@ def send_deadline_reminder(self, deadline_id: str):
 
     except Exception as exc:
         logger.exception("send_deadline_reminder failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -436,17 +455,17 @@ def send_deadline_reminder(self, deadline_id: str):
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_deadline_missed_notification",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
-def send_deadline_missed_notification(self, deadline_id: str):
+def send_deadline_missed_notification(self: Any, deadline_id: str) -> dict[str, str]:
     """Send an urgent notification when a deadline has been missed."""
     try:
 
-        async def _fetch():
+        async def _fetch() -> dict[str, Any] | None:
             from datetime import date
 
             from sqlalchemy import select
@@ -481,10 +500,12 @@ def send_deadline_missed_notification(self, deadline_id: str):
                 # Notify assignee + all matter admins
                 recipients = []
                 if deadline.assignee:
-                    recipients.append({
-                        "to": deadline.assignee.email,
-                        "recipient_name": deadline.assignee.full_name,
-                    })
+                    recipients.append(
+                        {
+                            "to": deadline.assignee.email,
+                            "recipient_name": deadline.assignee.full_name,
+                        }
+                    )
 
                 admin_result = await session.execute(
                     select(Stakeholder).where(
@@ -494,10 +515,12 @@ def send_deadline_missed_notification(self, deadline_id: str):
                 )
                 for admin in admin_result.scalars().all():
                     if not any(r["to"] == admin.email for r in recipients):
-                        recipients.append({
-                            "to": admin.email,
-                            "recipient_name": admin.full_name,
-                        })
+                        recipients.append(
+                            {
+                                "to": admin.email,
+                                "recipient_name": admin.full_name,
+                            }
+                        )
 
                 return {
                     "recipients": recipients,
@@ -508,9 +531,7 @@ def send_deadline_missed_notification(self, deadline_id: str):
                     "linked_task": deadline.task.title if deadline.task else None,
                     "decedent_name": matter.decedent_name if matter else "Unknown",
                     "firm_name": firm.name if firm else None,
-                    "calendar_url": (
-                        f"{settings.frontend_url}/matters/{matter_id}/deadlines"
-                    ),
+                    "calendar_url": (f"{settings.frontend_url}/matters/{matter_id}/deadlines"),
                 }
 
         info = _run_async(_fetch())
@@ -536,7 +557,7 @@ def send_deadline_missed_notification(self, deadline_id: str):
 
     except Exception as exc:
         logger.exception("send_deadline_missed_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -544,20 +565,24 @@ def send_deadline_missed_notification(self, deadline_id: str):
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_milestone_notification",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
 def send_milestone_notification(
-    self, matter_id: str, milestone_type: str, stakeholder_ids: list[str],
-    milestone_description: str | None = None, progress_summary: str | None = None,
-):
+    self: Any,
+    matter_id: str,
+    milestone_type: str,
+    stakeholder_ids: list[str],
+    milestone_description: str | None = None,
+    progress_summary: str | None = None,
+) -> dict[str, Any]:
     """Notify stakeholders about a milestone in the matter."""
     try:
 
-        async def _fetch():
+        async def _fetch() -> dict[str, Any]:
             from sqlalchemy import select
             from sqlalchemy.orm import selectinload
 
@@ -568,9 +593,7 @@ def send_milestone_notification(
 
             async with async_session_factory() as session:
                 matter_result = await session.execute(
-                    select(Matter)
-                    .options(selectinload(Matter.firm))
-                    .where(Matter.id == matter_id)
+                    select(Matter).options(selectinload(Matter.firm)).where(Matter.id == matter_id)
                 )
                 matter = matter_result.scalar_one_or_none()
 
@@ -622,7 +645,7 @@ def send_milestone_notification(
 
     except Exception as exc:
         logger.exception("send_milestone_notification failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -630,18 +653,24 @@ def send_milestone_notification(
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_distribution_notice",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
 def send_distribution_notice(
-    self, *, matter_id: str, communication_id: str,
-    to: str, recipient_name: str, decedent_name: str,
-    distribution_details: str, amount: str | None = None,
+    self: Any,
+    *,
+    matter_id: str,
+    communication_id: str,
+    to: str,
+    recipient_name: str,
+    decedent_name: str,
+    distribution_details: str,
+    amount: str | None = None,
     firm_name: str | None = None,
-):
+) -> dict[str, str]:
     """Send distribution notice email to a beneficiary."""
     from app.core.config import settings
 
@@ -668,7 +697,7 @@ def send_distribution_notice(
 
     except Exception as exc:
         logger.exception("send_distribution_notice failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -676,17 +705,24 @@ def send_distribution_notice(
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.notification_tasks.send_document_request",
     bind=True,
     max_retries=3,
     retry_backoff=True,
 )
 def send_document_request(
-    self, *, matter_id: str, to: str, recipient_name: str,
-    requester_name: str, doc_type: str, reason: str | None = None,
-    decedent_name: str = "Unknown", firm_name: str | None = None,
-):
+    self: Any,
+    *,
+    matter_id: str,
+    to: str,
+    recipient_name: str,
+    requester_name: str,
+    doc_type: str,
+    reason: str | None = None,
+    decedent_name: str = "Unknown",
+    firm_name: str | None = None,
+) -> dict[str, str]:
     """Send document request email to a stakeholder."""
     from app.core.config import settings
 
@@ -711,4 +747,4 @@ def send_document_request(
 
     except Exception as exc:
         logger.exception("send_document_request failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

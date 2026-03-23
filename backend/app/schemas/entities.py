@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import EntityType, FundingStatus
-
-from .common import PaginationMeta
 
 
 class AssetBrief(BaseModel):
@@ -34,9 +33,7 @@ class AssetBrief(BaseModel):
     id: UUID
     title: str
     asset_type: str
-    current_estimated_value: Decimal | None = Field(
-        None, max_digits=15, decimal_places=2
-    )
+    current_estimated_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
 
 
 class EntityCreate(BaseModel):
@@ -61,9 +58,9 @@ class EntityCreate(BaseModel):
     name: str
     trustee: str | None = None
     successor_trustee: str | None = None
-    trigger_conditions: dict | None = None
+    trigger_conditions: dict[str, Any] | None = None
     funding_status: FundingStatus | None = None
-    distribution_rules: dict | None = None
+    distribution_rules: dict[str, Any] | None = None
     asset_ids: list[UUID] | None = None
 
 
@@ -87,9 +84,9 @@ class EntityUpdate(BaseModel):
     name: str | None = None
     trustee: str | None = None
     successor_trustee: str | None = None
-    trigger_conditions: dict | None = None
+    trigger_conditions: dict[str, Any] | None = None
     funding_status: FundingStatus | None = None
-    distribution_rules: dict | None = None
+    distribution_rules: dict[str, Any] | None = None
     asset_ids: list[UUID] | None = None
 
 
@@ -126,10 +123,10 @@ class EntityResponse(BaseModel):
     name: str
     trustee: str | None
     successor_trustee: str | None
-    trigger_conditions: dict | None
+    trigger_conditions: dict[str, Any] | None
     funding_status: FundingStatus
-    distribution_rules: dict | None
-    metadata: dict | None
+    distribution_rules: dict[str, Any] | None
+    metadata: dict[str, Any] | None
     assets: list[AssetBrief]
     created_at: datetime
     updated_at: datetime

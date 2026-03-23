@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from fastapi import Request
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import async_session_factory
 from app.core.events import EventLogger, event_logger
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from fastapi import Request
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:

@@ -279,8 +279,7 @@ class TestNotificationTasks:
         from app.workers.celery_app import celery_app
 
         assert (
-            "app.workers.notification_tasks.send_task_assignment_notification"
-            in celery_app.tasks
+            "app.workers.notification_tasks.send_task_assignment_notification" in celery_app.tasks
         )
 
     def test_send_deadline_reminder_task_registered(self):
@@ -292,8 +291,7 @@ class TestNotificationTasks:
         from app.workers.celery_app import celery_app
 
         assert (
-            "app.workers.notification_tasks.send_deadline_missed_notification"
-            in celery_app.tasks
+            "app.workers.notification_tasks.send_deadline_missed_notification" in celery_app.tasks
         )
 
     def test_send_milestone_task_registered(self):
@@ -314,7 +312,4 @@ class TestNotificationTasks:
     def test_send_task_overdue_task_registered(self):
         from app.workers.celery_app import celery_app
 
-        assert (
-            "app.workers.notification_tasks.send_task_overdue_notification"
-            in celery_app.tasks
-        )
+        assert "app.workers.notification_tasks.send_task_overdue_notification" in celery_app.tasks

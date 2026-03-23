@@ -7,14 +7,12 @@ import {
   FileSpreadsheet,
   Loader2,
   CheckCircle2,
-  Clock,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/layout/Toaster";
-import { useApi } from "@/hooks";
 
 const FIRM_ID = "current";
 
@@ -77,7 +75,6 @@ export default function ReportsPage({
   params: Promise<{ matterId: string }>;
 }) {
   const { matterId } = use(params);
-  const api = useApi();
   const { toast } = useToast();
   const [generating, setGenerating] = useState<GeneratingState>({});
 
@@ -147,7 +144,7 @@ export default function ReportsPage({
         );
       }
     },
-    [matterId, api, toast],
+    [matterId, toast],
   );
 
   return (

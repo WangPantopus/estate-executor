@@ -11,7 +11,6 @@ import {
   useStakeholders,
   useCurrentUser,
 } from "@/hooks";
-import type { CommunicationResponse } from "@/lib/types";
 
 import { MessageList, type FilterTab } from "./_components/MessageList";
 import { MessageDetail } from "./_components/MessageDetail";

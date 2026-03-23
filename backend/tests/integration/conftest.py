@@ -16,10 +16,7 @@ from __future__ import annotations
 
 import sys
 import uuid
-from collections.abc import AsyncGenerator
-from datetime import date, datetime, timezone
-from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock
 
 # ─── Patch broken jwt/cryptography before any app imports ─────────────────────
@@ -35,10 +32,15 @@ if "jwt" not in sys.modules:
 
 # Mock cryptography
 for _mod in [
-    "cryptography", "cryptography.hazmat", "cryptography.hazmat.bindings",
-    "cryptography.hazmat.bindings._rust", "cryptography.hazmat.bindings._rust.exceptions",
-    "cryptography.exceptions", "cryptography.hazmat.primitives",
-    "cryptography.hazmat.primitives.ciphers", "cryptography.hazmat.primitives.ciphers.aead",
+    "cryptography",
+    "cryptography.hazmat",
+    "cryptography.hazmat.bindings",
+    "cryptography.hazmat.bindings._rust",
+    "cryptography.hazmat.bindings._rust.exceptions",
+    "cryptography.exceptions",
+    "cryptography.hazmat.primitives",
+    "cryptography.hazmat.primitives.ciphers",
+    "cryptography.hazmat.primitives.ciphers.aead",
     "cryptography.hazmat.primitives.ciphers.base",
     "cryptography.hazmat.primitives.asymmetric",
     "cryptography.hazmat.primitives.asymmetric.ec",
@@ -48,12 +50,15 @@ for _mod in [
     if _mod not in sys.modules:
         sys.modules[_mod] = MagicMock()
 
-import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
+import pytest  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
-from app.models.enums import FirmRole, InviteStatus, StakeholderRole
-from app.schemas.auth import CurrentUser, FirmMembershipBrief
+from app.models.enums import FirmRole, StakeholderRole  # noqa: E402
+from app.schemas.auth import CurrentUser, FirmMembershipBrief  # noqa: E402
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -104,9 +109,7 @@ async def client(firm_id, user_id) -> AsyncGenerator[AsyncClient]:
         return CurrentUser(
             user_id=user_id,
             email="testuser@example.com",
-            firm_memberships=[
-                FirmMembershipBrief(firm_id=firm_id, firm_role="owner")
-            ],
+            firm_memberships=[FirmMembershipBrief(firm_id=firm_id, firm_role="owner")],
         )
 
     # Mock DB session — most endpoints will need specific mocks per test

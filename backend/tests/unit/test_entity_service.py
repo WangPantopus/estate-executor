@@ -1,7 +1,5 @@
 """Unit tests for entity service helpers — trust detection and pour-over logic."""
 
-import pytest
-
 from app.models.enums import EntityType, TransferMechanism
 
 
@@ -103,6 +101,7 @@ class TestFundingStatusEnum:
 
     def test_funding_status_count(self):
         from app.models.enums import FundingStatus
+
         assert len(list(FundingStatus)) == 4
 
 
@@ -111,15 +110,18 @@ class TestEntityAssetJunction:
 
     def test_junction_table_exists(self):
         from app.models.entity_assets import entity_assets
+
         assert entity_assets is not None
 
     def test_junction_has_entity_id(self):
         from app.models.entity_assets import entity_assets
+
         col_names = {c.name for c in entity_assets.columns}
         assert "entity_id" in col_names
 
     def test_junction_has_asset_id(self):
         from app.models.entity_assets import entity_assets
+
         col_names = {c.name for c in entity_assets.columns}
         assert "asset_id" in col_names
 
@@ -132,8 +134,13 @@ class TestEntityTypeCount:
 
     def test_all_entity_types(self):
         expected = {
-            "revocable_trust", "irrevocable_trust", "llc",
-            "flp", "corporation", "foundation", "other",
+            "revocable_trust",
+            "irrevocable_trust",
+            "llc",
+            "flp",
+            "corporation",
+            "foundation",
+            "other",
         }
         actual = {t.value for t in EntityType}
         assert expected == actual

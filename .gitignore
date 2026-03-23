@@ -54,6 +54,11 @@ docker-compose.override.yml
 # Alembic
 migrations/versions/*.pyc
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
 # Misc
 *.log
 tmp/

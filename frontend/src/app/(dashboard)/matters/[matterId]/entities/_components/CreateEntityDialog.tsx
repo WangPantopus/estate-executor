@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { ENTITY_TYPE_LABELS, FUNDING_STATUS_LABELS, ASSET_TYPE_LABELS } from "@/lib/constants";
 import { useCreateEntity } from "@/hooks";
-import type { EntityCreate, AssetBrief, EntityType, FundingStatus } from "@/lib/types";
+import type { EntityCreate, AssetBrief } from "@/lib/types";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

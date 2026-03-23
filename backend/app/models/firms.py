@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Enum, String
 from sqlalchemy.dialects.postgresql import JSONB
@@ -27,8 +27,8 @@ class Firm(BaseModel):
         server_default="starter",
     )
     stripe_customer_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    settings: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
-    white_label: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
+    white_label: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     memberships: Mapped[list[FirmMembership]] = relationship(
         back_populates="firm", cascade="all, delete-orphan"

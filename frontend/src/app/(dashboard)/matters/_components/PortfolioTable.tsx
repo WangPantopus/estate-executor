@@ -125,7 +125,7 @@ export function PortfolioTable({ items }: Props) {
                 {/* Overdue count */}
                 <TableCell className="text-center">
                   {item.overdue_task_count > 0 ? (
-                    <Badge variant="destructive" className="font-mono">
+                    <Badge variant="danger" className="font-mono">
                       {item.overdue_task_count}
                     </Badge>
                   ) : (

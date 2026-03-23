@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -64,7 +65,7 @@ class MatterUpdate(BaseModel):
     phase: MatterPhase | None = None
     jurisdiction_state: str | None = Field(None, min_length=2, max_length=2)
     estimated_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
-    settings: dict | None = None
+    settings: dict[str, Any] | None = None
 
 
 class MatterResponse(BaseModel):
@@ -233,7 +234,7 @@ class MatterDashboard(BaseModel):
 
 
 # Deferred imports to avoid circular dependencies
-from .deadlines import DeadlineResponse  # noqa: E402
-from .events import EventResponse  # noqa: E402
+from .deadlines import DeadlineResponse as DeadlineResponse  # noqa: E402, F811
+from .events import EventResponse as EventResponse  # noqa: E402, F811
 
 MatterDashboard.model_rebuild()

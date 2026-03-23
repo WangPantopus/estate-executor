@@ -7,12 +7,11 @@ including authentication, permission enforcement, and response serialization.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-from httpx import AsyncClient
 
 
 def _make_matter_obj(**overrides):
@@ -37,9 +36,9 @@ def _make_matter_obj(**overrides):
         estimated_value=overrides.get("estimated_value", Decimal("1000000")),
         phase=MatterPhase(phase_val) if isinstance(phase_val, str) else phase_val,
         settings={},
-        closed_at=overrides.get("closed_at", None),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        closed_at=overrides.get("closed_at"),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
 
@@ -47,7 +46,10 @@ def _make_matter_obj(**overrides):
 class TestMatterCreation:
     """Test matter creation via API."""
 
-    @pytest.mark.xfail(reason="MatterCreate schema has strict=True which prevents string→enum coercion in JSON — discovered bug in production schemas")
+    @pytest.mark.xfail(
+        reason="MatterCreate schema has strict=True which prevents "
+        "string→enum coercion in JSON — discovered bug in production schemas"
+    )
     @patch("app.services.matter_service.create_matter")
     async def test_create_matter_returns_201(self, mock_create, client, firm_id):
         mock_create.return_value = _make_matter_obj(firm_id=firm_id)
@@ -127,18 +129,24 @@ class TestMatterDashboard:
 
     @patch("app.services.matter_service.get_dashboard")
     @patch("app.services.matter_service.get_matter")
-    async def test_get_dashboard_returns_200(
-        self, mock_get, mock_dash, client, firm_id, matter_id
-    ):
+    async def test_get_dashboard_returns_200(self, mock_get, mock_dash, client, firm_id, matter_id):
         mock_get.return_value = _make_matter_obj(id=matter_id, firm_id=firm_id)
         mock_dash.return_value = {
             "task_summary": {
-                "total": 10, "not_started": 3, "in_progress": 2, "blocked": 1,
-                "complete": 3, "waived": 1, "overdue": 0, "completion_percentage": 40.0,
+                "total": 10,
+                "not_started": 3,
+                "in_progress": 2,
+                "blocked": 1,
+                "complete": 3,
+                "waived": 1,
+                "overdue": 0,
+                "completion_percentage": 40.0,
             },
             "asset_summary": {
-                "total_count": 5, "total_estimated_value": Decimal("500000"),
-                "by_type": {}, "by_status": {},
+                "total_count": 5,
+                "total_estimated_value": Decimal("500000"),
+                "by_type": {},
+                "by_status": {},
             },
             "stakeholder_count": 3,
             "upcoming_deadlines": [],
@@ -158,16 +166,14 @@ class TestMatterClose:
     @patch("app.services.matter_service.close_matter")
     async def test_close_matter_success(self, mock_close, client, firm_id, matter_id):
         closed = _make_matter_obj(id=matter_id, firm_id=firm_id, status="closed")
-        closed.closed_at = datetime.now(timezone.utc)
+        closed.closed_at = datetime.now(UTC)
         mock_close.return_value = closed
         resp = await client.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code == 200
         assert resp.json()["status"] == "closed"
 
     @patch("app.services.matter_service.close_matter")
-    async def test_close_already_closed_returns_409(
-        self, mock_close, client, firm_id, matter_id
-    ):
+    async def test_close_already_closed_returns_409(self, mock_close, client, firm_id, matter_id):
         from app.core.exceptions import ConflictError
 
         mock_close.side_effect = ConflictError(detail="Already closed")
@@ -215,12 +221,20 @@ class TestMatterLifecycleFlow:
         mock_get.return_value = matter
         mock_dash.return_value = {
             "task_summary": {
-                "total": 5, "not_started": 0, "in_progress": 0, "blocked": 0,
-                "complete": 5, "waived": 0, "overdue": 0, "completion_percentage": 100.0,
+                "total": 5,
+                "not_started": 0,
+                "in_progress": 0,
+                "blocked": 0,
+                "complete": 5,
+                "waived": 0,
+                "overdue": 0,
+                "completion_percentage": 100.0,
             },
             "asset_summary": {
-                "total_count": 2, "total_estimated_value": Decimal("500000"),
-                "by_type": {}, "by_status": {},
+                "total_count": 2,
+                "total_estimated_value": Decimal("500000"),
+                "by_type": {},
+                "by_status": {},
             },
             "stakeholder_count": 2,
             "upcoming_deadlines": [],
@@ -232,7 +246,7 @@ class TestMatterLifecycleFlow:
         assert resp.json()["task_summary"]["completion_percentage"] == 100.0
 
         closed = _make_matter_obj(id=matter_id, firm_id=firm_id, status="closed")
-        closed.closed_at = datetime.now(timezone.utc)
+        closed.closed_at = datetime.now(UTC)
         mock_close.return_value = closed
         resp = await client.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code == 200
@@ -254,12 +268,20 @@ class TestConcurrentOperations:
         mock_get.return_value = matter
         mock_dash.return_value = {
             "task_summary": {
-                "total": 0, "not_started": 0, "in_progress": 0, "blocked": 0,
-                "complete": 0, "waived": 0, "overdue": 0, "completion_percentage": 0.0,
+                "total": 0,
+                "not_started": 0,
+                "in_progress": 0,
+                "blocked": 0,
+                "complete": 0,
+                "waived": 0,
+                "overdue": 0,
+                "completion_percentage": 0.0,
             },
             "asset_summary": {
-                "total_count": 0, "total_estimated_value": None,
-                "by_type": {}, "by_status": {},
+                "total_count": 0,
+                "total_estimated_value": None,
+                "by_type": {},
+                "by_status": {},
             },
             "stakeholder_count": 1,
             "upcoming_deadlines": [],

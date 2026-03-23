@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -142,7 +142,7 @@ class TestPDFGeneration:
         assert pair is not None
 
     def test_rgb_creates_color(self):
-        from app.services.report_service import _rgb, NAVY
+        from app.services.report_service import NAVY, _rgb
 
         color = _rgb(NAVY)
         assert color is not None
@@ -178,7 +178,7 @@ class TestExcelGeneration:
         assert ws.freeze_panes == "A2"
 
     def test_auto_width(self):
-        from app.services.report_service import _create_workbook, _auto_width
+        from app.services.report_service import _auto_width, _create_workbook
 
         wb = _create_workbook()
         ws = wb.active
@@ -236,6 +236,7 @@ class TestReportCaching:
 
     def test_cache_key_format(self):
         import uuid
+
         from app.services.report_service import _get_cache_key
 
         matter_id = uuid.UUID("12345678-1234-1234-1234-123456789012")
@@ -248,6 +249,7 @@ class TestReportCaching:
     def test_cache_key_includes_date(self):
         import uuid
         from datetime import date
+
         from app.services.report_service import _get_cache_key
 
         matter_id = uuid.UUID("12345678-1234-1234-1234-123456789012")
@@ -258,6 +260,7 @@ class TestReportCaching:
     def test_cache_get_returns_none_on_error(self):
         """Cache failures should return None, not raise."""
         from app.services.report_service import _cache_get
+
         # With no Redis running, should gracefully return None
         result = _cache_get("nonexistent:key")
         # May return None (no Redis) or None (key not found) — both are fine
@@ -266,11 +269,13 @@ class TestReportCaching:
     def test_cache_set_does_not_raise(self):
         """Cache write failures should be silent."""
         from app.services.report_service import _cache_set
+
         # With no Redis running, should not raise
         _cache_set("test:key", b"test data")  # Should not raise
 
     def test_cache_ttl_is_24h(self):
         from app.services.report_service import _CACHE_TTL
+
         assert _CACHE_TTL == 86400
 
 

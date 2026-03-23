@@ -141,8 +141,6 @@ describe("CreateMatterDialog", () => {
 // ─── CreateTaskDialog Tests ─────────────────────────────────────────────────
 
 describe("CreateTaskDialog", () => {
-  const user = userEvent.setup();
-
   it("renders dialog content when open", () => {
     renderWithProviders(
       <CreateTaskDialog

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -82,7 +83,7 @@ class DocumentResponse(BaseModel):
     doc_type: str | None
     doc_type_confidence: float | None
     doc_type_confirmed: bool
-    ai_extracted_data: dict | None
+    ai_extracted_data: dict[str, Any] | None
     current_version: int
     created_at: datetime
 
@@ -195,7 +196,7 @@ class DocumentDetailResponse(BaseModel):
     doc_type: str | None
     doc_type_confidence: float | None
     doc_type_confirmed: bool
-    ai_extracted_data: dict | None
+    ai_extracted_data: dict[str, Any] | None
     current_version: int
     created_at: datetime
     updated_at: datetime

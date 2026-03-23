@@ -11,10 +11,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
-from app.models.enums import AssetStatus, AssetType, OwnershipType, StakeholderRole, TransferMechanism
+from app.models.assets import Asset
+from app.models.enums import (
+    AssetStatus,
+    AssetType,
+    OwnershipType,
+    StakeholderRole,
+    TransferMechanism,
+)
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
-from app.schemas.auth import CurrentUser
 from app.schemas.assets import (
     AssetCreate,
     AssetDetailResponse,
@@ -23,11 +29,12 @@ from app.schemas.assets import (
     AssetListResponse,
     AssetUpdate,
     AssetValuation,
-    DocumentBrief,
     EntityBrief,
     ValuationEntry,
 )
+from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
+from app.schemas.tasks import DocumentBrief
 from app.services import asset_service
 
 router = APIRouter()
@@ -193,7 +200,9 @@ async def get_asset_detail(
         metadata=detail["metadata"] if not is_beneficiary else {},
         documents=[DocumentBrief(**d) for d in detail["documents"]] if not is_beneficiary else [],
         entities=[EntityBrief(**e) for e in detail["entities"]],
-        valuations=[ValuationEntry(**v) for v in detail["valuations"]] if not is_beneficiary else [],
+        valuations=(
+            [ValuationEntry(**v) for v in detail["valuations"]] if not is_beneficiary else []
+        ),
         created_at=detail["created_at"],
         updated_at=detail["updated_at"],
     )
@@ -275,7 +284,9 @@ async def link_document(
 ) -> dict[str, str]:
     """Link a document to an asset."""
     if stakeholder.role not in _WRITE_ROLES:
-        raise PermissionDeniedError(detail="Only matter admins and professionals can link documents")
+        raise PermissionDeniedError(
+            detail="Only matter admins and professionals can link documents"
+        )
 
     await asset_service.link_document(
         db,
@@ -305,7 +316,9 @@ async def add_valuation(
 ) -> AssetListItem:
     """Add a valuation to an asset."""
     if stakeholder.role not in _WRITE_ROLES:
-        raise PermissionDeniedError(detail="Only matter admins and professionals can add valuations")
+        raise PermissionDeniedError(
+            detail="Only matter admins and professionals can add valuations"
+        )
 
     asset = await asset_service.add_valuation(
         db,

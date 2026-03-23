@@ -28,7 +28,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { TASK_PHASE_LABELS, TASK_PHASE_ORDER, TASK_STATUS_LABELS } from "@/lib/constants";
-import type { Task, Stakeholder, TaskPhase, TaskStatus } from "@/lib/types";
+import type { Task, Stakeholder, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -168,7 +168,6 @@ function TaskRow({
   onTaskClick,
   onComplete,
   onWaive,
-  onAssign,
   onEdit,
   onDelete,
 }: {
@@ -179,7 +178,6 @@ function TaskRow({
   onTaskClick: () => void;
   onComplete: () => void;
   onWaive: () => void;
-  onAssign: (stakeholderId: string) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -369,7 +367,6 @@ function GroupSection({
               onTaskClick={() => onTaskClick(task.id)}
               onComplete={() => onComplete(task.id)}
               onWaive={() => onWaive(task.id)}
-              onAssign={(sid) => onAssign(task.id, sid)}
               onEdit={() => onEdit(task.id)}
               onDelete={() => onDelete(task.id)}
             />
@@ -388,7 +385,6 @@ export function TaskListView({
   groupBy,
   selectedIds,
   onToggleSelect,
-  onSelectAll,
   onTaskClick,
   onComplete,
   onWaive,
@@ -441,7 +437,6 @@ export function TaskListView({
             onTaskClick={() => onTaskClick(task.id)}
             onComplete={() => onComplete(task.id)}
             onWaive={() => onWaive(task.id)}
-            onAssign={(sid) => onAssign(task.id, sid)}
             onEdit={() => onEdit(task.id)}
             onDelete={() => onDelete(task.id)}
           />

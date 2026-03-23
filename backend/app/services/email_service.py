@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import smtplib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -16,7 +16,6 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.email_logs import EmailLog
@@ -41,7 +40,7 @@ def render_template(template_name: str, **context: Any) -> str:
     # Inject defaults that templates can use, but allow caller overrides
     defaults = {
         "frontend_url": settings.frontend_url,
-        "current_year": datetime.now(timezone.utc).year,
+        "current_year": datetime.now(UTC).year,
     }
     defaults.update(context)
     return template.render(**defaults)
@@ -87,7 +86,7 @@ def _send_via_resend(
     if text_fallback:
         params["text"] = text_fallback
 
-    response = resend.Emails.send(params)
+    response = resend.Emails.send(params)  # type: ignore[arg-type]
     resend_id = response.get("id") if isinstance(response, dict) else getattr(response, "id", None)
 
     logger.info("email_sent_resend", extra={"to": to, "subject": subject, "resend_id": resend_id})
@@ -129,7 +128,7 @@ def log_email_sync(
     error: str | None = None,
 ) -> None:
     """Log an email send using a synchronous DB connection."""
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
 
     sync_engine = create_engine(settings.database_url_sync)
@@ -142,7 +141,7 @@ def log_email_sync(
                 status=status,
                 resend_id=resend_id,
                 error=error,
-                sent_at=datetime.now(timezone.utc) if status == "sent" else None,
+                sent_at=datetime.now(UTC) if status == "sent" else None,
             )
         )
         session.commit()

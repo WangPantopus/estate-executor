@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import calendar
 import logging
-import uuid
 from datetime import date, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.events import event_logger
 from app.models.deadlines import Deadline
@@ -18,6 +16,11 @@ from app.models.matters import Matter
 from app.models.task_dependencies import TaskDependency
 from app.models.tasks import Task
 from app.services.template_registry import template_registry
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +206,7 @@ async def _create_tasks_from_templates(
             key_to_id[task.template_key] = task.id
 
     # Second pass: create dependencies
-    for task, tmpl in zip(new_tasks, template_order):
+    for task, tmpl in zip(new_tasks, template_order, strict=False):
         dep_keys = tmpl.get("dependencies") or []
         for dep_key in dep_keys:
             dep_task_id = key_to_id.get(dep_key)
@@ -218,7 +221,7 @@ async def _create_tasks_from_templates(
             db.add(dep)
 
     # Third pass: create deadlines for tasks with due dates
-    for task, tmpl in zip(new_tasks, template_order):
+    for task, tmpl in zip(new_tasks, template_order, strict=False):
         if task.due_date is not None:
             deadline = Deadline(
                 matter_id=matter.id,

@@ -24,7 +24,7 @@ async def client_firm_b() -> AsyncClient:
     """
     from app.core.dependencies import get_db
     from app.core.exceptions import NotFoundError
-    from app.core.security import get_current_user, require_firm_member, _get_db_session
+    from app.core.security import _get_db_session, get_current_user, require_firm_member
     from app.main import app
 
     firm_b_id = uuid.uuid4()
@@ -34,9 +34,7 @@ async def client_firm_b() -> AsyncClient:
         return CurrentUser(
             user_id=user_b_id,
             email="userb@otherfirm.com",
-            firm_memberships=[
-                FirmMembershipBrief(firm_id=firm_b_id, firm_role="owner")
-            ],
+            firm_memberships=[FirmMembershipBrief(firm_id=firm_b_id, firm_role="owner")],
         )
 
     mock_db = AsyncMock()
@@ -49,6 +47,7 @@ async def client_firm_b() -> AsyncClient:
         if firm_id != firm_b_id:
             raise NotFoundError(detail="Firm not found")
         from unittest.mock import MagicMock
+
         from app.models.enums import FirmRole
         from app.models.firm_memberships import FirmMembership
 
@@ -74,15 +73,11 @@ async def client_firm_b() -> AsyncClient:
 class TestCrossTenantAccess:
     """Verify firm A data is invisible to firm B users."""
 
-    async def test_cross_firm_matter_list_returns_404(
-        self, client_firm_b, firm_id
-    ):
+    async def test_cross_firm_matter_list_returns_404(self, client_firm_b, firm_id):
         resp = await client_firm_b.get(f"/api/v1/firms/{firm_id}/matters")
         assert resp.status_code == 404
 
-    async def test_cross_firm_matter_create_returns_404(
-        self, client_firm_b, firm_id
-    ):
+    async def test_cross_firm_matter_create_returns_404(self, client_firm_b, firm_id):
         resp = await client_firm_b.post(
             f"/api/v1/firms/{firm_id}/matters",
             json={
@@ -94,32 +89,22 @@ class TestCrossTenantAccess:
         )
         assert resp.status_code == 404
 
-    async def test_cross_firm_task_list_returns_404(
-        self, client_firm_b, firm_id, matter_id
-    ):
-        resp = await client_firm_b.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks"
-        )
+    async def test_cross_firm_task_list_returns_404(self, client_firm_b, firm_id, matter_id):
+        resp = await client_firm_b.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks")
         assert resp.status_code == 404
 
-    @pytest.mark.xfail(reason="Default client overrides require_firm_member; needs separate fixture")
+    @pytest.mark.xfail(
+        reason="Default client overrides require_firm_member; needs separate fixture"
+    )
     async def test_nonexistent_firm_returns_404(self, client):
         fake_firm = uuid.uuid4()
         resp = await client.get(f"/api/v1/firms/{fake_firm}/matters")
         assert resp.status_code == 404
 
-    async def test_cross_firm_document_access_returns_404(
-        self, client_firm_b, firm_id, matter_id
-    ):
-        resp = await client_firm_b.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/documents"
-        )
+    async def test_cross_firm_document_access_returns_404(self, client_firm_b, firm_id, matter_id):
+        resp = await client_firm_b.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/documents")
         assert resp.status_code == 404
 
-    async def test_cross_firm_stakeholder_list_returns_404(
-        self, client_firm_b, firm_id, matter_id
-    ):
-        resp = await client_firm_b.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/stakeholders"
-        )
+    async def test_cross_firm_stakeholder_list_returns_404(self, client_firm_b, firm_id, matter_id):
+        resp = await client_firm_b.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/stakeholders")
         assert resp.status_code == 404

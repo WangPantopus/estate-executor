@@ -7,10 +7,8 @@ when attempting restricted operations.
 from __future__ import annotations
 
 import uuid
-from unittest.mock import patch
 
 import pytest
-import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.schemas.auth import CurrentUser, FirmMembershipBrief
@@ -22,10 +20,10 @@ async def _make_role_client(role: str, firm_id, user_id=None):
 
     from app.core.dependencies import get_db
     from app.core.security import (
+        _get_db_session,
         get_current_user,
         require_firm_member,
         require_stakeholder,
-        _get_db_session,
     )
     from app.main import app
     from app.models.enums import FirmRole, StakeholderRole
@@ -39,9 +37,7 @@ async def _make_role_client(role: str, firm_id, user_id=None):
         return CurrentUser(
             user_id=uid,
             email=f"{role}@example.com",
-            firm_memberships=[
-                FirmMembershipBrief(firm_id=firm_id, firm_role="member")
-            ],
+            firm_memberships=[FirmMembershipBrief(firm_id=firm_id, firm_role="member")],
         )
 
     mock_db = AsyncMock()
@@ -80,7 +76,9 @@ async def _make_role_client(role: str, firm_id, user_id=None):
 class TestBeneficiaryRestrictions:
     """Beneficiary should be denied write operations."""
 
-    @pytest.mark.xfail(reason="Needs require_permission dependency override for role-specific checks")
+    @pytest.mark.xfail(
+        reason="Needs require_permission dependency override for role-specific checks"
+    )
     async def test_beneficiary_cannot_create_task(self, firm_id, matter_id):
         c = await _make_role_client("beneficiary", firm_id)
         resp = await c.post(
@@ -90,7 +88,9 @@ class TestBeneficiaryRestrictions:
         assert resp.status_code in (403, 404)
         await c.aclose()
 
-    @pytest.mark.xfail(reason="Needs require_permission dependency override for role-specific checks")
+    @pytest.mark.xfail(
+        reason="Needs require_permission dependency override for role-specific checks"
+    )
     async def test_beneficiary_cannot_create_asset(self, firm_id, matter_id):
         c = await _make_role_client("beneficiary", firm_id)
         resp = await c.post(
@@ -102,9 +102,7 @@ class TestBeneficiaryRestrictions:
 
     async def test_beneficiary_cannot_close_matter(self, firm_id, matter_id):
         c = await _make_role_client("beneficiary", firm_id)
-        resp = await c.post(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/close"
-        )
+        resp = await c.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code in (403, 404)
         await c.aclose()
 
@@ -123,9 +121,7 @@ class TestBeneficiaryRestrictions:
 
     async def test_beneficiary_cannot_generate_reports(self, firm_id, matter_id):
         c = await _make_role_client("beneficiary", firm_id)
-        resp = await c.post(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/reports/matter-summary"
-        )
+        resp = await c.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/reports/matter-summary")
         assert resp.status_code in (403, 404)
         await c.aclose()
 
@@ -134,7 +130,9 @@ class TestBeneficiaryRestrictions:
 class TestReadOnlyRestrictions:
     """read_only should have minimal access."""
 
-    @pytest.mark.xfail(reason="Needs require_permission dependency override for role-specific checks")
+    @pytest.mark.xfail(
+        reason="Needs require_permission dependency override for role-specific checks"
+    )
     async def test_read_only_cannot_create_task(self, firm_id, matter_id):
         c = await _make_role_client("read_only", firm_id)
         resp = await c.post(
@@ -160,9 +158,7 @@ class TestProfessionalRestrictions:
 
     async def test_professional_cannot_close_matter(self, firm_id, matter_id):
         c = await _make_role_client("professional", firm_id)
-        resp = await c.post(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/close"
-        )
+        resp = await c.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code in (403, 404)
         await c.aclose()
 
@@ -195,9 +191,7 @@ class TestExecutorRestrictions:
 
     async def test_executor_cannot_close_matter(self, firm_id, matter_id):
         c = await _make_role_client("executor_trustee", firm_id)
-        resp = await c.post(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/close"
-        )
+        resp = await c.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/close")
         assert resp.status_code in (403, 404)
         await c.aclose()
 
@@ -225,8 +219,6 @@ class TestExecutorRestrictions:
 
     async def test_executor_cannot_generate_reports(self, firm_id, matter_id):
         c = await _make_role_client("executor_trustee", firm_id)
-        resp = await c.post(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/reports/matter-summary"
-        )
+        resp = await c.post(f"/api/v1/firms/{firm_id}/matters/{matter_id}/reports/matter-summary")
         assert resp.status_code in (403, 404)
         await c.aclose()

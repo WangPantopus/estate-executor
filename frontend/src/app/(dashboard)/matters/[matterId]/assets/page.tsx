@@ -12,7 +12,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { LoadingState } from "@/components/layout/LoadingState";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { useAssets, useEntities } from "@/hooks";
-import type { AssetListItem } from "@/lib/types";
 
 import {
   AssetSummaryBar,

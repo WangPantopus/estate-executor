@@ -26,7 +26,7 @@ export default function MatterDashboardPage({
   const { data: dashboard, isLoading, error } = useMatterDashboard(FIRM_ID, matterId);
   const { data: tasksData } = useTasks(FIRM_ID, matterId, { per_page: 100 });
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
-  const { can, isBeneficiary, isReadOnly } = usePermissions(matterId);
+  const { can, isReadOnly } = usePermissions(matterId);
 
   if (isLoading) {
     return <LoadingState variant="detail" />;

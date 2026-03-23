@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -43,7 +43,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -375,7 +374,7 @@ export function AppShell({
 
   // Close mobile nav on route change
   useEffect(() => {
-    setMobileOpen(false);
+    setMobileOpen(false); // eslint-disable-line react-hooks/set-state-in-effect -- close drawer on navigation
   }, [pathname]);
 
   // Keyboard shortcut: Cmd+K placeholder event

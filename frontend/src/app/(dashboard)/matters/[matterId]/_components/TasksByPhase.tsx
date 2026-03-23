@@ -10,9 +10,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/layout/StatusBadge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Collapsible,
   CollapsibleContent,

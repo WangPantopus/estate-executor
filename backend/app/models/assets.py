@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Enum, ForeignKey, Index, LargeBinary, Numeric, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -49,7 +49,9 @@ class Asset(BaseModel):
     date_of_death_value: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
     current_estimated_value: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
     final_appraised_value: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, server_default="{}"
+    )
 
     matter: Mapped[Matter] = relationship(back_populates="assets")
     entities: Mapped[list[Entity]] = relationship(

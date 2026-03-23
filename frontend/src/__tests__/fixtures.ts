@@ -25,9 +25,8 @@ export const mockUser: UserProfile = {
   user_id: "user-1",
   email: "admin@example.com",
   full_name: "Test Admin",
-  avatar_url: null,
   firm_memberships: [
-    { firm_id: "firm-1", firm_name: "Test Law Firm", firm_role: "owner" },
+    { firm_id: "firm-1", firm_name: "Test Law Firm", firm_slug: "test-law-firm", firm_role: "owner" },
   ],
 };
 
@@ -42,10 +41,8 @@ export const mockMatter: Matter = {
   jurisdiction_state: "CA",
   decedent_name: "John Doe",
   date_of_death: "2025-12-01",
-  date_of_incapacity: null,
   estimated_value: 2500000,
   phase: "administration",
-  settings: {},
   closed_at: null,
   created_at: "2025-12-15T10:00:00Z",
   updated_at: "2026-01-10T10:00:00Z",
@@ -76,7 +73,7 @@ export const mockMatter3: Matter = {
 
 export const mockMattersPage: PaginatedResponse<Matter> = {
   data: [mockMatter, mockMatter2, mockMatter3],
-  meta: { total: 3, page: 1, page_size: 25, total_pages: 1 },
+  meta: { total: 3, page: 1, per_page: 25, total_pages: 1 },
 };
 
 // ─── Tasks ───────────────────────────────────────────────────────────────────
@@ -95,26 +92,25 @@ export const mockTaskSummary: TaskSummary = {
 export const mockTask1: Task = {
   id: "task-1",
   matter_id: "matter-1",
+  parent_task_id: null,
+  template_key: null,
   title: "Obtain Death Certificate",
   description: "Get certified copies of the death certificate",
+  instructions: null,
   phase: "immediate",
   status: "complete",
   priority: "critical",
   assigned_to: "user-1",
-  assignee_name: "Test Admin",
   due_date: "2026-01-15",
   requires_document: true,
-  is_system_generated: true,
   sort_order: 1,
-  dependencies: [],
-  dependent_count: 2,
-  document_count: 1,
+  metadata: {},
   documents: [],
+  dependencies: [],
+  completed_at: "2026-01-10T10:00:00Z",
+  completed_by: null,
   created_at: "2025-12-15T10:00:00Z",
   updated_at: "2026-01-10T10:00:00Z",
-  completed_at: "2026-01-10T10:00:00Z",
-  waived_at: null,
-  waived_reason: null,
 };
 
 export const mockTask2: Task = {
@@ -124,11 +120,9 @@ export const mockTask2: Task = {
   description: "File the initial probate petition with the court",
   phase: "probate_filing",
   status: "in_progress",
-  priority: "high",
+  priority: "normal",
   due_date: "2026-03-01",
   dependencies: ["task-1"],
-  dependent_count: 0,
-  document_count: 0,
   completed_at: null,
 };
 
@@ -139,11 +133,9 @@ export const mockTask3: Task = {
   description: "Create detailed inventory of personal items",
   phase: "asset_inventory",
   status: "not_started",
-  priority: "medium",
+  priority: "normal",
   due_date: "2026-04-01",
   dependencies: [],
-  dependent_count: 0,
-  document_count: 0,
   completed_at: null,
 };
 
@@ -152,13 +144,11 @@ export const mockTask4: Task = {
   id: "task-4",
   title: "Blocked Task",
   description: "This task is blocked",
-  phase: "administration",
+  phase: "custom",
   status: "blocked",
-  priority: "high",
+  priority: "normal",
   due_date: "2026-05-01",
   dependencies: ["task-2"],
-  dependent_count: 0,
-  document_count: 0,
   completed_at: null,
 };
 
@@ -171,7 +161,7 @@ export const mockTaskDetail: TaskDetail = {
 
 export const mockTasksPage: PaginatedResponse<Task> = {
   data: [mockTask1, mockTask2, mockTask3, mockTask4],
-  meta: { total: 4, page: 1, page_size: 25, total_pages: 1 },
+  meta: { total: 4, page: 1, per_page: 25, total_pages: 1 },
 };
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
@@ -187,15 +177,18 @@ export const mockAsset1: AssetListItem = {
   id: "asset-1",
   matter_id: "matter-1",
   title: "Primary Residence",
+  description: null,
   asset_type: "real_estate",
   status: "valued",
   institution: null,
   account_number_masked: null,
   current_estimated_value: 850000,
   date_of_death_value: 800000,
+  final_appraised_value: null,
   ownership_type: "individual",
   transfer_mechanism: "probate",
-  entities: [{ id: "entity-1", name: "Doe Family Trust" }],
+  metadata: {},
+  entities: [{ id: "entity-1", name: "Doe Family Trust", entity_type: "revocable_trust" }],
   document_count: 3,
   created_at: "2025-12-20T10:00:00Z",
   updated_at: "2026-01-05T10:00:00Z",
@@ -205,14 +198,17 @@ export const mockAsset2: AssetListItem = {
   id: "asset-2",
   matter_id: "matter-1",
   title: "Checking Account",
+  description: null,
   asset_type: "bank_account",
   status: "discovered",
   institution: "Chase Bank",
   account_number_masked: "****4567",
   current_estimated_value: 45000,
   date_of_death_value: 42000,
+  final_appraised_value: null,
   ownership_type: "joint_tenancy",
   transfer_mechanism: "beneficiary_designation",
+  metadata: {},
   entities: [],
   document_count: 0,
   created_at: "2025-12-22T10:00:00Z",
@@ -234,6 +230,7 @@ export const mockDeadline1: DeadlineResponse = {
   assigned_to: null,
   assignee_name: null,
   reminder_config: { days_before: [30, 7, 1] },
+  last_reminder_sent: null,
   task: null,
   created_at: "2025-12-15T10:00:00Z",
   updated_at: "2025-12-15T10:00:00Z",
@@ -262,9 +259,14 @@ export const mockCalendarMonths: CalendarMonth[] = [
       {
         id: "dl-2",
         title: "State Inheritance Tax",
+        description: null,
         due_date: "2026-04-15",
         status: "upcoming",
         source: "auto",
+        task_id: null,
+        task_title: null,
+        assigned_to: null,
+        assignee_name: null,
       },
     ],
   },
@@ -274,9 +276,14 @@ export const mockCalendarMonths: CalendarMonth[] = [
       {
         id: "dl-3",
         title: "Creditor Claims Window",
+        description: null,
         due_date: "2026-06-15",
         status: "completed",
         source: "auto",
+        task_id: null,
+        task_title: null,
+        assigned_to: null,
+        assignee_name: null,
       },
     ],
   },
@@ -290,13 +297,9 @@ export const mockMessage1: CommunicationResponse = {
   type: "message",
   subject: "Initial Consultation Notes",
   body: "Summary of the initial meeting with the family.",
-  visibility: "all",
+  visibility: "all_stakeholders",
   sender_id: "user-1",
   sender_name: "Test Admin",
-  sender_type: "user",
-  recipients: [],
-  is_flagged: false,
-  flag_reason: null,
   acknowledged_by: [],
   created_at: "2026-01-10T10:00:00Z",
 };
@@ -304,10 +307,10 @@ export const mockMessage1: CommunicationResponse = {
 export const mockMessage2: CommunicationResponse = {
   ...mockMessage1,
   id: "msg-2",
-  type: "milestone",
+  type: "milestone_notification",
   subject: "Probate Petition Filed",
   body: "The probate petition has been filed with the court.",
-  visibility: "all",
+  visibility: "all_stakeholders",
   created_at: "2026-02-15T10:00:00Z",
 };
 
@@ -332,11 +335,9 @@ export const mockStakeholders: PaginatedResponse<Stakeholder> = {
       email: "admin@example.com",
       full_name: "Test Admin",
       role: "matter_admin",
+      relationship: null,
       invite_status: "accepted",
-      invited_by: null,
-      accepted_at: "2025-12-15T10:00:00Z",
       created_at: "2025-12-15T10:00:00Z",
-      updated_at: "2025-12-15T10:00:00Z",
     },
     {
       id: "sh-2",
@@ -345,14 +346,12 @@ export const mockStakeholders: PaginatedResponse<Stakeholder> = {
       email: "beneficiary@example.com",
       full_name: "Jane Beneficiary",
       role: "beneficiary",
+      relationship: null,
       invite_status: "accepted",
-      invited_by: "user-1",
-      accepted_at: "2025-12-20T10:00:00Z",
       created_at: "2025-12-20T10:00:00Z",
-      updated_at: "2025-12-20T10:00:00Z",
     },
   ],
-  meta: { total: 2, page: 1, page_size: 25, total_pages: 1 },
+  meta: { total: 2, page: 1, per_page: 25, total_pages: 1 },
 };
 
 // ─── Events ──────────────────────────────────────────────────────────────────
@@ -366,13 +365,14 @@ export const mockEvents: PaginatedResponse<EventResponse> = {
       entity_id: "task-1",
       action: "completed",
       changes: null,
+      metadata: null,
       actor_id: "user-1",
       actor_type: "user",
       actor_name: "Test Admin",
       created_at: "2026-01-10T10:00:00Z",
     },
   ],
-  meta: { total: 1, page: 1, page_size: 25, total_pages: 1 },
+  meta: { total: 1, page: 1, per_page: 25, total_pages: 1 },
 };
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -44,7 +44,7 @@ class AssetCreate(BaseModel):
     transfer_mechanism: TransferMechanism = TransferMechanism.probate
     date_of_death_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
     current_estimated_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
-    metadata: dict | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class AssetUpdate(BaseModel):
@@ -63,7 +63,7 @@ class AssetUpdate(BaseModel):
     date_of_death_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
     current_estimated_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
     final_appraised_value: Decimal | None = Field(None, max_digits=15, decimal_places=2)
-    metadata: dict | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class AssetListItem(BaseModel):
@@ -84,7 +84,7 @@ class AssetListItem(BaseModel):
     date_of_death_value: Decimal | None
     current_estimated_value: Decimal | None
     final_appraised_value: Decimal | None
-    metadata: dict | None
+    metadata: dict[str, Any] | None
     document_count: int
     entities: list[EntityBrief]
     created_at: datetime
@@ -130,7 +130,7 @@ class AssetDetailResponse(BaseModel):
     date_of_death_value: Decimal | None
     current_estimated_value: Decimal | None
     final_appraised_value: Decimal | None
-    metadata: dict | None
+    metadata: dict[str, Any] | None
     documents: list[DocumentBrief]
     entities: list[EntityBrief]
     valuations: list[ValuationEntry]

@@ -8,12 +8,15 @@ import re
 import time
 import traceback
 import uuid
+from typing import TYPE_CHECKING
 
-from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
+
+if TYPE_CHECKING:
+    from fastapi import Request, Response
 
 logger = logging.getLogger(__name__)
 
@@ -77,18 +80,20 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
         try:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
         except Exception as exc:
             request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
 
             logger.error(
-                json.dumps({
-                    "request_id": request_id,
-                    "method": request.method,
-                    "path": request.url.path,
-                    "error": str(exc),
-                    "traceback": traceback.format_exc(),
-                })
+                json.dumps(
+                    {
+                        "request_id": request_id,
+                        "method": request.method,
+                        "path": request.url.path,
+                        "error": str(exc),
+                        "traceback": traceback.format_exc(),
+                    }
+                )
             )
 
             detail = str(exc) if not settings.is_production else "Internal server error"

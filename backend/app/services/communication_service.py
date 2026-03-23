@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import logging
-import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -20,7 +18,13 @@ from app.models.enums import (
     StakeholderRole,
 )
 from app.models.stakeholders import Stakeholder
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +57,7 @@ async def _get_communication_or_404(
     return comm
 
 
-async def _get_matter_admins(
-    db: AsyncSession, *, matter_id: uuid.UUID
-) -> list[Stakeholder]:
+async def _get_matter_admins(db: AsyncSession, *, matter_id: uuid.UUID) -> list[Stakeholder]:
     """Return all stakeholders with matter_admin role for a matter."""
     result = await db.execute(
         select(Stakeholder).where(
@@ -66,9 +68,7 @@ async def _get_matter_admins(
     return list(result.scalars().all())
 
 
-def _notify_email_stub(
-    comm: Communication, recipients: list[Stakeholder]
-) -> None:
+def _notify_email_stub(comm: Communication, recipients: list[Stakeholder]) -> None:
     """Stub: log that an email would be sent for milestone/distribution notices."""
     logger.info(
         "email_notification_stub",
@@ -100,9 +100,12 @@ async def create_communication(
 ) -> Communication:
     """Create a communication. Sender is set from the authenticated stakeholder."""
     # Ensure sender is always in visible_to for specific visibility
-    if visibility == CommunicationVisibility.specific and visible_to is not None:
-        if sender.id not in visible_to:
-            visible_to = [sender.id, *visible_to]
+    if (
+        visibility == CommunicationVisibility.specific
+        and visible_to is not None
+        and sender.id not in visible_to
+    ):
+        visible_to = [sender.id, *visible_to]
 
     comm = Communication(
         matter_id=matter_id,
@@ -135,10 +138,10 @@ async def create_communication(
     # Email notification stub for milestone/distribution types
     if comm_type in _EMAIL_TYPES:
         all_stakeholders = (
-            await db.execute(
-                select(Stakeholder).where(Stakeholder.matter_id == matter_id)
-            )
-        ).scalars().all()
+            (await db.execute(select(Stakeholder).where(Stakeholder.matter_id == matter_id)))
+            .scalars()
+            .all()
+        )
         _notify_email_stub(comm, list(all_stakeholders))
 
     # Reload with sender relationship
@@ -173,9 +176,10 @@ async def list_communications(
         base_filters.append(Communication.type == comm_type)
 
     # Build visibility filter based on role
+    visibility_filter: Any = True  # no extra filter for professionals
     if stakeholder.role in _PROFESSIONAL_ROLES:
         # Admin/professional see everything
-        visibility_filter = True  # no extra filter
+        pass
     else:
         # Non-professionals: all_stakeholders + specific where they're in visible_to
         vis_conditions = [
@@ -185,7 +189,7 @@ async def list_communications(
         if stakeholder.id is not None:
             vis_conditions.append(
                 (Communication.visibility == CommunicationVisibility.specific)
-                & Communication.visible_to.any(stakeholder.id)
+                & Communication.visible_to.any(stakeholder.id)  # type: ignore[arg-type]
             )
         visibility_filter = or_(*vis_conditions)
 
@@ -196,19 +200,11 @@ async def list_communications(
     total = (await db.execute(count_q)).scalar_one()
 
     # Data query
-    q = (
-        select(Communication)
-        .options(selectinload(Communication.sender))
-        .where(*base_filters)
-    )
+    q = select(Communication).options(selectinload(Communication.sender)).where(*base_filters)
     if visibility_filter is not True:
         q = q.where(visibility_filter)
 
-    q = (
-        q.order_by(Communication.created_at.desc())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-    )
+    q = q.order_by(Communication.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(q)
     comms = list(result.scalars().unique().all())
 
@@ -232,9 +228,7 @@ async def acknowledge_communication(
     comm = await _get_communication_or_404(db, comm_id=comm_id, matter_id=matter_id)
 
     if comm.type != CommunicationType.distribution_notice:
-        raise PermissionDeniedError(
-            detail="Only distribution notices can be acknowledged"
-        )
+        raise PermissionDeniedError(detail="Only distribution notices can be acknowledged")
 
     # Append (not replace) — idempotent
     current_acks = list(comm.acknowledged_by or [])

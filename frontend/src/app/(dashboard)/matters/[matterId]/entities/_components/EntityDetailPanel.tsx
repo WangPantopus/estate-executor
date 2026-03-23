@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   X,
   UserCircle,
@@ -9,7 +8,6 @@ import {
   Link2,
   Trash2,
   Loader2,
-  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +19,7 @@ import {
   ASSET_TYPE_LABELS,
 } from "@/lib/constants";
 import { useUpdateEntity, useDeleteEntity } from "@/hooks";
-import type { Entity, AssetBrief, FundingStatus } from "@/lib/types";
+import type { Entity, FundingStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

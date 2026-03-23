@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import ActorType
-
-from .common import PaginationMeta
 
 
 class EventResponse(BaseModel):
@@ -25,8 +24,8 @@ class EventResponse(BaseModel):
     entity_type: str
     entity_id: UUID
     action: str
-    changes: dict | None
-    metadata: dict | None
+    changes: dict[str, Any] | None
+    metadata: dict[str, Any] | None
     created_at: datetime
 
 

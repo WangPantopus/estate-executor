@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
 from app.models.enums import (
     CommunicationType,
     CommunicationVisibility,

@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import logging
-import uuid
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -19,7 +17,13 @@ from app.models.stakeholders import Stakeholder
 from app.models.task_dependencies import TaskDependency
 from app.models.task_documents import task_documents
 from app.models.tasks import Task
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -442,7 +446,7 @@ async def update_task(
         # Map 'metadata' to 'metadata_' on the model
         attr_name = "metadata_" if field == "metadata" else field
         old_value = getattr(task, attr_name, None)
-        old_cmp = old_value.value if hasattr(old_value, "value") else old_value
+        old_cmp = old_value.value if hasattr(old_value, "value") else old_value  # type: ignore[union-attr]
         new_cmp = value.value if hasattr(value, "value") else value
         if old_cmp != new_cmp:
             old_str = str(old_cmp) if old_cmp is not None else None
@@ -527,7 +531,7 @@ async def complete_task(
 
     # Apply completion
     task.status = TaskStatus.complete
-    task.completed_at = datetime.now(timezone.utc)
+    task.completed_at = datetime.now(UTC)
     task.completed_by = stakeholder.id
     if notes:
         meta = dict(task.metadata_) if task.metadata_ else {}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,7 +47,7 @@ class AIExtractResponse(BaseModel):
         },
     )
 
-    extracted_fields: dict
+    extracted_fields: dict[str, Any]
     confidence: float = Field(..., ge=0.0, le=1.0)
 
 

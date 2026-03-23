@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { use, useState, useCallback, useRef, useEffect } from "react";
 import { Download, Loader2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -65,7 +65,7 @@ export default function ActivityPage({
         const result: CursorPaginatedResponse<EventResponse> = await api.getEvents(
           FIRM_ID,
           matterId,
-          params as any,
+          params as Record<string, string | number>,
         );
 
         let newEvents = result.data;
@@ -148,7 +148,7 @@ export default function ActivityPage({
         const result: CursorPaginatedResponse<EventResponse> = await api.getEvents(
           FIRM_ID,
           matterId,
-          params as any,
+          params as Record<string, string | number>,
         );
 
         allEvents = [...allEvents, ...result.data];

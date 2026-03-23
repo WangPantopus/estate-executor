@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestComputeRiskLevel:
     """Test the _compute_risk_level helper in matter_service."""
 
     def _compute(self, **kwargs):
         from app.services.matter_service import _compute_risk_level
+
         return _compute_risk_level(**kwargs)
 
     def test_no_issues_returns_green(self):

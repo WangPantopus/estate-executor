@@ -15,6 +15,7 @@ from app.core.security import get_current_user, require_firm_member, require_sta
 from app.models.enums import StakeholderRole, TaskPhase, TaskPriority, TaskStatus
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
+from app.models.tasks import Task as TaskModel
 from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.schemas.tasks import (
@@ -32,8 +33,7 @@ from app.schemas.tasks import (
     TaskUpdate,
     TaskWaive,
 )
-from app.services import task_service
-from app.services import task_generation_service
+from app.services import task_generation_service, task_service
 
 router = APIRouter()
 
@@ -472,7 +472,6 @@ def _task_to_response(task: object) -> TaskResponse:
 
     Handles the case where relationships may not be loaded.
     """
-    from app.models.tasks import Task as TaskModel
 
     t: TaskModel = task  # type: ignore[assignment]
     docs = []

@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, date, datetime
+from unittest.mock import MagicMock, patch
 
 import pytest
-from httpx import AsyncClient
 
 
 def _make_task_obj(**overrides):
-    from app.models.enums import TaskPhase, TaskPriority, TaskStatus as TS
+    from app.models.enums import TaskPhase, TaskPriority, TaskStatus
 
     t = MagicMock()
     t.id = overrides.get("id", uuid.uuid4())
@@ -25,20 +24,20 @@ def _make_task_obj(**overrides):
     phase_val = overrides.get("phase", "immediate")
     t.phase = TaskPhase(phase_val) if isinstance(phase_val, str) else phase_val
     status_val = overrides.get("status", "not_started")
-    t.status = TS(status_val) if isinstance(status_val, str) else status_val
+    t.status = TaskStatus(status_val) if isinstance(status_val, str) else status_val
     priority_val = overrides.get("priority", "normal")
     t.priority = TaskPriority(priority_val) if isinstance(priority_val, str) else priority_val
-    t.assigned_to = overrides.get("assigned_to", None)
+    t.assigned_to = overrides.get("assigned_to")
     t.due_date = overrides.get("due_date", date(2026, 3, 1))
     t.requires_document = overrides.get("requires_document", False)
-    t.completed_at = overrides.get("completed_at", None)
+    t.completed_at = overrides.get("completed_at")
     t.completed_by = None
     t.sort_order = 0
     t.metadata_ = {}
     t.documents = []
     t.dependencies = []
-    t.created_at = datetime.now(timezone.utc)
-    t.updated_at = datetime.now(timezone.utc)
+    t.created_at = datetime.now(UTC)
+    t.updated_at = datetime.now(UTC)
     return t
 
 
@@ -92,7 +91,7 @@ class TestTaskStateTransitions:
     @patch("app.services.task_service.complete_task")
     async def test_complete_task_returns_200(self, mock_complete, client, firm_id, matter_id):
         task = _make_task_obj(matter_id=matter_id, status="complete")
-        task.completed_at = datetime.now(timezone.utc)
+        task.completed_at = datetime.now(UTC)
         mock_complete.return_value = (task, [])
         task_id = uuid.uuid4()
         resp = await client.post(
@@ -123,9 +122,7 @@ class TestTaskStateTransitions:
         assert resp.status_code == 200
 
     @patch("app.services.task_service.waive_task")
-    async def test_waive_without_reason_returns_422(
-        self, mock_waive, client, firm_id, matter_id
-    ):
+    async def test_waive_without_reason_returns_422(self, mock_waive, client, firm_id, matter_id):
         resp = await client.post(
             f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks/{uuid.uuid4()}/waive",
             json={},
@@ -145,9 +142,7 @@ class TestTaskStateTransitions:
 
     @pytest.mark.xfail(reason="TaskUpdate strict=True prevents string→enum in JSON")
     @patch("app.services.task_service.update_task")
-    async def test_invalid_transition_returns_409(
-        self, mock_update, client, firm_id, matter_id
-    ):
+    async def test_invalid_transition_returns_409(self, mock_update, client, firm_id, matter_id):
         from app.core.exceptions import ConflictError
 
         mock_update.side_effect = ConflictError(detail="Invalid transition")

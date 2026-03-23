@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.deadlines import Deadline
 from app.models.enums import DeadlineStatus, StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
@@ -34,7 +35,7 @@ router = APIRouter()
 _WRITE_ROLES = {StakeholderRole.matter_admin, StakeholderRole.professional}
 
 
-def _deadline_to_response(dl) -> DeadlineResponse:
+def _deadline_to_response(dl: Deadline) -> DeadlineResponse:
     """Convert a Deadline ORM object to DeadlineResponse."""
     task_brief = None
     if dl.task is not None:

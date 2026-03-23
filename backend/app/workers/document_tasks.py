@@ -6,13 +6,14 @@ import asyncio
 import io
 import logging
 import zipfile
+from typing import Any
 
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     loop = asyncio.new_event_loop()
     try:
         return loop.run_until_complete(coro)
@@ -20,7 +21,7 @@ def _run_async(coro):
         loop.close()
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.document_tasks.generate_bulk_download",
     bind=True,
     max_retries=2,
@@ -29,12 +30,12 @@ def _run_async(coro):
     time_limit=900,
 )
 def generate_bulk_download(
-    self,
+    self: Any,
     job_id: str,
     matter_id: str,
     document_ids: list[str],
     requester_stakeholder_id: str,
-):
+) -> dict[str, Any]:
     """Generate a ZIP file containing multiple documents for bulk download.
 
     1. Fetches document metadata from DB
@@ -45,7 +46,7 @@ def generate_bulk_download(
     """
     try:
 
-        async def _generate():
+        async def _generate() -> dict[str, Any]:
             from sqlalchemy import select
 
             from app.core.config import settings
@@ -134,10 +135,10 @@ def generate_bulk_download(
                     "document_count": len(docs),
                 }
 
-        result = _run_async(_generate())
+        result: dict[str, Any] = _run_async(_generate())
         logger.info("bulk_download_completed", extra={"job_id": job_id, "result": result})
         return result
 
     except Exception as exc:
         logger.exception("generate_bulk_download failed", extra={"job_id": job_id})
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

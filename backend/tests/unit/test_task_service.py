@@ -13,6 +13,7 @@ class TestTaskStateMachine:
     @pytest.fixture(autouse=True)
     def _import(self):
         from app.services.task_service import VALID_TRANSITIONS
+
         self.VALID_TRANSITIONS = VALID_TRANSITIONS
 
     # ── Valid transitions from not_started ───────────────────────────────────
@@ -62,7 +63,7 @@ class TestTaskStateMachine:
     def test_not_started_cannot_go_to_complete(self):
         # not_started → complete is NOT in VALID_TRANSITIONS (must go through in_progress first)
         # Actually, let's check what the actual transition map says
-        allowed = self.VALID_TRANSITIONS.get(TaskStatus.not_started, set())
+        self.VALID_TRANSITIONS.get(TaskStatus.not_started, set())
         # The spec may or may not allow this — we just test the actual map
         # If complete is in allowed, the state machine permits it
         pass  # This test verifies the transition map exists
@@ -105,6 +106,7 @@ class TestTaskStateMachineInvalidTransitions:
     @pytest.fixture(autouse=True)
     def _import(self):
         from app.services.task_service import VALID_TRANSITIONS
+
         self.VALID_TRANSITIONS = VALID_TRANSITIONS
 
     def test_complete_to_not_started_invalid(self):
@@ -134,8 +136,15 @@ class TestTaskPhaseEnum:
 
     def test_all_phases(self):
         expected = {
-            "immediate", "asset_inventory", "notification", "probate_filing",
-            "tax", "transfer_distribution", "family_communication", "closing", "custom",
+            "immediate",
+            "asset_inventory",
+            "notification",
+            "probate_filing",
+            "tax",
+            "transfer_distribution",
+            "family_communication",
+            "closing",
+            "custom",
         }
         actual = {p.value for p in TaskPhase}
         assert expected == actual
@@ -238,7 +247,7 @@ class TestCompletionWithDependencies:
         from tests.factories import TaskFactory
 
         blocker = TaskFactory.build(status="in_progress")
-        dependent = TaskFactory.build(status="in_progress")
+        TaskFactory.build(status="in_progress")
         # Business rule: all dependencies must be complete/waived before completion
         blocker_done = blocker["status"] in ("complete", "waived", "cancelled")
         assert not blocker_done
@@ -262,9 +271,7 @@ class TestCompletionWithDependencies:
     def test_task_with_no_dependencies_can_complete(self):
         """Tasks without dependencies can always be completed."""
         dependencies = []
-        all_resolved = all(
-            d["status"] in ("complete", "waived", "cancelled") for d in dependencies
-        )
+        all_resolved = all(d["status"] in ("complete", "waived", "cancelled") for d in dependencies)
         assert all_resolved is True  # vacuously true
 
 
@@ -304,7 +311,6 @@ class TestCascadingUnblock:
         dep_a = TaskFactory.build(status="complete")
         dep_b = TaskFactory.build(status="in_progress")
         all_resolved = all(
-            d["status"] in ("complete", "waived", "cancelled")
-            for d in [dep_a, dep_b]
+            d["status"] in ("complete", "waived", "cancelled") for d in [dep_a, dep_b]
         )
         assert not all_resolved  # B is still incomplete

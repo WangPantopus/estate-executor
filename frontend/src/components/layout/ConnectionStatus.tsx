@@ -2,7 +2,6 @@
 
 import { useSocket, type ConnectionStatus as Status } from "@/components/providers/SocketProvider";
 import { cn } from "@/lib/utils";
-import { Wifi, WifiOff } from "lucide-react";
 
 /**
  * Subtle connection status indicator for the app header.

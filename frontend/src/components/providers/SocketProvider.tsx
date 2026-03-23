@@ -50,6 +50,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
+  const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const joinedRoomsRef = useRef<Set<string>>(new Set());
 
@@ -71,7 +72,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
       if (!token || !mounted) return;
 
-      const socket = io(`${API_URL}/matters`, {
+      const sock = io(`${API_URL}/matters`, {
         path: "/ws/socket.io",
         auth: { token: `Bearer ${token}` },
         transports: ["websocket", "polling"],
@@ -81,29 +82,30 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         reconnectionAttempts: Infinity,
       });
 
-      socket.on("connect", () => {
+      sock.on("connect", () => {
         if (!mounted) return;
         setStatus("connected");
 
         // Re-join any rooms we were in before reconnect
         for (const matterId of joinedRoomsRef.current) {
-          socket.emit("join_matter", { matter_id: matterId });
+          sock.emit("join_matter", { matter_id: matterId });
         }
       });
 
-      socket.on("disconnect", () => {
+      sock.on("disconnect", () => {
         if (mounted) setStatus("disconnected");
       });
 
-      socket.on("connect_error", () => {
+      sock.on("connect_error", () => {
         if (mounted) setStatus("disconnected");
       });
 
-      socket.io.on("reconnect_attempt", () => {
+      sock.io.on("reconnect_attempt", () => {
         if (mounted) setStatus("connecting");
       });
 
-      socketRef.current = socket;
+      socketRef.current = sock;
+      setSocket(sock);
       setStatus("connecting");
     }
 
@@ -115,6 +117,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      setSocket(null);
       setStatus("disconnected");
     };
   }, []);
@@ -137,7 +140,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     <SocketContext.Provider
       value={{
         status,
-        socket: socketRef.current,
+        socket,
         joinMatter,
         leaveMatter,
       }}

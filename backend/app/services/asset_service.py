@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import logging
-import uuid
-from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -19,7 +16,13 @@ from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
 from app.models.documents import Document
 from app.models.enums import ActorType, AssetStatus, AssetType, OwnershipType, TransferMechanism
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,12 @@ logger = logging.getLogger(__name__)
 # Asset status lifecycle — ordered, forward-only
 # ---------------------------------------------------------------------------
 
-_STATUS_ORDER = [AssetStatus.discovered, AssetStatus.valued, AssetStatus.transferred, AssetStatus.distributed]
+_STATUS_ORDER = [
+    AssetStatus.discovered,
+    AssetStatus.valued,
+    AssetStatus.transferred,
+    AssetStatus.distributed,
+]
 _STATUS_INDEX = {s: i for i, s in enumerate(_STATUS_ORDER)}
 
 
@@ -98,7 +106,7 @@ async def create_asset(
     transfer_mechanism: TransferMechanism = TransferMechanism.probate,
     date_of_death_value: Decimal | None = None,
     current_estimated_value: Decimal | None = None,
-    metadata: dict | None = None,
+    metadata: dict[str, Any] | None = None,
     current_user: CurrentUser,
 ) -> Asset:
     """Create a new asset with optional account number encryption."""
@@ -192,29 +200,31 @@ async def list_assets(
 
     items = []
     for asset in assets:
-        items.append({
-            "id": asset.id,
-            "matter_id": asset.matter_id,
-            "asset_type": asset.asset_type,
-            "title": asset.title,
-            "description": asset.description,
-            "institution": asset.institution,
-            "account_number_masked": mask_account_number(asset.account_number_encrypted),
-            "ownership_type": asset.ownership_type,
-            "transfer_mechanism": asset.transfer_mechanism,
-            "status": asset.status,
-            "date_of_death_value": asset.date_of_death_value,
-            "current_estimated_value": asset.current_estimated_value,
-            "final_appraised_value": asset.final_appraised_value,
-            "metadata": asset.metadata_,
-            "document_count": len(asset.documents),
-            "entities": [
-                {"id": e.id, "name": e.name, "entity_type": e.entity_type.value}
-                for e in asset.entities
-            ],
-            "created_at": asset.created_at,
-            "updated_at": asset.updated_at,
-        })
+        items.append(
+            {
+                "id": asset.id,
+                "matter_id": asset.matter_id,
+                "asset_type": asset.asset_type,
+                "title": asset.title,
+                "description": asset.description,
+                "institution": asset.institution,
+                "account_number_masked": mask_account_number(asset.account_number_encrypted),
+                "ownership_type": asset.ownership_type,
+                "transfer_mechanism": asset.transfer_mechanism,
+                "status": asset.status,
+                "date_of_death_value": asset.date_of_death_value,
+                "current_estimated_value": asset.current_estimated_value,
+                "final_appraised_value": asset.final_appraised_value,
+                "metadata": asset.metadata_,
+                "document_count": len(asset.documents),
+                "entities": [
+                    {"id": e.id, "name": e.name, "entity_type": e.entity_type.value}
+                    for e in asset.entities
+                ],
+                "created_at": asset.created_at,
+                "updated_at": asset.updated_at,
+            }
+        )
 
     return items, total
 
@@ -261,13 +271,17 @@ async def get_asset_detail(
     valuations = []
     for ev in val_events:
         meta = ev.metadata_ or {}
-        valuations.append({
-            "type": meta.get("valuation_type", ""),
-            "value": Decimal(str(meta["value"])) if meta.get("value") is not None else Decimal("0"),
-            "notes": meta.get("notes"),
-            "recorded_at": ev.created_at,
-            "recorded_by": ev.actor_id,
-        })
+        valuations.append(
+            {
+                "type": meta.get("valuation_type", ""),
+                "value": Decimal(str(meta["value"]))
+                if meta.get("value") is not None
+                else Decimal("0"),
+                "notes": meta.get("notes"),
+                "recorded_at": ev.created_at,
+                "recorded_by": ev.actor_id,
+            }
+        )
 
     return {
         "id": asset.id,
@@ -294,8 +308,7 @@ async def get_asset_detail(
             for doc in asset.documents
         ],
         "entities": [
-            {"id": e.id, "name": e.name, "entity_type": e.entity_type.value}
-            for e in asset.entities
+            {"id": e.id, "name": e.name, "entity_type": e.entity_type.value} for e in asset.entities
         ],
         "valuations": valuations,
         "created_at": asset.created_at,
@@ -347,7 +360,10 @@ async def update_asset(
             old_str = old_val.value if hasattr(old_val, "value") else old_val
             new_str = value.value if hasattr(value, "value") else value
             if old_str != new_str:
-                changes[field] = {"old": str(old_str) if old_str is not None else None, "new": str(new_str)}
+                changes[field] = {
+                    "old": str(old_str) if old_str is not None else None,
+                    "new": str(new_str),
+                }
                 setattr(asset, field, value)
 
     if changes:

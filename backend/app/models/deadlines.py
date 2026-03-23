@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Date, Enum, ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
@@ -44,7 +44,7 @@ class Deadline(BaseModel):
         Enum(DeadlineSource, name="deadline_source", native_enum=True),
         nullable=False,
     )
-    rule: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    rule: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[DeadlineStatus] = mapped_column(
         Enum(DeadlineStatus, name="deadline_status", native_enum=True),
         nullable=False,
@@ -55,7 +55,7 @@ class Deadline(BaseModel):
         ForeignKey("stakeholders.id", ondelete="SET NULL"),
         nullable=True,
     )
-    reminder_config: Mapped[dict] = mapped_column(
+    reminder_config: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         server_default='{"days_before": [30, 7, 1]}',

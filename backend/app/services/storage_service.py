@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from typing import Any
 
 from botocore.config import Config as BotoConfig
 
@@ -14,14 +15,14 @@ logger = logging.getLogger(__name__)
 _PRESIGN_EXPIRY = 900  # 15 minutes
 
 
-def _get_s3_client():
+def _get_s3_client() -> Any:
     """Get or create an S3 client configured for the current environment.
 
     In development, connects to MinIO; in production, uses AWS S3.
     """
     import boto3
 
-    client_kwargs: dict = {
+    client_kwargs: dict[str, Any] = {
         "region_name": settings.aws_region,
         "aws_access_key_id": settings.aws_access_key_id,
         "aws_secret_access_key": settings.aws_secret_access_key,
@@ -75,7 +76,7 @@ def generate_upload_url(
 def generate_download_url(*, storage_key: str) -> str:
     """Generate a presigned GET URL for document download (15-minute expiry)."""
     client = _get_s3_client()
-    return client.generate_presigned_url(
+    return client.generate_presigned_url(  # type: ignore[no-any-return]
         "get_object",
         Params={
             "Bucket": settings.aws_s3_bucket,

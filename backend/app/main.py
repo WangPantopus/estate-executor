@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +23,7 @@ from app.core.middleware import (
 )
 
 # Background task handle for the realtime subscriber
-_subscriber_task: asyncio.Task | None = None
+_subscriber_task: asyncio.Task[Any] | None = None
 
 
 @asynccontextmanager
@@ -41,10 +42,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Shutdown
     if _subscriber_task is not None:
         _subscriber_task.cancel()
-        try:
+        with suppress(asyncio.CancelledError):
             await _subscriber_task
-        except asyncio.CancelledError:
-            pass
 
 
 def _rfc7807_response(status_code: int, title: str, detail: str, request_path: str) -> JSONResponse:

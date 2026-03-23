@@ -1,0 +1,270 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+  ECS_CLUSTER: estate-executor-staging
+  BACKEND_SERVICE: estate-executor-api-staging
+  WORKER_SERVICE: estate-executor-worker-staging
+  BACKEND_TASK_DEF: estate-executor-api-staging
+  WORKER_TASK_DEF: estate-executor-worker-staging
+  STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────
+  # Build & push Docker images to ECR
+  # ─────────────────────────────────────────────────────────────────────
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      backend-image: ${{ steps.build-backend.outputs.image }}
+      worker-image: ${{ steps.build-worker.outputs.image }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: tag
+        run: echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push backend image
+        id: build-backend
+        working-directory: backend
+        run: |
+          IMAGE="${{ env.ECR_REGISTRY }}/estate-executor-api:${{ steps.tag.outputs.tag }}"
+          docker build -t "$IMAGE" -t "${{ env.ECR_REGISTRY }}/estate-executor-api:latest" .
+          docker push "$IMAGE"
+          docker push "${{ env.ECR_REGISTRY }}/estate-executor-api:latest"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push worker image
+        id: build-worker
+        working-directory: backend
+        run: |
+          IMAGE="${{ env.ECR_REGISTRY }}/estate-executor-worker:${{ steps.tag.outputs.tag }}"
+          docker build -t "$IMAGE" -t "${{ env.ECR_REGISTRY }}/estate-executor-worker:latest" .
+          docker push "$IMAGE"
+          docker push "${{ env.ECR_REGISTRY }}/estate-executor-worker:latest"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Deploy backend to ECS Fargate
+  # ─────────────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-images
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download current task definition (API)
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.BACKEND_TASK_DEF }} \
+            --query taskDefinition \
+            > api-task-def.json
+
+      - name: Update API task definition image
+        id: render-api
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: api-task-def.json
+          container-name: api
+          image: ${{ needs.build-images.outputs.backend-image }}
+
+      - name: Deploy API service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-api.outputs.task-definition }}
+          service: ${{ env.BACKEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-for-minutes: 5
+
+      - name: Download current task definition (Worker)
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.WORKER_TASK_DEF }} \
+            --query taskDefinition \
+            > worker-task-def.json
+
+      - name: Update Worker task definition image
+        id: render-worker
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: worker-task-def.json
+          container-name: worker
+          image: ${{ needs.build-images.outputs.worker-image }}
+
+      - name: Deploy Worker service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-worker.outputs.task-definition }}
+          service: ${{ env.WORKER_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-for-minutes: 5
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Run database migrations against staging
+  # ─────────────────────────────────────────────────────────────────────
+  migrate:
+    name: Run Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build-images
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -e .
+
+      - name: Run Alembic migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DATABASE_URL_SYNC: ${{ secrets.STAGING_DATABASE_URL_SYNC }}
+        run: alembic upgrade head
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Frontend: Vercel handles deployment via GitHub integration.
+  # This job verifies the build succeeds with staging env vars.
+  # ─────────────────────────────────────────────────────────────────────
+  frontend-verify:
+    name: Frontend Build Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build with staging env
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
+        run: npm run build
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Smoke test: verify staging is healthy after deploy
+  # ─────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [deploy-backend, migrate, frontend-verify]
+
+    steps:
+      - name: Wait for services to stabilize
+        run: sleep 15
+
+      - name: Health check — backend API
+        run: |
+          for i in $(seq 1 10); do
+            STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+              "${{ env.STAGING_API_URL }}/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Backend health check passed"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying in 5s..."
+            sleep 5
+          done
+          echo "Backend health check failed after 10 attempts"
+          exit 1
+
+      - name: Health check — frontend
+        env:
+          STAGING_FRONTEND_URL: ${{ secrets.STAGING_FRONTEND_URL }}
+        run: |
+          for i in $(seq 1 10); do
+            STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+              "$STAGING_FRONTEND_URL" || true)
+            if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
+              echo "Frontend health check passed"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying in 5s..."
+            sleep 5
+          done
+          echo "Frontend health check failed after 10 attempts"
+          exit 1
+
+      - name: Notify success
+        if: success()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -sf -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-type: application/json' \
+              -d "{
+                \"text\": \"✅ *Staging deploy succeeded*\nCommit: \`${{ github.sha }}\`\nBy: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\"
+              }"
+          fi
+
+      - name: Notify failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -sf -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-type: application/json' \
+              -d "{
+                \"text\": \"❌ *Staging deploy failed*\nCommit: \`${{ github.sha }}\`\nBy: ${{ github.actor }}\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+              }"
+          fi

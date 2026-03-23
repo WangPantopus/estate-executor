@@ -98,7 +98,8 @@ class TestGetTemplates:
         trust_templates = template_registry.get_templates("trust_administration", "CA")
         trust_keys = {t["key"] for t in trust_templates}
 
-        # ca_file_petition_superior_court has conditions.estate_types that excludes trust_administration
+        # ca_file_petition_superior_court has conditions.estate_types
+        # that excludes trust_administration
         assert "ca_file_petition_superior_court" not in trust_keys
 
         # ca_trust_notification_120_days includes trust_administration

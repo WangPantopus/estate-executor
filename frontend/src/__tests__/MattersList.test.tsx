@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, within, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi } from "vitest";
+import { screen } from "@testing-library/react";
 import { renderWithProviders } from "./test-utils";
-import { mockMatter, mockMatter2, mockMatter3, mockMattersPage, mockUser } from "./fixtures";
+import { mockMatter, mockMatter2, mockMatter3, mockUser } from "./fixtures";
 
 // ─── Mock hooks ──────────────────────────────────────────────────────────────
 
@@ -65,8 +64,6 @@ import { MattersPageContent } from "@/app/(dashboard)/matters/_components/Matter
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("MattersPageContent", () => {
-  const user = userEvent.setup();
-
   it("renders the page title", () => {
     renderWithProviders(<MattersPageContent />);
     expect(screen.getByText("Matters")).toBeInTheDocument();

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import Enum, Index, String, text
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
@@ -35,8 +36,10 @@ class Event(Base):
     entity_type: Mapped[str] = mapped_column(String, nullable=False)
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     action: Mapped[str] = mapped_column(String, nullable=False)
-    changes: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    changes: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, server_default="{}"
+    )
     ip_address: Mapped[str | None] = mapped_column(String, nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

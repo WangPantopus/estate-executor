@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, Date, Enum, ForeignKey, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
@@ -59,7 +59,7 @@ class Task(BaseModel):
         nullable=True,
     )
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    due_date_rule: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    due_date_rule: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     requires_document: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     completed_by: Mapped[uuid.UUID | None] = mapped_column(
@@ -68,7 +68,9 @@ class Task(BaseModel):
         nullable=True,
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, server_default="{}"
+    )
 
     matter: Mapped[Matter] = relationship(back_populates="tasks")
     parent_task: Mapped[Task | None] = relationship(

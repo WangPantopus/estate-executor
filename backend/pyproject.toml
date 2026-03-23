@@ -14,9 +14,9 @@ dependencies = [
     "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.10",
     "alembic>=1.14.0",
-    "pydantic>=2.10.0",
+    "pydantic[email]>=2.10.0",
     "pydantic-settings>=2.6.0",
-    "python-jose[cryptography]>=3.3.0",
+    "PyJWT[crypto]>=2.8.0",
     "httpx>=0.28.0",
     "redis>=5.2.0",
     "celery[redis]>=5.4.0",
@@ -31,6 +31,7 @@ dependencies = [
     "python-socketio>=5.11.0",
     "reportlab>=4.0",
     "openpyxl>=3.1.0",
+    "cachetools>=5.3.0",
 ]
 
 [project.optional-dependencies]
@@ -54,9 +55,12 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
+ignore = ["B008"]  # Allow Depends() / Query() in FastAPI parameter defaults
 
 [tool.ruff.lint.per-file-ignores]
-"app/models/*.py" = ["TCH003"]
+"app/models/*.py" = ["TCH003", "TC003"]
+"app/schemas/*.py" = ["TC001", "TC002", "TC003", "TCH001", "TCH002", "TCH003"]
+"app/api/v1/*/__init__.py" = ["TC001", "TC002", "TC003", "TCH001", "TCH002", "TCH003"]
 "migrations/versions/*.py" = ["E501"]
 
 [tool.mypy]
@@ -65,6 +69,33 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "celery.*",
+    "boto3.*",
+    "botocore.*",
+    "socketio.*",
+    "jwt.*",
+    "resend.*",
+    "yaml.*",
+    "cachetools.*",
+    "reportlab.*",
+    "openpyxl.*",
+    "redis.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "app.realtime.publisher",
+    "app.realtime.subscriber",
+    "app.services.report_service",
+    "app.services.email_service",
+]
+disallow_untyped_calls = false
+warn_return_any = false
+warn_unused_ignores = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

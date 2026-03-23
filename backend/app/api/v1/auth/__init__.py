@@ -77,9 +77,7 @@ async def get_me(
     """
     result = await db.execute(
         select(User)
-        .options(
-            selectinload(User.firm_memberships).selectinload(FirmMembership.firm)
-        )
+        .options(selectinload(User.firm_memberships).selectinload(FirmMembership.firm))
         .where(User.id == current_user.user_id)
     )
     user = result.scalar_one_or_none()

@@ -1,9 +1,6 @@
 "use client";
 
 import {
-  MessageSquare,
-  Bell,
-  FileText,
   AlertTriangle,
   Shield,
   Eye,
@@ -20,7 +17,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { STAKEHOLDER_ROLE_LABELS } from "@/lib/constants";
 import { useAcknowledgeCommunication } from "@/hooks";
 import type { CommunicationResponse, CommunicationType, Stakeholder } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

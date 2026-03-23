@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import logging
 import secrets
-import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -18,7 +16,13 @@ from app.models.enums import ActorType, InviteStatus, StakeholderRole
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.users import User
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +80,7 @@ async def invite_stakeholder(
         raise ConflictError(detail="A stakeholder with this email already exists on this matter")
 
     # Check if email matches an existing user (case-insensitive)
-    result = await db.execute(
-        select(User).where(func.lower(User.email) == normalized_email)
-    )
+    result = await db.execute(select(User).where(func.lower(User.email) == normalized_email))
     existing_user = result.scalar_one_or_none()
 
     invite_token = _generate_invite_token()
@@ -98,7 +100,9 @@ async def invite_stakeholder(
         await db.flush()
     except IntegrityError:
         await db.rollback()
-        raise ConflictError(detail="A stakeholder with this email already exists on this matter")
+        raise ConflictError(
+            detail="A stakeholder with this email already exists on this matter"
+        ) from None
 
     await event_logger.log(
         db,
@@ -145,11 +149,7 @@ async def list_stakeholders(
     if viewer_role in _RESTRICTED_VIEWER_ROLES:
         base_filter.append(Stakeholder.role.in_(_RESTRICTED_VISIBLE_ROLES))
 
-    count_q = (
-        select(func.count())
-        .select_from(Stakeholder)
-        .where(*base_filter)
-    )
+    count_q = select(func.count()).select_from(Stakeholder).where(*base_filter)
     total = (await db.execute(count_q)).scalar_one()
 
     q = (
@@ -201,7 +201,7 @@ async def update_stakeholder(
         attr = field_map.get(field, field)
         old_value = getattr(stakeholder, attr, None)
         # Normalize enum comparison
-        old_cmp = old_value.value if hasattr(old_value, "value") else old_value
+        old_cmp = old_value.value if hasattr(old_value, "value") else old_value  # type: ignore[union-attr]
         new_cmp = value.value if hasattr(value, "value") else value
         if old_cmp != new_cmp:
             changes[field] = {"old": old_cmp, "new": new_cmp}
@@ -276,9 +276,7 @@ async def resend_invite(
     stakeholder = await get_stakeholder(db, matter_id=matter_id, stakeholder_id=stakeholder_id)
 
     if stakeholder.invite_status != InviteStatus.pending:
-        raise BadRequestError(
-            detail="Can only resend invitations for pending stakeholders"
-        )
+        raise BadRequestError(detail="Can only resend invitations for pending stakeholders")
 
     matter = await _get_matter_or_404(db, matter_id)
 
@@ -315,9 +313,15 @@ async def resend_invite(
 
 _ROLE_DESCRIPTIONS: dict[StakeholderRole, str] = {
     StakeholderRole.matter_admin: "full administrative access to manage all aspects of the estate",
-    StakeholderRole.professional: "professional access to manage tasks, assets, and communications",
-    StakeholderRole.executor_trustee: "access to your assigned tasks, linked documents, and communications",
-    StakeholderRole.beneficiary: "access to view estate milestones, shared documents, and communications relevant to you",
+    StakeholderRole.professional: (
+        "professional access to manage tasks, assets, and communications"
+    ),
+    StakeholderRole.executor_trustee: (
+        "access to your assigned tasks, linked documents, and communications"
+    ),
+    StakeholderRole.beneficiary: (
+        "access to view estate milestones, shared documents, and communications relevant to you"
+    ),
     StakeholderRole.read_only: "read-only access to view estate milestones",
 }
 
@@ -352,7 +356,10 @@ def _dispatch_invite_email(
             f"[Accept Invitation]\n\n"
         )
     else:
-        body += "Your account has been automatically linked. You can access the matter from your dashboard.\n\n"
+        body += (
+            "Your account has been automatically linked. "
+            "You can access the matter from your dashboard.\n\n"
+        )
 
     body += "If you have any questions, please contact the estate administrator."
 

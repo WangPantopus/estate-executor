@@ -7,7 +7,7 @@ and function-based helpers (make_firm, make_user, etc.) for convenience.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -17,7 +17,7 @@ def _uuid() -> uuid.UUID:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ═════════════════════════════════════════════════════════════════════════════

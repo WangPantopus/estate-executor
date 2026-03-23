@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncGenerator
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 import jwt
 from cachetools import TTLCache
@@ -13,7 +11,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import Depends, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
@@ -48,8 +45,8 @@ def _get_signing_key(token: str) -> jwt.PyJWK:
     if "jwks" not in _jwks_cache:
         jwks_client = jwt.PyJWKClient(jwks_url)
         _jwks_cache["jwks"] = jwks_client.get_jwk_set().keys
-        _jwks_cache["client"] = jwks_client  # type: ignore[assignment]
-    client: jwt.PyJWKClient = _jwks_cache["client"]  # type: ignore[assignment]
+        _jwks_cache["client"] = jwks_client
+    client: jwt.PyJWKClient = _jwks_cache["client"]
     return client.get_signing_key_from_jwt(token)
 
 
@@ -58,13 +55,41 @@ def _get_signing_key(token: str) -> jwt.PyJWK:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Mock auth user map for E2E tests
+# ---------------------------------------------------------------------------
+
+_MOCK_USERS: dict[str, dict[str, str]] = {
+    "admin": {"sub": "auth0|e2e-admin", "email": "admin@e2e-test.local"},
+    "professional": {"sub": "auth0|e2e-professional", "email": "pro@e2e-test.local"},
+    "beneficiary": {"sub": "auth0|e2e-beneficiary", "email": "beneficiary@e2e-test.local"},
+    "readOnly": {"sub": "auth0|e2e-readOnly", "email": "readonly@e2e-test.local"},
+}
+
+
 async def verify_jwt(token: str) -> TokenPayload:
     """Verify and decode a JWT token from Auth0.
 
     - Fetches Auth0 JWKS (cached for 24h via cachetools)
     - Validates JWT signature, expiration, audience, issuer
     - Returns decoded payload as TokenPayload schema
+
+    When E2E_MOCK_AUTH is enabled, accepts tokens of the form
+    ``e2e-mock-token-<userKey>`` and returns a synthetic payload.
     """
+    # Mock auth bypass for E2E tests
+    if settings.e2e_mock_auth and token.startswith("e2e-mock-token-"):
+        user_key = token.removeprefix("e2e-mock-token-")
+        mock = _MOCK_USERS.get(user_key)
+        if mock is None:
+            raise UnauthorizedError(detail=f"Unknown mock user: {user_key}")
+        return TokenPayload(
+            sub=mock["sub"],
+            email=mock["email"],
+            firm_ids=[],
+            roles={},
+        )
+
     try:
         signing_key = _get_signing_key(token)
         payload = jwt.decode(
@@ -75,9 +100,9 @@ async def verify_jwt(token: str) -> TokenPayload:
             issuer=settings.auth0_issuer,
         )
     except jwt.ExpiredSignatureError:
-        raise UnauthorizedError(detail="Token has expired")
+        raise UnauthorizedError(detail="Token has expired") from None
     except jwt.InvalidTokenError as exc:
-        raise UnauthorizedError(detail=f"Invalid token: {exc}")
+        raise UnauthorizedError(detail=f"Invalid token: {exc}") from exc
 
     return TokenPayload(
         sub=payload["sub"],
@@ -94,6 +119,12 @@ async def verify_jwt(token: str) -> TokenPayload:
 # Avoid circular import: get_db is defined in dependencies.py but that
 # module must not import from security. We re-use the same session factory.
 from app.core.database import async_session_factory  # noqa: E402
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Callable
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def _get_db_session() -> AsyncGenerator[AsyncSession]:
@@ -140,9 +171,7 @@ async def get_current_user(
         await db.flush()
         # Reload with relationships
         result = await db.execute(
-            select(User)
-            .options(selectinload(User.firm_memberships))
-            .where(User.id == user.id)
+            select(User).options(selectinload(User.firm_memberships)).where(User.id == user.id)
         )
         user = result.scalar_one()
 
@@ -209,9 +238,7 @@ async def require_stakeholder(
         return stakeholder
 
     # Fallback: check if user is a firm member of the matter's firm
-    result = await db.execute(
-        select(Matter.firm_id).where(Matter.id == matter_id)
-    )
+    result = await db.execute(select(Matter.firm_id).where(Matter.id == matter_id))
     firm_id = result.scalar_one_or_none()
     if firm_id is None:
         raise NotFoundError(detail="Matter not found")
@@ -229,7 +256,7 @@ async def require_stakeholder(
     # Firm members get a synthetic stakeholder with matter_admin permissions
     # Create a transient stakeholder object (not persisted)
     synthetic = Stakeholder(
-        id=None,  # type: ignore[arg-type]
+        id=None,
         matter_id=matter_id,
         user_id=current_user.user_id,
         email=current_user.email,
@@ -237,9 +264,9 @@ async def require_stakeholder(
         role=StakeholderRole.matter_admin,
     )
     # Mark as transient so we don't accidentally persist it
-    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import make_transient
 
-    sa_inspect(synthetic).detach()
+    make_transient(synthetic)
     return synthetic
 
 
@@ -249,34 +276,56 @@ async def require_stakeholder(
 
 ROLE_PERMISSIONS: dict[StakeholderRole, list[str]] = {
     StakeholderRole.matter_admin: [
-        "matter:read", "matter:write", "matter:close",
-        "task:read", "task:write", "task:assign", "task:complete",
-        "asset:read", "asset:write",
-        "entity:read", "entity:write",
-        "document:read", "document:upload", "document:download",
-        "stakeholder:invite", "stakeholder:manage",
-        "communication:read", "communication:write",
+        "matter:read",
+        "matter:write",
+        "matter:close",
+        "task:read",
+        "task:write",
+        "task:assign",
+        "task:complete",
+        "asset:read",
+        "asset:write",
+        "entity:read",
+        "entity:write",
+        "document:read",
+        "document:upload",
+        "document:download",
+        "stakeholder:invite",
+        "stakeholder:manage",
+        "communication:read",
+        "communication:write",
         "event:read",
         "ai:trigger",
         "report:generate",
     ],
     StakeholderRole.professional: [
         "matter:read",
-        "task:read", "task:write", "task:assign", "task:complete",
-        "asset:read", "asset:write",
-        "entity:read", "entity:write",
-        "document:read", "document:upload", "document:download",
-        "communication:read", "communication:write",
+        "task:read",
+        "task:write",
+        "task:assign",
+        "task:complete",
+        "asset:read",
+        "asset:write",
+        "entity:read",
+        "entity:write",
+        "document:read",
+        "document:upload",
+        "document:download",
+        "communication:read",
+        "communication:write",
         "event:read",
         "ai:trigger",
         "report:generate",
     ],
     StakeholderRole.executor_trustee: [
         "matter:read",
-        "task:read:assigned", "task:complete:assigned",
+        "task:read:assigned",
+        "task:complete:assigned",
         "asset:read",
-        "document:read:linked", "document:upload",
-        "communication:read", "communication:write",
+        "document:read:linked",
+        "document:upload",
+        "communication:read",
+        "communication:write",
     ],
     StakeholderRole.beneficiary: [
         "matter:read:summary",
@@ -306,8 +355,9 @@ def _has_permission(role: StakeholderRole, required: str) -> bool:
     return False
 
 
-def require_permission(permission: str):
-    """Return a FastAPI dependency that checks the resolved stakeholder has the required permission."""
+def require_permission(permission: str) -> Callable[..., Any]:
+    """Return a FastAPI dependency that checks the resolved
+    stakeholder has the required permission."""
 
     async def _check(
         request: Request,

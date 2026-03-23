@@ -12,13 +12,15 @@ import json
 import logging
 import uuid
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.events import Event
 from app.models.stakeholders import Stakeholder
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -28,16 +30,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-async def _load_actor_names(
-    db: AsyncSession, *, actor_ids: set[uuid.UUID]
-) -> dict[uuid.UUID, str]:
+async def _load_actor_names(db: AsyncSession, *, actor_ids: set[uuid.UUID]) -> dict[uuid.UUID, str]:
     """Load stakeholder full_name for a set of actor user_ids."""
     if not actor_ids:
         return {}
     result = await db.execute(
-        select(Stakeholder.user_id, Stakeholder.full_name).where(
-            Stakeholder.user_id.in_(actor_ids)
-        )
+        select(Stakeholder.user_id, Stakeholder.full_name).where(Stakeholder.user_id.in_(actor_ids))
     )
     # A user may be a stakeholder on multiple matters; just pick any name
     names: dict[uuid.UUID, str] = {}
@@ -135,7 +133,7 @@ async def list_events(
 # ---------------------------------------------------------------------------
 
 
-def _summarize_changes(changes: dict | None) -> str:
+def _summarize_changes(changes: dict[str, Any] | None) -> str:
     """Create a human-readable summary of changes dict."""
     if not changes:
         return ""
@@ -159,9 +157,7 @@ async def export_events_csv(
     """
     # Fetch all events for the matter, oldest first for chronological CSV
     result = await db.execute(
-        select(Event)
-        .where(Event.matter_id == matter_id)
-        .order_by(Event.created_at.asc())
+        select(Event).where(Event.matter_id == matter_id).order_by(Event.created_at.asc())
     )
     events = list(result.scalars().all())
 
@@ -174,14 +170,20 @@ async def export_events_csv(
     writer.writerow(["timestamp", "actor", "entity_type", "entity_id", "action", "changes_summary"])
 
     for event in events:
-        actor_name = actor_names.get(event.actor_id, event.actor_type.value) if event.actor_id else event.actor_type.value
-        writer.writerow([
-            event.created_at.isoformat(),
-            actor_name,
-            event.entity_type,
-            str(event.entity_id),
-            event.action,
-            _summarize_changes(event.changes),
-        ])
+        actor_name = (
+            actor_names.get(event.actor_id, event.actor_type.value)
+            if event.actor_id
+            else event.actor_type.value
+        )
+        writer.writerow(
+            [
+                event.created_at.isoformat(),
+                actor_name,
+                event.entity_type,
+                str(event.entity_id),
+                event.action,
+                _summarize_changes(event.changes),
+            ]
+        )
 
     return output.getvalue()

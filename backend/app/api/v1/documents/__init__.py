@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.documents import Document
 from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
@@ -71,7 +73,7 @@ def _require_doc_admin(stakeholder: Stakeholder) -> None:
         raise PermissionDeniedError(detail="Insufficient permissions")
 
 
-def _doc_to_response(doc) -> DocumentResponse:
+def _doc_to_response(doc: Document) -> DocumentResponse:
     """Convert a Document ORM object to DocumentResponse."""
     return DocumentResponse(
         id=doc.id,
@@ -90,7 +92,7 @@ def _doc_to_response(doc) -> DocumentResponse:
     )
 
 
-def _doc_to_detail(doc) -> DocumentDetailResponse:
+def _doc_to_detail(doc: Document) -> DocumentDetailResponse:
     """Convert a Document ORM object to full detail response."""
     versions = [
         DocumentVersionResponse(
@@ -104,12 +106,8 @@ def _doc_to_detail(doc) -> DocumentDetailResponse:
         )
         for v in sorted(doc.versions, key=lambda v: v.version_number)
     ]
-    linked_tasks = [
-        TaskBriefDoc(id=t.id, title=t.title) for t in doc.tasks
-    ]
-    linked_assets = [
-        AssetBriefDoc(id=a.id, title=a.title) for a in doc.assets
-    ]
+    linked_tasks = [TaskBriefDoc(id=t.id, title=t.title) for t in doc.tasks]
+    linked_assets = [AssetBriefDoc(id=a.id, title=a.title) for a in doc.assets]
     return DocumentDetailResponse(
         id=doc.id,
         matter_id=doc.matter_id,
@@ -255,7 +253,7 @@ async def request_document(
     stakeholder: Stakeholder = Depends(require_stakeholder),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     """Request a document from a stakeholder. Sends email with upload link."""
     _require_doc_admin(stakeholder)
     comm = await document_service.request_document(

@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from collections import defaultdict
-from datetime import date, datetime, timezone
-from typing import Any
+from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -17,7 +15,13 @@ from app.core.exceptions import NotFoundError
 from app.models.deadlines import Deadline
 from app.models.enums import ActorType, DeadlineSource, DeadlineStatus, MatterStatus
 from app.models.matters import Matter
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +59,7 @@ async def create_deadline(
     due_date: date,
     task_id: uuid.UUID | None = None,
     assigned_to: uuid.UUID | None = None,
-    reminder_config: dict | None = None,
+    reminder_config: dict[str, Any] | None = None,
     current_user: CurrentUser,
 ) -> Deadline:
     """Create a manual deadline."""
@@ -150,9 +154,7 @@ async def update_deadline(
     current_user: CurrentUser,
 ) -> Deadline:
     """Update a deadline. Tracks due_date changes and auto-extends status."""
-    deadline = await _get_deadline_or_404(
-        db, deadline_id=deadline_id, matter_id=matter_id
-    )
+    deadline = await _get_deadline_or_404(db, deadline_id=deadline_id, matter_id=matter_id)
 
     changes: dict[str, dict[str, Any]] = {}
 
@@ -171,8 +173,7 @@ async def update_deadline(
         if (
             new_due_date > old_due_date
             and "status" not in updates
-            and deadline.status
-            in (DeadlineStatus.upcoming, DeadlineStatus.missed)
+            and deadline.status in (DeadlineStatus.upcoming, DeadlineStatus.missed)
         ):
             changes["status"] = {
                 "old": deadline.status.value,
@@ -246,24 +247,23 @@ async def get_calendar(
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for dl in deadlines:
         month_key = dl.due_date.strftime("%Y-%m")
-        grouped[month_key].append({
-            "id": dl.id,
-            "title": dl.title,
-            "description": dl.description,
-            "due_date": dl.due_date,
-            "status": dl.status.value,
-            "source": dl.source.value,
-            "task_id": dl.task_id,
-            "task_title": dl.task.title if dl.task else None,
-            "assigned_to": dl.assigned_to,
-            "assignee_name": dl.assignee.full_name if dl.assignee else None,
-        })
+        grouped[month_key].append(
+            {
+                "id": dl.id,
+                "title": dl.title,
+                "description": dl.description,
+                "due_date": dl.due_date,
+                "status": dl.status.value,
+                "source": dl.source.value,
+                "task_id": dl.task_id,
+                "task_title": dl.task.title if dl.task else None,
+                "assigned_to": dl.assigned_to,
+                "assignee_name": dl.assignee.full_name if dl.assignee else None,
+            }
+        )
 
     # Return sorted by month key
-    return [
-        {"month": month, "deadlines": items}
-        for month, items in sorted(grouped.items())
-    ]
+    return [{"month": month, "deadlines": items} for month, items in sorted(grouped.items())]
 
 
 # ---------------------------------------------------------------------------
@@ -281,28 +281,23 @@ async def check_deadlines(db: AsyncSession, *, today: date | None = None) -> dic
     if today is None:
         today = date.today()
 
-    now = datetime.now(timezone.utc)
-    today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+    now = datetime.now(UTC)
+    today_start = datetime(today.year, today.month, today.day, tzinfo=UTC)
 
     stats = {"missed": 0, "reminders_sent": 0}
 
     # Get active matters
-    active_matters = await db.execute(
-        select(Matter.id).where(Matter.status == MatterStatus.active)
-    )
+    active_matters = await db.execute(select(Matter.id).where(Matter.status == MatterStatus.active))
     matter_ids = [row[0] for row in active_matters.all()]
 
     if not matter_ids:
         return stats
 
     # --- 1. Mark overdue deadlines as missed ---
-    overdue_q = (
-        select(Deadline)
-        .where(
-            Deadline.matter_id.in_(matter_ids),
-            Deadline.status == DeadlineStatus.upcoming,
-            Deadline.due_date < today,
-        )
+    overdue_q = select(Deadline).where(
+        Deadline.matter_id.in_(matter_ids),
+        Deadline.status == DeadlineStatus.upcoming,
+        Deadline.due_date < today,
     )
     overdue_result = await db.execute(overdue_q)
     overdue_deadlines = overdue_result.scalars().all()
@@ -327,13 +322,10 @@ async def check_deadlines(db: AsyncSession, *, today: date | None = None) -> dic
         )
 
     # --- 2. Send reminders for upcoming deadlines ---
-    upcoming_q = (
-        select(Deadline)
-        .where(
-            Deadline.matter_id.in_(matter_ids),
-            Deadline.status == DeadlineStatus.upcoming,
-            Deadline.due_date >= today,
-        )
+    upcoming_q = select(Deadline).where(
+        Deadline.matter_id.in_(matter_ids),
+        Deadline.status == DeadlineStatus.upcoming,
+        Deadline.due_date >= today,
     )
     upcoming_result = await db.execute(upcoming_q)
     upcoming_deadlines = upcoming_result.scalars().all()

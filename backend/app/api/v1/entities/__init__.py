@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
-from app.models.enums import StakeholderRole
+from app.models.assets import Asset
+from app.models.entities import Entity
+from app.models.enums import FundingStatus, StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
 from app.schemas.auth import CurrentUser
@@ -28,7 +30,7 @@ router = APIRouter()
 _WRITE_ROLES = {StakeholderRole.matter_admin, StakeholderRole.professional}
 
 
-def _entity_to_response(entity) -> EntityResponse:
+def _entity_to_response(entity: Entity) -> EntityResponse:
     """Convert an Entity ORM model to EntityResponse."""
     return EntityResponse(
         id=entity.id,
@@ -55,7 +57,7 @@ def _entity_to_response(entity) -> EntityResponse:
     )
 
 
-def _asset_to_brief(asset) -> AssetBrief:
+def _asset_to_brief(asset: Asset) -> AssetBrief:
     """Convert an Asset ORM model to AssetBrief."""
     return AssetBrief(
         id=asset.id,
@@ -82,7 +84,9 @@ async def create_entity(
 ) -> EntityResponse:
     """Create a new entity with optional asset linking."""
     if stakeholder.role not in _WRITE_ROLES:
-        raise PermissionDeniedError(detail="Only matter admins and professionals can create entities")
+        raise PermissionDeniedError(
+            detail="Only matter admins and professionals can create entities"
+        )
 
     entity = await entity_service.create_entity(
         db,
@@ -92,7 +96,7 @@ async def create_entity(
         trustee=body.trustee,
         successor_trustee=body.successor_trustee,
         trigger_conditions=body.trigger_conditions,
-        funding_status=body.funding_status,
+        funding_status=body.funding_status or FundingStatus.unknown,
         distribution_rules=body.distribution_rules,
         asset_ids=body.asset_ids,
         current_user=current_user,
@@ -133,9 +137,7 @@ async def get_entity_detail(
     db: AsyncSession = Depends(get_db),
 ) -> EntityResponse:
     """Get full entity detail with all linked assets."""
-    entity = await entity_service.get_entity_detail(
-        db, entity_id=entity_id, matter_id=matter_id
-    )
+    entity = await entity_service.get_entity_detail(db, entity_id=entity_id, matter_id=matter_id)
     return _entity_to_response(entity)
 
 
@@ -157,7 +159,9 @@ async def update_entity(
 ) -> EntityResponse:
     """Update an entity. If asset_ids provided, replaces all links."""
     if stakeholder.role not in _WRITE_ROLES:
-        raise PermissionDeniedError(detail="Only matter admins and professionals can update entities")
+        raise PermissionDeniedError(
+            detail="Only matter admins and professionals can update entities"
+        )
 
     updates = body.model_dump(exclude_unset=True)
     entity = await entity_service.update_entity(
@@ -187,7 +191,9 @@ async def delete_entity(
 ) -> None:
     """Delete an entity and its junction links. Does NOT delete assets."""
     if stakeholder.role not in _WRITE_ROLES:
-        raise PermissionDeniedError(detail="Only matter admins and professionals can delete entities")
+        raise PermissionDeniedError(
+            detail="Only matter admins and professionals can delete entities"
+        )
 
     await entity_service.delete_entity(
         db,

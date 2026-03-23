@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -13,6 +14,7 @@ from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import require_firm_member, require_stakeholder
 from app.models.enums import StakeholderRole
+from app.models.events import Event
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
 from app.schemas.events import CursorMeta, EventListResponse, EventResponse
@@ -21,7 +23,7 @@ from app.services import event_service
 router = APIRouter()
 
 
-def _event_to_response(event, actor_names: dict) -> EventResponse:
+def _event_to_response(event: Event, actor_names: dict[Any, str]) -> EventResponse:
     """Convert an Event ORM object to EventResponse."""
     actor_name = None
     if event.actor_id is not None:
@@ -59,7 +61,10 @@ async def list_events(
     action: str | None = Query(None),
     date_from: date | None = Query(None, alias="from"),
     date_to: date | None = Query(None, alias="to"),
-    cursor: str | None = Query(None, description="Cursor for pagination (created_at ISO timestamp)"),
+    cursor: str | None = Query(
+        None,
+        description="Cursor for pagination (created_at ISO timestamp)",
+    ),
     per_page: int = Query(50, ge=1, le=200),
     _membership: FirmMembership = Depends(require_firm_member),
     _stakeholder: Stakeholder = Depends(require_stakeholder),
@@ -108,15 +113,11 @@ async def export_events(
 ) -> StreamingResponse:
     """Export all events for a matter as CSV. Requires matter_admin permission."""
     if stakeholder.role != StakeholderRole.matter_admin:
-        raise PermissionDeniedError(
-            detail="Only matter admins can export event logs"
-        )
+        raise PermissionDeniedError(detail="Only matter admins can export event logs")
 
     csv_content = await event_service.export_events_csv(db, matter_id=matter_id)
     return StreamingResponse(
         iter([csv_content]),
         media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename=events_{matter_id}.csv"
-        },
+        headers={"Content-Disposition": f"attachment; filename=events_{matter_id}.csv"},
     )

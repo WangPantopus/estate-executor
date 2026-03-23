@@ -11,14 +11,11 @@ import {
   CheckCircle2,
   Ban,
   AlertCircle,
-  Clock,
   MessageSquare,
   History,
-  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TASK_PHASE_LABELS, TASK_PRIORITY_LABELS } from "@/lib/constants";
+import { TASK_PHASE_LABELS } from "@/lib/constants";
 import { useTask, useEvents, useUpdateTask, useAssignTask } from "@/hooks";
 import type { Task, TaskDetail, Stakeholder, EventResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";

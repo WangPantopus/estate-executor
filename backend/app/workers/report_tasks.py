@@ -8,13 +8,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
+from typing import Any
 
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     loop = asyncio.new_event_loop()
     try:
         return loop.run_until_complete(coro)
@@ -22,7 +24,7 @@ def _run_async(coro):
         loop.close()
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.report_tasks.generate_report_task",
     bind=True,
     max_retries=2,
@@ -31,17 +33,17 @@ def _run_async(coro):
     time_limit=180,
 )
 def generate_report_task(
-    self,
+    self: Any,
     *,
     job_id: str,
     matter_id: str,
     report_type: str,
     output_format: str = "pdf",
-):
+) -> dict[str, Any]:
     """Generate a report asynchronously, upload to S3, return download URL."""
     try:
 
-        async def _generate():
+        async def _generate() -> dict[str, Any]:
             from app.core.config import settings
             from app.core.database import async_session_factory
             from app.services import report_service
@@ -50,7 +52,7 @@ def generate_report_task(
             async with async_session_factory() as session:
                 content, filename, content_type = await report_service.generate_report(
                     session,
-                    matter_id=matter_id,
+                    matter_id=uuid.UUID(matter_id),
                     report_type=report_type,
                     output_format=output_format,
                 )
@@ -74,7 +76,7 @@ def generate_report_task(
                 "filename": filename,
             }
 
-        result = _run_async(_generate())
+        result: dict[str, Any] = _run_async(_generate())
         logger.info(
             "report_generated",
             extra={
@@ -90,4 +92,4 @@ def generate_report_task(
             "report_generation_failed",
             extra={"job_id": job_id, "report_type": report_type},
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

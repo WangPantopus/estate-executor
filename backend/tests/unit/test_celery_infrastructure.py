@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestCeleryAppConfiguration:
     """Verify celery_app.py configuration."""
@@ -150,25 +148,29 @@ class TestNotificationTasks:
         from app.workers.notification_tasks import send_stakeholder_invitation
 
         assert callable(send_stakeholder_invitation)
-        assert send_stakeholder_invitation.name == "app.workers.notification_tasks.send_stakeholder_invitation"
+        expected = "app.workers.notification_tasks.send_stakeholder_invitation"
+        assert send_stakeholder_invitation.name == expected
 
     def test_send_task_assignment_notification_exists(self):
         from app.workers.notification_tasks import send_task_assignment_notification
 
         assert callable(send_task_assignment_notification)
-        assert send_task_assignment_notification.name == "app.workers.notification_tasks.send_task_assignment_notification"
+        expected = "app.workers.notification_tasks.send_task_assignment_notification"
+        assert send_task_assignment_notification.name == expected
 
     def test_send_deadline_reminder_exists(self):
         from app.workers.notification_tasks import send_deadline_reminder
 
         assert callable(send_deadline_reminder)
-        assert send_deadline_reminder.name == "app.workers.notification_tasks.send_deadline_reminder"
+        expected = "app.workers.notification_tasks.send_deadline_reminder"
+        assert send_deadline_reminder.name == expected
 
     def test_send_milestone_notification_exists(self):
         from app.workers.notification_tasks import send_milestone_notification
 
         assert callable(send_milestone_notification)
-        assert send_milestone_notification.name == "app.workers.notification_tasks.send_milestone_notification"
+        expected = "app.workers.notification_tasks.send_milestone_notification"
+        assert send_milestone_notification.name == expected
 
 
 class TestAITasks:
@@ -263,8 +265,9 @@ class TestTaskQueueAssignment:
     """Verify tasks would be routed to their correct queues based on naming."""
 
     def _get_queue_for_task(self, task_name: str) -> str:
-        from app.workers.celery_app import celery_app
         import fnmatch
+
+        from app.workers.celery_app import celery_app
 
         routes = celery_app.conf.task_routes
         for pattern, config in routes.items():
@@ -279,10 +282,12 @@ class TestTaskQueueAssignment:
         assert self._get_queue_for_task("app.workers.ai_tasks.extract_document_data") == "ai"
 
     def test_notification_email_routes_to_notifications(self):
-        assert self._get_queue_for_task("app.workers.notification_tasks.send_email") == "notifications"
+        task = "app.workers.notification_tasks.send_email"
+        assert self._get_queue_for_task(task) == "notifications"
 
     def test_document_bulk_routes_to_documents(self):
-        assert self._get_queue_for_task("app.workers.document_tasks.generate_bulk_download") == "documents"
+        task = "app.workers.document_tasks.generate_bulk_download"
+        assert self._get_queue_for_task(task) == "documents"
 
     def test_deadline_routes_to_default(self):
         assert self._get_queue_for_task("app.workers.deadline_tasks.check_deadlines") == "default"

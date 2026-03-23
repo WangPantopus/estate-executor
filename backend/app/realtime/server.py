@@ -35,7 +35,7 @@ sio = socketio.AsyncServer(
 )
 
 
-def create_socketio_app():
+def create_socketio_app() -> socketio.ASGIApp:
     """Create the ASGI app wrapping Socket.IO, to be mounted on FastAPI."""
     return socketio.ASGIApp(sio, socketio_path="/socket.io")
 
@@ -106,14 +106,19 @@ async def _get_user_stakeholder_matter_ids(auth_provider_id: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-class MatterNamespace(socketio.AsyncNamespace):
+class MatterNamespace(socketio.AsyncNamespace):  # type: ignore[misc]
     """Handles connections to the /matters namespace.
 
     Clients connect with: { auth: { token: "Bearer <jwt>" } }
     Then emit 'join_matter' with { matter_id: "<uuid>" } to join a room.
     """
 
-    async def on_connect(self, sid: str, environ: dict, auth: dict | None = None):
+    async def on_connect(
+        self,
+        sid: str,
+        environ: dict[str, Any],
+        auth: dict[str, Any] | None = None,
+    ) -> None:
         """Authenticate the connection using JWT."""
         token = None
 
@@ -150,10 +155,10 @@ class MatterNamespace(socketio.AsyncNamespace):
             },
         )
 
-    async def on_disconnect(self, sid: str):
+    async def on_disconnect(self, sid: str) -> None:
         logger.info("websocket_disconnected", extra={"sid": sid})
 
-    async def on_join_matter(self, sid: str, data: dict):
+    async def on_join_matter(self, sid: str, data: dict[str, Any]) -> None:
         """Join a matter room. Validates the user is authorized for this matter."""
         matter_id = data.get("matter_id", "")
 
@@ -182,7 +187,7 @@ class MatterNamespace(socketio.AsyncNamespace):
             extra={"sid": sid, "matter_id": matter_id},
         )
 
-    async def on_leave_matter(self, sid: str, data: dict):
+    async def on_leave_matter(self, sid: str, data: dict[str, Any]) -> None:
         """Leave a matter room."""
         matter_id = data.get("matter_id", "")
         sio.leave_room(sid, f"matter:{matter_id}", namespace="/matters")

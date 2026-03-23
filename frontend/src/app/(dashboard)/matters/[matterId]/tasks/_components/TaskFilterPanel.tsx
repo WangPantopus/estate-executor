@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   TASK_PHASE_LABELS,
   TASK_STATUS_LABELS,
@@ -104,7 +103,7 @@ export function TaskFilterPanel({ filters, onChange, stakeholders }: TaskFilterP
   const [searchInput, setSearchInput] = useState(filters.search);
 
   useEffect(() => {
-    setSearchInput(filters.search);
+    setSearchInput(filters.search); // eslint-disable-line react-hooks/set-state-in-effect -- sync local input from parent filter reset
   }, [filters.search]);
 
   const update = useCallback(

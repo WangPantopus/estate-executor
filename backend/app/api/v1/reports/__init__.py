@@ -6,6 +6,7 @@ via Celery for large reports (returns job_id for polling).
 
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -14,11 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError, ValidationError
-from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.core.security import require_firm_member, require_stakeholder
 from app.models.enums import StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
-from app.schemas.auth import CurrentUser
 from app.services import report_service
 
 router = APIRouter()
@@ -42,7 +42,7 @@ async def list_report_types(
     matter_id: UUID,
     _membership: FirmMembership = Depends(require_firm_member),
     stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """List available report types with their supported formats."""
     _check_report_permission(stakeholder)
 
@@ -66,7 +66,7 @@ async def generate_report(
     firm_id: UUID,
     matter_id: UUID,
     report_type: str,
-    format: str = Query("pdf", description="Output format: pdf or xlsx"),
+    format: str = Query("pdf", description="Output format: pdf or xlsx"),  # noqa: A002
     _membership: FirmMembership = Depends(require_firm_member),
     stakeholder: Stakeholder = Depends(require_stakeholder),
     db: AsyncSession = Depends(get_db),
@@ -90,7 +90,7 @@ async def generate_report(
             output_format=format,
         )
     except ValueError as exc:
-        raise ValidationError(detail=str(exc))
+        raise ValidationError(detail=str(exc)) from exc
 
     return Response(
         content=content,
@@ -112,10 +112,10 @@ async def generate_report_async(
     firm_id: UUID,
     matter_id: UUID,
     report_type: str,
-    format: str = Query("pdf", description="Output format: pdf or xlsx"),
+    format: str = Query("pdf", description="Output format: pdf or xlsx"),  # noqa: A002
     _membership: FirmMembership = Depends(require_firm_member),
     stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> dict:
+) -> dict[str, Any]:
     """Queue async report generation via Celery. Returns a job_id for polling."""
     _check_report_permission(stakeholder)
 
@@ -124,13 +124,11 @@ async def generate_report_async(
 
     config = report_service.REPORT_GENERATORS[report_type]
     if format not in config["formats"]:
-        raise ValidationError(
-            detail=f"Format '{format}' not supported for '{report_type}'"
-        )
-
-    from app.workers.report_tasks import generate_report_task
+        raise ValidationError(detail=f"Format '{format}' not supported for '{report_type}'")
 
     import uuid as uuid_mod
+
+    from app.workers.report_tasks import generate_report_task
 
     job_id = str(uuid_mod.uuid4())
     generate_report_task.delay(
@@ -155,7 +153,7 @@ async def get_report_job_status(
     job_id: str,
     _membership: FirmMembership = Depends(require_firm_member),
     _stakeholder: Stakeholder = Depends(require_stakeholder),
-) -> dict:
+) -> dict[str, Any]:
     """Check the status of an async report generation job."""
     from app.workers.celery_app import celery_app
 

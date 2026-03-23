@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
+from app.models.communications import Communication
 from app.models.enums import CommunicationType, CommunicationVisibility, StakeholderRole
 from app.models.firm_memberships import FirmMembership
 from app.models.stakeholders import Stakeholder
@@ -28,7 +29,7 @@ router = APIRouter()
 dispute_flag_router = APIRouter()
 
 
-def _comm_to_response(comm) -> CommunicationResponse:
+def _comm_to_response(comm: Communication) -> CommunicationResponse:
     """Convert a Communication ORM object to CommunicationResponse."""
     return CommunicationResponse(
         id=comm.id,
@@ -61,17 +62,18 @@ async def create_communication(
 ) -> CommunicationResponse:
     """Create a communication. Sender is automatically set to current stakeholder."""
     # Beneficiaries can only create with all_stakeholders visibility
-    if stakeholder.role == StakeholderRole.beneficiary:
-        if body.visibility and body.visibility != CommunicationVisibility.all_stakeholders:
-            raise PermissionDeniedError(
-                detail="Beneficiaries can only send to all stakeholders"
-            )
+    if (
+        stakeholder.role == StakeholderRole.beneficiary
+        and body.visibility
+        and body.visibility != CommunicationVisibility.all_stakeholders
+    ):
+        raise PermissionDeniedError(detail="Beneficiaries can only send to all stakeholders")
 
     # Only professionals can use professionals_only visibility
-    if (
-        body.visibility == CommunicationVisibility.professionals_only
-        and stakeholder.role not in {StakeholderRole.matter_admin, StakeholderRole.professional}
-    ):
+    if body.visibility == CommunicationVisibility.professionals_only and stakeholder.role not in {
+        StakeholderRole.matter_admin,
+        StakeholderRole.professional,
+    }:
         raise PermissionDeniedError(
             detail="Only matter admins and professionals can use professionals_only visibility"
         )
@@ -99,7 +101,7 @@ async def create_communication(
 async def list_communications(
     firm_id: UUID,
     matter_id: UUID,
-    type: CommunicationType | None = Query(None),
+    type: CommunicationType | None = Query(None),  # noqa: A002
     _membership: FirmMembership = Depends(require_firm_member),
     stakeholder: Stakeholder = Depends(require_stakeholder),
     pagination: PaginationParams = Depends(),

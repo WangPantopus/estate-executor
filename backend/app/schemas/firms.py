@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -49,7 +50,7 @@ class FirmUpdate(BaseModel):
 
     name: str | None = None
     type: FirmType | None = None
-    settings: dict | None = None
+    settings: dict[str, Any] | None = None
 
 
 class FirmResponse(BaseModel):
@@ -79,7 +80,7 @@ class FirmResponse(BaseModel):
     slug: str
     type: FirmType
     subscription_tier: SubscriptionTier
-    settings: dict | None
+    settings: dict[str, Any] | None
     created_at: datetime
     updated_at: datetime
 
