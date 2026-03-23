@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Enum, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -38,14 +38,14 @@ class Stakeholder(BaseModel):
         nullable=False,
     )
     relationship_label: Mapped[str | None] = mapped_column("relationship", String, nullable=True)
-    permissions: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
+    permissions: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
     invite_status: Mapped[InviteStatus] = mapped_column(
         Enum(InviteStatus, name="invite_status", native_enum=True),
         nullable=False,
         server_default="pending",
     )
     invite_token: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
-    notification_preferences: Mapped[dict] = mapped_column(
+    notification_preferences: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, server_default="{}"
     )
 

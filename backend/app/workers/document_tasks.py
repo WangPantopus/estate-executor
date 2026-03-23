@@ -6,6 +6,7 @@ import asyncio
 import io
 import logging
 import zipfile
+from typing import Any
 
 from app.workers.celery_app import celery_app
 

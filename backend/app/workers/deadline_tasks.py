@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import date
+from typing import Any
 
 from app.workers.celery_app import celery_app
 

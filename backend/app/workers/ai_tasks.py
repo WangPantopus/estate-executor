@@ -6,13 +6,14 @@ Placeholder implementations — will be filled in during the AI phase.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[misc]
     name="app.workers.ai_tasks.classify_document",
     bind=True,
     max_retries=3,
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
     soft_time_limit=120,
     time_limit=180,
 )
-def classify_document(self, document_id: str, matter_id: str):
+def classify_document(self: Any, document_id: str, matter_id: str) -> dict[str, Any]:
     """Classify an uploaded document using AI.
 
     Placeholder: In production, this would:
@@ -49,7 +50,7 @@ def classify_document(self, document_id: str, matter_id: str):
         raise self.retry(exc=exc) from exc
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[misc]
     name="app.workers.ai_tasks.extract_document_data",
     bind=True,
     max_retries=3,
@@ -58,7 +59,7 @@ def classify_document(self, document_id: str, matter_id: str):
     soft_time_limit=120,
     time_limit=180,
 )
-def extract_document_data(self, document_id: str):
+def extract_document_data(self: Any, document_id: str) -> dict[str, Any]:
     """Extract structured data from a document using AI.
 
     Placeholder: In production, this would parse the document content
@@ -79,7 +80,7 @@ def extract_document_data(self, document_id: str):
         raise self.retry(exc=exc) from exc
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[misc]
     name="app.workers.ai_tasks.draft_letter",
     bind=True,
     max_retries=3,
@@ -88,7 +89,7 @@ def extract_document_data(self, document_id: str):
     soft_time_limit=180,
     time_limit=300,
 )
-def draft_letter(self, matter_id: str, asset_id: str, letter_type: str):
+def draft_letter(self: Any, matter_id: str, asset_id: str, letter_type: str) -> dict[str, Any]:
     """Draft a letter using AI (e.g., notification to creditors, beneficiary communication).
 
     Placeholder: In production, this would generate a letter draft

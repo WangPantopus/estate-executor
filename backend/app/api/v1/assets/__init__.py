@@ -25,10 +25,10 @@ from app.schemas.assets import (
     AssetListResponse,
     AssetUpdate,
     AssetValuation,
-    DocumentBrief,
     EntityBrief,
     ValuationEntry,
 )
+from app.schemas.tasks import DocumentBrief
 from app.schemas.common import PaginationMeta, PaginationParams
 from app.services import asset_service
 
@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.models.assets import Asset
 
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
@@ -341,7 +343,7 @@ async def add_valuation(
 # ---------------------------------------------------------------------------
 
 
-def _asset_to_list_item(asset: object) -> AssetListItem:
+def _asset_to_list_item(asset: Asset) -> AssetListItem:
     """Convert an Asset ORM model to AssetListItem."""
     import contextlib
 

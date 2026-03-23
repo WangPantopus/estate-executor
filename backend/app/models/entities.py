@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -30,14 +30,14 @@ class Entity(BaseModel):
     name: Mapped[str] = mapped_column(String, nullable=False)
     trustee: Mapped[str | None] = mapped_column(String, nullable=True)
     successor_trustee: Mapped[str | None] = mapped_column(String, nullable=True)
-    trigger_conditions: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    trigger_conditions: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     funding_status: Mapped[FundingStatus] = mapped_column(
         Enum(FundingStatus, name="funding_status", native_enum=True),
         nullable=False,
         server_default="unknown",
     )
-    distribution_rules: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    distribution_rules: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
 
     matter: Mapped[Matter] = relationship(back_populates="entities")
     assets: Mapped[list[Asset]] = relationship(secondary="entity_assets", back_populates="entities")

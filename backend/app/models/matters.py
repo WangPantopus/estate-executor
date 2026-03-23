@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Date, Enum, ForeignKey, Index, LargeBinary, Numeric, String
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
@@ -52,7 +52,7 @@ class Matter(BaseModel):
         nullable=False,
         server_default="immediate",
     )
-    settings: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
     closed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     firm: Mapped[Firm] = relationship(back_populates="matters")

@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     loop = asyncio.new_event_loop()
     try:
         return loop.run_until_complete(coro)
@@ -27,7 +28,7 @@ def _run_async(coro):
 # ---------------------------------------------------------------------------
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[misc]
     name="app.workers.notification_tasks.send_email",
     bind=True,
     max_retries=3,
@@ -35,14 +36,14 @@ def _run_async(coro):
     retry_backoff_max=900,
 )
 def send_email(
-    self,
+    self: Any,
     *,
     to: str,
     subject: str,
     html_body: str,
     text_body: str | None = None,
     template_name: str | None = None,
-):
+) -> dict[str, str]:
     """Send an email via the email service (Resend in prod, Mailpit in dev).
 
     Retries on transient failures with exponential backoff.

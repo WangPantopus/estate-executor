@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import BigInteger, Boolean, Float, ForeignKey, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -39,7 +39,7 @@ class Document(BaseModel):
     doc_type_confirmed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false"
     )
-    ai_extracted_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    ai_extracted_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     current_version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
 
     matter: Mapped[Matter] = relationship(back_populates="documents")
