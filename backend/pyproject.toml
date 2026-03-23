@@ -75,6 +75,11 @@ module = [
     "socketio.*",
     "jwt.*",
     "resend.*",
+    "yaml.*",
+    "cachetools.*",
+    "reportlab.*",
+    "openpyxl.*",
+    "redis.*",
 ]
 ignore_missing_imports = true
 
