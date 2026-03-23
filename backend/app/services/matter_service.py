@@ -182,7 +182,7 @@ async def list_matters(
 
     q = q.order_by(Matter.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(q)
-    return list(result.scalars().all()), total
+    return list(result.scalars().all()), total  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +358,7 @@ async def update_matter(
             old_value = getattr(matter, field, None)
             if old_value != value:
                 old_str = (
-                    old_value.value
+                    old_value.value  # type: ignore[union-attr]
                     if hasattr(old_value, "value")
                     else str(old_value)
                     if old_value is not None

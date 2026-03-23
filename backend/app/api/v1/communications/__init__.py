@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.communications import Communication
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
     from app.schemas.auth import CurrentUser
@@ -33,7 +34,7 @@ router = APIRouter()
 dispute_flag_router = APIRouter()
 
 
-def _comm_to_response(comm) -> CommunicationResponse:
+def _comm_to_response(comm: Communication) -> CommunicationResponse:
     """Convert a Communication ORM object to CommunicationResponse."""
     return CommunicationResponse(
         id=comm.id,

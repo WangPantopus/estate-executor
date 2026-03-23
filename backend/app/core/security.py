@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import jwt
@@ -236,9 +237,9 @@ async def require_stakeholder(
         role=StakeholderRole.matter_admin,
     )
     # Mark as transient so we don't accidentally persist it
-    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import make_transient
 
-    sa_inspect(synthetic).detach()
+    make_transient(synthetic)
     return synthetic
 
 
@@ -327,7 +328,7 @@ def _has_permission(role: StakeholderRole, required: str) -> bool:
     return False
 
 
-def require_permission(permission: str):
+def require_permission(permission: str) -> Callable[..., Any]:
     """Return a FastAPI dependency that checks the resolved
     stakeholder has the required permission."""
 

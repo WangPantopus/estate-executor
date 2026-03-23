@@ -80,7 +80,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
         try:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
         except Exception as exc:
             request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
 

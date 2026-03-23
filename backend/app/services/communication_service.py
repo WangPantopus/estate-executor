@@ -176,9 +176,10 @@ async def list_communications(
         base_filters.append(Communication.type == comm_type)
 
     # Build visibility filter based on role
+    visibility_filter: Any = True  # no extra filter for professionals
     if stakeholder.role in _PROFESSIONAL_ROLES:
         # Admin/professional see everything
-        visibility_filter = True  # no extra filter
+        pass
     else:
         # Non-professionals: all_stakeholders + specific where they're in visible_to
         vis_conditions = [

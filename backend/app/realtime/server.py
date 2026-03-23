@@ -35,7 +35,7 @@ sio = socketio.AsyncServer(
 )
 
 
-def create_socketio_app():
+def create_socketio_app() -> socketio.ASGIApp:
     """Create the ASGI app wrapping Socket.IO, to be mounted on FastAPI."""
     return socketio.ASGIApp(sio, socketio_path="/socket.io")
 
@@ -106,14 +106,14 @@ async def _get_user_stakeholder_matter_ids(auth_provider_id: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-class MatterNamespace(socketio.AsyncNamespace):
+class MatterNamespace(socketio.AsyncNamespace):  # type: ignore[misc]
     """Handles connections to the /matters namespace.
 
     Clients connect with: { auth: { token: "Bearer <jwt>" } }
     Then emit 'join_matter' with { matter_id: "<uuid>" } to join a room.
     """
 
-    async def on_connect(self, sid: str, environ: dict[str, Any], auth: dict[str, Any] | None = None):
+    async def on_connect(self, sid: str, environ: dict[str, Any], auth: dict[str, Any] | None = None) -> None:
         """Authenticate the connection using JWT."""
         token = None
 

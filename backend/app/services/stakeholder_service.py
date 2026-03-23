@@ -201,7 +201,7 @@ async def update_stakeholder(
         attr = field_map.get(field, field)
         old_value = getattr(stakeholder, attr, None)
         # Normalize enum comparison
-        old_cmp = old_value.value if hasattr(old_value, "value") else old_value
+        old_cmp = old_value.value if hasattr(old_value, "value") else old_value  # type: ignore[union-attr]
         new_cmp = value.value if hasattr(value, "value") else value
         if old_cmp != new_cmp:
             changes[field] = {"old": old_cmp, "new": new_cmp}

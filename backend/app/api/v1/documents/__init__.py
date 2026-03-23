@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.documents import Document
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
     from app.schemas.auth import CurrentUser
@@ -76,7 +77,7 @@ def _require_doc_admin(stakeholder: Stakeholder) -> None:
         raise PermissionDeniedError(detail="Insufficient permissions")
 
 
-def _doc_to_response(doc) -> DocumentResponse:
+def _doc_to_response(doc: Document) -> DocumentResponse:
     """Convert a Document ORM object to DocumentResponse."""
     return DocumentResponse(
         id=doc.id,
@@ -95,7 +96,7 @@ def _doc_to_response(doc) -> DocumentResponse:
     )
 
 
-def _doc_to_detail(doc) -> DocumentDetailResponse:
+def _doc_to_detail(doc: Document) -> DocumentDetailResponse:
     """Convert a Document ORM object to full detail response."""
     versions = [
         DocumentVersionResponse(

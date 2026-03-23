@@ -20,13 +20,14 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.events import Event
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
 
 router = APIRouter()
 
 
-def _event_to_response(event, actor_names: dict[str, Any]) -> EventResponse:
+def _event_to_response(event: Event, actor_names: dict[str, Any]) -> EventResponse:
     """Convert an Event ORM object to EventResponse."""
     actor_name = None
     if event.actor_id is not None:

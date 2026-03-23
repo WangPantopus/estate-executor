@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from app.core.dependencies import get_db
 from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member, require_stakeholder
-from app.models.enums import StakeholderRole
+from app.models.enums import FundingStatus, StakeholderRole
 from app.schemas.entities import (
     AssetBrief,
     EntityCreate,
@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.assets import Asset
+    from app.models.entities import Entity
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
     from app.schemas.auth import CurrentUser
@@ -33,7 +35,7 @@ router = APIRouter()
 _WRITE_ROLES = {StakeholderRole.matter_admin, StakeholderRole.professional}
 
 
-def _entity_to_response(entity) -> EntityResponse:
+def _entity_to_response(entity: Entity) -> EntityResponse:
     """Convert an Entity ORM model to EntityResponse."""
     return EntityResponse(
         id=entity.id,
@@ -60,7 +62,7 @@ def _entity_to_response(entity) -> EntityResponse:
     )
 
 
-def _asset_to_brief(asset) -> AssetBrief:
+def _asset_to_brief(asset: Asset) -> AssetBrief:
     """Convert an Asset ORM model to AssetBrief."""
     return AssetBrief(
         id=asset.id,
@@ -99,7 +101,7 @@ async def create_entity(
         trustee=body.trustee,
         successor_trustee=body.successor_trustee,
         trigger_conditions=body.trigger_conditions,
-        funding_status=body.funding_status,
+        funding_status=body.funding_status or FundingStatus.unknown,
         distribution_rules=body.distribution_rules,
         asset_ids=body.asset_ids,
         current_user=current_user,

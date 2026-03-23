@@ -446,7 +446,7 @@ async def update_task(
         # Map 'metadata' to 'metadata_' on the model
         attr_name = "metadata_" if field == "metadata" else field
         old_value = getattr(task, attr_name, None)
-        old_cmp = old_value.value if hasattr(old_value, "value") else old_value
+        old_cmp = old_value.value if hasattr(old_value, "value") else old_value  # type: ignore[union-attr]
         new_cmp = value.value if hasattr(value, "value") else value
         if old_cmp != new_cmp:
             old_str = str(old_cmp) if old_cmp is not None else None

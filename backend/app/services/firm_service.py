@@ -239,7 +239,7 @@ async def invite_firm_member(
         .options(selectinload(FirmMembership.user))
         .where(FirmMembership.id == new_membership.id)
     )
-    new_membership = result.scalar_one()
+    new_membership = result.scalar_one()  # type: ignore[assignment]
 
     await event_logger.log(
         db,

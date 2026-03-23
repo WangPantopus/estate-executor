@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.deadlines import Deadline
     from app.models.firm_memberships import FirmMembership
     from app.models.stakeholders import Stakeholder
     from app.schemas.auth import CurrentUser
@@ -39,7 +40,7 @@ router = APIRouter()
 _WRITE_ROLES = {StakeholderRole.matter_admin, StakeholderRole.professional}
 
 
-def _deadline_to_response(dl) -> DeadlineResponse:
+def _deadline_to_response(dl: Deadline) -> DeadlineResponse:
     """Convert a Deadline ORM object to DeadlineResponse."""
     task_brief = None
     if dl.task is not None:
