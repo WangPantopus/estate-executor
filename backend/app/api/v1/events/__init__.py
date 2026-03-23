@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 router = APIRouter()
 
 
-def _event_to_response(event: Event, actor_names: dict[str, Any]) -> EventResponse:
+def _event_to_response(event: Event, actor_names: dict[Any, str]) -> EventResponse:
     """Convert an Event ORM object to EventResponse."""
     actor_name = None
     if event.actor_id is not None:

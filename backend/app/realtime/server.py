@@ -182,7 +182,7 @@ class MatterNamespace(socketio.AsyncNamespace):  # type: ignore[misc]
             extra={"sid": sid, "matter_id": matter_id},
         )
 
-    async def on_leave_matter(self, sid: str, data: dict[str, Any]):
+    async def on_leave_matter(self, sid: str, data: dict[str, Any]) -> None:
         """Leave a matter room."""
         matter_id = data.get("matter_id", "")
         sio.leave_room(sid, f"matter:{matter_id}", namespace="/matters")
