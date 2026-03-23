@@ -19,112 +19,22 @@ from app.models.ai_usage_logs import AIUsageLog
 from app.models.documents import Document
 from app.models.enums import ActorType
 from app.models.matters import Matter
+from app.prompts import get_prompt_version
+from app.prompts.classification import (
+    DOCUMENT_TYPES,
+    SYSTEM_PROMPT as _SYSTEM_PROMPT,
+    build_tool_schema as _build_tool_schema,
+    build_user_prompt as _build_classification_prompt,
+)
 from app.schemas.ai import AIClassifyResponse
 from app.services import text_extraction_service
 from app.services.ai_rate_limiter import check_rate_limit
 
 logger = logging.getLogger(__name__)
 
-# Claude model for classification
 _MODEL = "claude-sonnet-4-20250514"
-
-# Pricing per 1M tokens (Sonnet)
 _INPUT_COST_PER_M = 3.0
 _OUTPUT_COST_PER_M = 15.0
-
-# Valid document types
-DOCUMENT_TYPES = {
-    "death_certificate": "Official certificate of death issued by a government authority",
-    "will": "Last will and testament of the decedent",
-    "trust_document": "Trust agreement, amendment, or restatement",
-    "deed": "Real property deed, title, or transfer document",
-    "account_statement": "Bank, brokerage, or financial account statement",
-    "insurance_policy": "Life insurance or other insurance policy document",
-    "court_filing": "Probate petition, court order, letters testamentary, or other court document",
-    "tax_return": "Federal or state tax return, tax form, or tax-related document",
-    "appraisal": "Property or asset appraisal report",
-    "correspondence": "Letter, email, or other correspondence related to the estate",
-    "other": "Document that does not fit any other category",
-}
-
-_SYSTEM_PROMPT = """You are a document classifier for estate administration. \
-Your job is to classify uploaded documents into exactly one category.
-
-You must analyze the document text and determine the most appropriate document type. \
-Consider the content, formatting, legal language, and context clues in the document.
-
-Be conservative with confidence scores:
-- 0.95+ only for very clear, unambiguous documents (e.g., clearly labeled death certificates)
-- 0.80-0.94 for documents that strongly match a category
-- 0.60-0.79 for documents that likely match but have some ambiguity
-- Below 0.60 for uncertain classifications"""
-
-
-def _build_classification_prompt(
-    extracted_text: str,
-    *,
-    estate_type: str | None = None,
-    jurisdiction: str | None = None,
-    decedent_name: str | None = None,
-) -> str:
-    """Build the user prompt for document classification."""
-    type_list = "\n".join(
-        f"- {doc_type}: {description}" for doc_type, description in DOCUMENT_TYPES.items()
-    )
-
-    context_parts: list[str] = []
-    if estate_type:
-        context_parts.append(f"Estate type: {estate_type}")
-    if jurisdiction:
-        context_parts.append(f"Jurisdiction: {jurisdiction}")
-    if decedent_name:
-        context_parts.append(f"Decedent: {decedent_name}")
-
-    context_section = ""
-    if context_parts:
-        context_section = (
-            "\n\nMatter context:\n" + "\n".join(f"  {p}" for p in context_parts) + "\n"
-        )
-
-    return f"""Classify the following document into exactly one of these categories:
-
-{type_list}
-{context_section}
-Document text:
-<document_text>
-{extracted_text}
-</document_text>
-
-Analyze the document and classify it."""
-
-
-def _build_tool_schema() -> dict[str, Any]:
-    """Build the tool-use schema for structured JSON output."""
-    return {
-        "name": "classify_document",
-        "description": "Classify an estate administration document into a category",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "doc_type": {
-                    "type": "string",
-                    "enum": list(DOCUMENT_TYPES.keys()),
-                    "description": "The document classification type",
-                },
-                "confidence": {
-                    "type": "number",
-                    "minimum": 0.0,
-                    "maximum": 1.0,
-                    "description": "Confidence score from 0.0 to 1.0",
-                },
-                "reasoning": {
-                    "type": "string",
-                    "description": "Brief explanation of why this classification was chosen",
-                },
-            },
-            "required": ["doc_type", "confidence", "reasoning"],
-        },
-    }
 
 
 def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
@@ -335,6 +245,7 @@ async def classify_document(
         metadata={
             "reasoning": classification.reasoning,
             "model": _MODEL,
+            "prompt_version": get_prompt_version("classify"),
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
         },

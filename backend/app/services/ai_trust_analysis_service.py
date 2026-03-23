@@ -23,6 +23,7 @@ from app.models.documents import Document
 from app.models.entities import Entity
 from app.models.enums import ActorType, EntityType, FundingStatus
 from app.models.matters import Matter
+from app.prompts import get_prompt_version
 from app.schemas.ai import AIExtractResponse
 from app.services.ai_rate_limiter import check_rate_limit
 
@@ -358,6 +359,7 @@ async def analyze_trust_document(
             "entity_created": entity_created,
             "entity_id": str(entity_id) if entity_id else None,
             "model": _MODEL,
+            "prompt_version": get_prompt_version("trust_analysis"),
         },
     )
 

@@ -20,6 +20,7 @@ from app.models.assets import Asset
 from app.models.enums import ActorType, StakeholderRole
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
+from app.prompts import get_prompt_version
 from app.schemas.ai import AILetterDraftResponse
 from app.services.ai_rate_limiter import check_rate_limit
 
@@ -429,6 +430,7 @@ async def draft_letter(
             "recipient_institution": response.recipient_institution,
             "subject": response.subject,
             "model": _MODEL,
+            "prompt_version": get_prompt_version("draft_letter"),
         },
     )
 

@@ -23,6 +23,7 @@ from app.models.enums import ActorType
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.tasks import Task
+from app.prompts import get_prompt_version
 from app.schemas.ai import AISuggestTasksResponse, TaskSuggestion
 from app.services.ai_rate_limiter import check_rate_limit
 
@@ -357,6 +358,7 @@ async def suggest_tasks(
         metadata={
             "suggestion_count": len(suggestions),
             "model": _MODEL,
+            "prompt_version": get_prompt_version("suggest_tasks"),
         },
     )
 

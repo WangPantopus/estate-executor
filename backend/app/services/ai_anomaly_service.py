@@ -23,6 +23,7 @@ from app.models.enums import ActorType
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.tasks import Task
+from app.prompts import get_prompt_version
 from app.schemas.ai import AIAnomalyResponse, Anomaly
 from app.services.ai_rate_limiter import check_rate_limit
 
@@ -373,6 +374,7 @@ async def detect_anomalies(
         metadata={
             "anomaly_count": len(anomalies),
             "model": _MODEL,
+            "prompt_version": get_prompt_version("detect_anomalies"),
         },
     )
 

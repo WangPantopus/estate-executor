@@ -21,6 +21,7 @@ from app.models.documents import Document
 from app.models.enums import ActorType
 from app.models.matters import Matter
 from app.schemas.ai import AIExtractResponse
+from app.prompts import get_prompt_version
 from app.services import text_extraction_service
 from app.services.ai_rate_limiter import check_rate_limit
 
@@ -442,6 +443,7 @@ async def extract_document_data(
             "output_tokens": output_tokens,
             "confidence": confidence,
             "doc_type": doc.doc_type,
+            "prompt_version": get_prompt_version("extract"),
             "extracted_at": datetime.now(timezone.utc).isoformat(),
         },
     }

@@ -84,7 +84,7 @@ class TestBuildClassificationPrompt:
     def test_partial_context(self):
         prompt = _build_classification_prompt("test", jurisdiction="NY")
         assert "NY" in prompt
-        assert "Matter context:" in prompt
+        assert "Context:" in prompt
 
 
 class TestBuildToolSchema:
