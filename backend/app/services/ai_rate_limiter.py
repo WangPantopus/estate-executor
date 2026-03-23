@@ -48,8 +48,28 @@ class RateLimitExceeded(Exception):
         )
 
 
+_RATE_LIMIT_SCRIPT = """
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local now = tonumber(ARGV[2])
+local window_start = tonumber(ARGV[3])
+local ttl = tonumber(ARGV[4])
+
+redis.call('ZREMRANGEBYSCORE', key, 0, window_start)
+local count = redis.call('ZCARD', key)
+
+if count >= limit then
+    return -1
+end
+
+redis.call('ZADD', key, now, tostring(now))
+redis.call('EXPIRE', key, ttl)
+return count + 1
+"""
+
+
 def _check_and_increment(key: str, limit: int) -> int:
-    """Sliding-window rate limit check using Redis sorted set.
+    """Atomic sliding-window rate limit check using a Redis Lua script.
 
     Returns the current count after incrementing. Raises RateLimitExceeded
     if the limit would be exceeded.
@@ -57,25 +77,14 @@ def _check_and_increment(key: str, limit: int) -> int:
     r = _get_redis()
     now = time.time()
     window_start = now - _WINDOW_SECONDS
+    ttl = _WINDOW_SECONDS + 60  # TTL slightly longer than window
 
-    pipe = r.pipeline()
-    # Remove expired entries
-    pipe.zremrangebyscore(key, 0, window_start)
-    # Count entries in current window
-    pipe.zcard(key)
-    results = pipe.execute()
-    current_count: int = results[1]
+    result = r.eval(_RATE_LIMIT_SCRIPT, 1, key, limit, now, window_start, ttl)
 
-    if current_count >= limit:
+    if result == -1:
         raise RateLimitExceeded(scope=key, limit=limit)
 
-    # Add new entry and set TTL
-    pipe2 = r.pipeline()
-    pipe2.zadd(key, {f"{now}": now})
-    pipe2.expire(key, _WINDOW_SECONDS + 60)  # TTL slightly longer than window
-    pipe2.execute()
-
-    return current_count + 1
+    return int(result)
 
 
 def check_rate_limit(*, firm_id: UUID, matter_id: UUID) -> None:

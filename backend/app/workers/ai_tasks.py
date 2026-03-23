@@ -1,7 +1,9 @@
 """AI tasks — document classification, extraction, letter drafting.
 
-Classification and extraction are fully implemented via their respective services.
-Letter drafting remains a placeholder for future implementation.
+All three AI operations are fully implemented via their respective services:
+- ai_classification_service — document classification
+- ai_extraction_service — structured data extraction
+- ai_letter_service — formal letter drafting
 """
 
 from __future__ import annotations

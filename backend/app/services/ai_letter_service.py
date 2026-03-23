@@ -7,13 +7,11 @@ Claude to draft professional notification and claim letters.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.events import event_logger
@@ -44,6 +42,8 @@ def _mask_account_number(encrypted: bytes | None) -> str | None:
     except Exception:
         logger.warning("Failed to decrypt account number for letter draft")
         return "****"
+
+
 _INPUT_COST_PER_M = 3.0
 _OUTPUT_COST_PER_M = 15.0
 

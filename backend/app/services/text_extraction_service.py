@@ -11,8 +11,6 @@ import io
 import logging
 from typing import Any
 
-from app.core.config import settings
-
 logger = logging.getLogger(__name__)
 
 # Approximate token limit (1 token ≈ 4 chars for English text)

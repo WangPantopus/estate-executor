@@ -6,7 +6,6 @@ updates the document record, and logs the AI event.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 from uuid import UUID

@@ -59,19 +59,9 @@ class TestCheckRateLimit:
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
 
-        # Pipeline for first call (firm check)
-        mock_pipe1 = MagicMock()
-        mock_pipe1.execute.return_value = [0, 5]  # zremrangebyscore result, zcard=5
-        mock_pipe2 = MagicMock()
-        mock_pipe2.execute.return_value = [True, True]
-
-        # Pipeline for second call (matter check)
-        mock_pipe3 = MagicMock()
-        mock_pipe3.execute.return_value = [0, 3]  # zremrangebyscore result, zcard=3
-        mock_pipe4 = MagicMock()
-        mock_pipe4.execute.return_value = [True, True]
-
-        mock_redis.pipeline.side_effect = [mock_pipe1, mock_pipe2, mock_pipe3, mock_pipe4]
+        # Lua script returns count (positive = success)
+        # First call (firm), second call (matter)
+        mock_redis.eval.side_effect = [6, 4]
 
         # Should not raise
         check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
@@ -81,9 +71,8 @@ class TestCheckRateLimit:
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
 
-        mock_pipe = MagicMock()
-        mock_pipe.execute.return_value = [0, FIRM_LIMIT_PER_HOUR]  # At the limit
-        mock_redis.pipeline.return_value = mock_pipe
+        # Lua script returns -1 when limit exceeded
+        mock_redis.eval.return_value = -1
 
         with pytest.raises(RateLimitExceeded):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())
@@ -93,17 +82,8 @@ class TestCheckRateLimit:
         mock_redis = MagicMock()
         mock_get_redis.return_value = mock_redis
 
-        # Firm check passes
-        mock_pipe1 = MagicMock()
-        mock_pipe1.execute.return_value = [0, 5]
-        mock_pipe_add = MagicMock()
-        mock_pipe_add.execute.return_value = [True, True]
-
-        # Matter check fails
-        mock_pipe2 = MagicMock()
-        mock_pipe2.execute.return_value = [0, MATTER_LIMIT_PER_HOUR]
-
-        mock_redis.pipeline.side_effect = [mock_pipe1, mock_pipe_add, mock_pipe2]
+        # Firm check passes (returns count), matter check fails (returns -1)
+        mock_redis.eval.side_effect = [6, -1]
 
         with pytest.raises(RateLimitExceeded):
             check_rate_limit(firm_id=uuid4(), matter_id=uuid4())

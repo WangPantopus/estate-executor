@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
-  FileText,
   Copy,
   Download,
   Loader2,
@@ -90,7 +89,6 @@ export function DraftLetterDialog({
   const [editedBody, setEditedBody] = useState("");
   const [editedSubject, setEditedSubject] = useState("");
   const [copied, setCopied] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleGenerate = () => {
     if (!letterType) return;
@@ -115,7 +113,17 @@ export function DraftLetterDialog({
   };
 
   const handleDownloadPdf = () => {
-    // Generate a simple text-based PDF-like download (HTML-to-print)
+    // Escape HTML entities to prevent XSS in the print window
+    const escapeHtml = (str: string) =>
+      str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const safeSubject = escapeHtml(editedSubject);
+    const safeBody = escapeHtml(editedBody).replace(/\n/g, "<br>");
+
     const html = `<!DOCTYPE html>
 <html><head>
 <style>
@@ -125,8 +133,8 @@ export function DraftLetterDialog({
   .body-text { white-space: pre-wrap; }
 </style>
 </head><body>
-<h1>${editedSubject}</h1>
-<div class="body-text">${editedBody.replace(/\n/g, "<br>")}</div>
+<h1>${safeSubject}</h1>
+<div class="body-text">${safeBody}</div>
 </body></html>`;
 
     const blob = new Blob([html], { type: "text/html" });
@@ -250,7 +258,6 @@ export function DraftLetterDialog({
               <Label htmlFor="letter-body">Letter Body</Label>
               <Textarea
                 id="letter-body"
-                ref={textareaRef}
                 value={editedBody}
                 onChange={(e) => setEditedBody(e.target.value)}
                 rows={16}
