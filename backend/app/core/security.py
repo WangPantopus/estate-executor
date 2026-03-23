@@ -45,8 +45,8 @@ def _get_signing_key(token: str) -> jwt.PyJWK:
     if "jwks" not in _jwks_cache:
         jwks_client = jwt.PyJWKClient(jwks_url)
         _jwks_cache["jwks"] = jwks_client.get_jwk_set().keys
-        _jwks_cache["client"] = jwks_client  # type: ignore[assignment]
-    client: jwt.PyJWKClient = _jwks_cache["client"]  # type: ignore[assignment]
+        _jwks_cache["client"] = jwks_client
+    client: jwt.PyJWKClient = _jwks_cache["client"]
     return client.get_signing_key_from_jwt(token)
 
 
