@@ -793,3 +793,12 @@ export function useDetectAnomalies(firmId: string, matterId: string) {
     mutationFn: () => api.detectAnomalies(firmId, matterId),
   });
 }
+
+export function useAIUsageStats(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...queryKeys.matters(firmId), "ai-usage-stats"] as const,
+    queryFn: () => api.getAIUsageStats(firmId, matterId),
+    staleTime: 60_000, // Cache for 1 minute
+  });
+}

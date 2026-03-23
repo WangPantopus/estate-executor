@@ -22,6 +22,7 @@ import {
   useStakeholders,
 } from "@/hooks";
 import { ESTATE_TYPE_LABELS, US_STATES } from "@/lib/constants";
+import { AIUsageDashboard } from "./_components/AIUsageDashboard";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -98,7 +99,7 @@ export default function MatterSettingsPage({
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <PageHeader title="Matter Settings" />
 
       {/* Matter details */}
@@ -238,6 +239,9 @@ export default function MatterSettingsPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Usage Dashboard */}
+      <AIUsageDashboard firmId={FIRM_ID} matterId={matterId} />
 
       {/* Danger zone */}
       <Card className="border-danger/30">

@@ -219,3 +219,30 @@ async def analyze_trust_document(
         raise NotFoundError(detail=str(exc)) from exc
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# GET .../ai/usage-stats — AI usage monitoring (firm-level, no matter needed)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/usage-stats")
+async def get_usage_stats(
+    firm_id: UUID,
+    matter_id: UUID,
+    _membership: FirmMembership = Depends(require_firm_member),
+    stakeholder: Stakeholder = Depends(require_stakeholder),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Get AI usage statistics for the firm.
+
+    Returns call counts, token usage, cost estimates, breakdowns by
+    operation and matter, and current rate limit status.
+    Accessible to matter_admin and professional roles.
+    """
+    if stakeholder.role not in {StakeholderRole.matter_admin, StakeholderRole.professional}:
+        raise PermissionDeniedError(detail="Only admins can view AI usage stats")
+
+    from app.services.ai_usage_service import get_usage_stats as do_get_stats
+
+    return await do_get_stats(db, firm_id=firm_id)

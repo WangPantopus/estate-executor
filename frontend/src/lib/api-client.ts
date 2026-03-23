@@ -8,6 +8,7 @@
 import type {
   AcceptInviteResponse,
   AIAnomalyResponse,
+  AIUsageStats,
   AIClassifyResponse,
   AIExtractResponse,
   AILetterDraftRequest,
@@ -900,5 +901,12 @@ export class ApiClient {
     matterId: string,
   ): Promise<AIAnomalyResponse> {
     return this.post(`${this.aiBase(firmId, matterId)}/detect-anomalies`);
+  }
+
+  async getAIUsageStats(
+    firmId: string,
+    matterId: string,
+  ): Promise<AIUsageStats> {
+    return this.get(`${this.aiBase(firmId, matterId)}/usage-stats`);
   }
 }

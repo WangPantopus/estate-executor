@@ -784,6 +784,38 @@ export interface AIAnomalyResponse {
   anomalies: Anomaly[];
 }
 
+export interface AIUsageByOperation {
+  operation: string;
+  calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+}
+
+export interface AIUsageByMatter {
+  matter_id: string;
+  matter_title: string;
+  calls: number;
+  cost_usd: number;
+}
+
+export interface AIUsageStats {
+  period_start: string;
+  total_calls: number;
+  successful_calls: number;
+  failed_calls: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cost_usd: number;
+  by_operation: AIUsageByOperation[];
+  by_matter: AIUsageByMatter[];
+  rate_limits: {
+    firm_limit_per_hour: number;
+    matter_limit_per_hour: number;
+    firm_calls_this_hour: number;
+  };
+}
+
 // ─── Filter / query params ──────────────────────────────────────────────────
 
 export interface PaginationParams {
