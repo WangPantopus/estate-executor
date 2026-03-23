@@ -50,9 +50,7 @@ def build_user_prompt(
     decedent_name: str | None = None,
 ) -> str:
     """Build the classification user prompt."""
-    type_list = "\n".join(
-        f"- {doc_type}: {desc}" for doc_type, desc in DOCUMENT_TYPES.items()
-    )
+    type_list = "\n".join(f"- {doc_type}: {desc}" for doc_type, desc in DOCUMENT_TYPES.items())
 
     context = ""
     parts: list[str] = []

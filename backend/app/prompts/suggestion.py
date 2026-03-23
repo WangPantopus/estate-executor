@@ -29,16 +29,17 @@ def build_user_prompt(
     document_types: list[str],
 ) -> str:
     """Build user prompt with estate profile context."""
-    assets = "\n".join(
-        f"  - {a['title']} ({a['type']}, {a.get('institution', 'N/A')}, {a.get('value', '?')})"
-        for a in assets_summary
-    ) or "  (none)"
+    assets = (
+        "\n".join(
+            f"  - {a['title']} ({a['type']}, {a.get('institution', 'N/A')}, {a.get('value', '?')})"
+            for a in assets_summary
+        )
+        or "  (none)"
+    )
 
     tasks = "\n".join(f"  - {t}" for t in existing_tasks[:50]) or "  (none)"
 
-    entities = "\n".join(
-        f"  - {e['name']} ({e['type']})" for e in entities_summary
-    ) or "  (none)"
+    entities = "\n".join(f"  - {e['name']} ({e['type']})" for e in entities_summary) or "  (none)"
 
     return f"""\
 Estate: {decedent_name} | {estate_type} | {jurisdiction} | Phase: {phase}
@@ -52,8 +53,8 @@ Current Tasks:
 Entities:
 {entities}
 
-Roles: {', '.join(stakeholder_roles) or 'none'}
-Documents: {', '.join(document_types) or 'none'}
+Roles: {", ".join(stakeholder_roles) or "none"}
+Documents: {", ".join(document_types) or "none"}
 
 Suggest tasks NOT already listed that this estate needs. Explain why each is needed."""
 
@@ -72,13 +73,22 @@ def build_tool_schema() -> dict[str, Any]:
                         "type": "object",
                         "properties": {
                             "title": {"type": "string", "description": "Task title"},
-                            "description": {"type": "string", "description": "What needs to be done"},
+                            "description": {
+                                "type": "string",
+                                "description": "What needs to be done",
+                            },
                             "phase": {
                                 "type": "string",
                                 "enum": [
-                                    "immediate", "asset_inventory", "notification",
-                                    "probate_filing", "tax", "transfer_distribution",
-                                    "family_communication", "closing", "custom",
+                                    "immediate",
+                                    "asset_inventory",
+                                    "notification",
+                                    "probate_filing",
+                                    "tax",
+                                    "transfer_distribution",
+                                    "family_communication",
+                                    "closing",
+                                    "custom",
                                 ],
                             },
                             "reasoning": {"type": "string", "description": "Why this is needed"},

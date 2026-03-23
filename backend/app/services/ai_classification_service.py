@@ -179,7 +179,11 @@ async def classify_document(
     # Build prompt with matter context
     user_prompt = _build_classification_prompt(
         extracted_text,
-        estate_type=matter.estate_type.value if hasattr(matter.estate_type, "value") else str(matter.estate_type) if matter.estate_type else None,
+        estate_type=matter.estate_type.value
+        if hasattr(matter.estate_type, "value")
+        else str(matter.estate_type)
+        if matter.estate_type
+        else None,
         jurisdiction=matter.jurisdiction_state,
         decedent_name=matter.decedent_name,
     )

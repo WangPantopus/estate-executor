@@ -27,8 +27,7 @@ class TestMimeTypeConstants:
 
     def test_docx_types_includes_openxml(self):
         assert (
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            in _DOCX_TYPES
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in _DOCX_TYPES
         )
 
 
@@ -53,7 +52,7 @@ class TestTruncateText:
 
     def test_truncation_at_word_boundary(self):
         # Create text just over limit with spaces
-        text = ("hello " * (_MAX_CHARS // 6 + 100))
+        text = "hello " * (_MAX_CHARS // 6 + 100)
         result = _truncate_text(text)
         # Should not end mid-word (before the truncation suffix)
         main_text = result.replace("\n[... text truncated for processing ...]", "")

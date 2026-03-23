@@ -25,8 +25,12 @@ class TestPromptRegistry:
         from app.prompts import PROMPT_VERSIONS
 
         expected_ops = {
-            "classify", "extract", "draft_letter",
-            "suggest_tasks", "detect_anomalies", "trust_analysis",
+            "classify",
+            "extract",
+            "draft_letter",
+            "suggest_tasks",
+            "detect_anomalies",
+            "trust_analysis",
         }
         assert set(PROMPT_VERSIONS.keys()) == expected_ops
 
@@ -219,16 +223,46 @@ class TestClassificationAccuracyBenchmark:
     """Benchmark classification prompt with 10 representative documents."""
 
     SAMPLES = [
-        ("CERTIFICATE OF DEATH\nState of California\nDecedent: John Doe\nDate of Death: 2025-01-15", "death_certificate"),
-        ("LAST WILL AND TESTAMENT\nI, John Doe, declare...\nArticle I: Executor\nSigned and witnessed", "will"),
-        ("DOE FAMILY TRUST\nRevocable Living Trust\nTrustee: Jane Doe\nArticle IV: Distributions", "trust_document"),
-        ("GRANT DEED\nAPN: 1234-567\nProperty: 123 Main St\nGrantee: Trust\nRecorded: 2020-01-20", "deed"),
-        ("CHASE BANK\nAccount Statement\nChecking ****4567\nBalance: $52,104.55\nDec 2024", "account_statement"),
-        ("PRUDENTIAL LIFE INSURANCE\nPolicy PLI-789\nFace Value: $500,000\nInsured: John Doe", "insurance_policy"),
-        ("SUPERIOR COURT\nCase No. 2025-PR-123\nPETITION FOR PROBATE\nDecedent: John Doe", "court_filing"),
-        ("Form 1040\nU.S. Individual Tax Return\n2024\nJohn Doe\nGross Income: $285,000", "tax_return"),
-        ("APPRAISAL REPORT\n123 Main St\nAppraised Value: $1,250,000\nAppraiser: J. Wilson", "appraisal"),
-        ("Dear Mrs. Doe,\nThank you for notifying us.\nSincerely,\nCustomer Service", "correspondence"),
+        (
+            "CERTIFICATE OF DEATH\nState of California\nDecedent: John Doe\nDate of Death: 2025-01-15",
+            "death_certificate",
+        ),
+        (
+            "LAST WILL AND TESTAMENT\nI, John Doe, declare...\nArticle I: Executor\nSigned and witnessed",
+            "will",
+        ),
+        (
+            "DOE FAMILY TRUST\nRevocable Living Trust\nTrustee: Jane Doe\nArticle IV: Distributions",
+            "trust_document",
+        ),
+        (
+            "GRANT DEED\nAPN: 1234-567\nProperty: 123 Main St\nGrantee: Trust\nRecorded: 2020-01-20",
+            "deed",
+        ),
+        (
+            "CHASE BANK\nAccount Statement\nChecking ****4567\nBalance: $52,104.55\nDec 2024",
+            "account_statement",
+        ),
+        (
+            "PRUDENTIAL LIFE INSURANCE\nPolicy PLI-789\nFace Value: $500,000\nInsured: John Doe",
+            "insurance_policy",
+        ),
+        (
+            "SUPERIOR COURT\nCase No. 2025-PR-123\nPETITION FOR PROBATE\nDecedent: John Doe",
+            "court_filing",
+        ),
+        (
+            "Form 1040\nU.S. Individual Tax Return\n2024\nJohn Doe\nGross Income: $285,000",
+            "tax_return",
+        ),
+        (
+            "APPRAISAL REPORT\n123 Main St\nAppraised Value: $1,250,000\nAppraiser: J. Wilson",
+            "appraisal",
+        ),
+        (
+            "Dear Mrs. Doe,\nThank you for notifying us.\nSincerely,\nCustomer Service",
+            "correspondence",
+        ),
     ]
 
     @pytest.mark.parametrize(
@@ -252,12 +286,21 @@ class TestExtractionAccuracyBenchmark:
     SAMPLES = [
         ("account_statement", "Chase Bank checking ****4567 balance $52,104.55 as of Dec 31, 2024"),
         ("account_statement", "Fidelity brokerage total value $1,245,678.90 December 2024"),
-        ("deed", "Grant Deed APN 1234-567-890 property 123 Main St LA grantee Doe Trust recorded 2020"),
+        (
+            "deed",
+            "Grant Deed APN 1234-567-890 property 123 Main St LA grantee Doe Trust recorded 2020",
+        ),
         ("deed", "Quitclaim Deed Harris County Mary Smith to James Smith 456 Oak Lane"),
         ("insurance_policy", "Prudential whole life PLI-789456 face $500,000 beneficiary Jane Doe"),
         ("insurance_policy", "Northwestern term NM-456789 death benefit $1,000,000"),
-        ("trust_document", "Doe Family Revocable Trust trustee John Doe successor First National Bank 2018"),
-        ("appraisal", "Residential appraisal 123 Main St appraised $1,250,000 Dec 2024 by Wilson MAI"),
+        (
+            "trust_document",
+            "Doe Family Revocable Trust trustee John Doe successor First National Bank 2018",
+        ),
+        (
+            "appraisal",
+            "Residential appraisal 123 Main St appraised $1,250,000 Dec 2024 by Wilson MAI",
+        ),
         ("tax_return", "Form 1040 2024 John Doe gross income $285,000 total tax $52,340"),
         ("tax_return", "Form 706 Estate Tax Return gross estate $5,245,000 taxable $4,045,000"),
     ]

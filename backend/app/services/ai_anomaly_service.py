@@ -70,10 +70,13 @@ def _build_user_prompt(
         doc_lines.append("")
     doc_section = "\n".join(doc_lines) or "  (no documents with extracted data)"
 
-    asset_lines = "\n".join(
-        f"  - [{a['id'][:8]}] {a['title']} (type: {a['type']}, institution: {a.get('institution', 'N/A')}, value: {a.get('value', 'N/A')})"
-        for a in assets_summary
-    ) or "  (no assets)"
+    asset_lines = (
+        "\n".join(
+            f"  - [{a['id'][:8]}] {a['title']} (type: {a['type']}, institution: {a.get('institution', 'N/A')}, value: {a.get('value', 'N/A')})"
+            for a in assets_summary
+        )
+        or "  (no assets)"
+    )
 
     task_lines = "\n".join(f"  - {t}" for t in existing_tasks) or "  (no tasks)"
     stakeholder_lines = ", ".join(stakeholder_names) if stakeholder_names else "(none)"
@@ -251,22 +254,24 @@ async def detect_anomalies(
         extracted = doc.ai_extracted_data or {}
         # Skip docs that only have metadata/status fields
         meaningful_fields = {
-            k: v for k, v in extracted.items()
-            if not k.startswith("_") and k not in ("classification_status", "extraction_status", "reason")
+            k: v
+            for k, v in extracted.items()
+            if not k.startswith("_")
+            and k not in ("classification_status", "extraction_status", "reason")
             and v is not None
         }
         if meaningful_fields:
-            documents_data.append({
-                "id": str(doc.id),
-                "filename": doc.filename,
-                "doc_type": doc.doc_type or "unknown",
-                "extracted_data": meaningful_fields,
-            })
+            documents_data.append(
+                {
+                    "id": str(doc.id),
+                    "filename": doc.filename,
+                    "doc_type": doc.doc_type or "unknown",
+                    "extracted_data": meaningful_fields,
+                }
+            )
 
     # Gather assets
-    assets_result = await db.execute(
-        select(Asset).where(Asset.matter_id == matter_id)
-    )
+    assets_result = await db.execute(select(Asset).where(Asset.matter_id == matter_id))
     assets = list(assets_result.scalars().all())
     assets_summary = [
         {
@@ -274,15 +279,15 @@ async def detect_anomalies(
             "title": a.title,
             "type": a.asset_type.value if hasattr(a.asset_type, "value") else str(a.asset_type),
             "institution": a.institution or "N/A",
-            "value": f"${a.current_estimated_value:,.2f}" if a.current_estimated_value else "Unknown",
+            "value": f"${a.current_estimated_value:,.2f}"
+            if a.current_estimated_value
+            else "Unknown",
         }
         for a in assets
     ]
 
     # Gather tasks
-    tasks_result = await db.execute(
-        select(Task.title).where(Task.matter_id == matter_id)
-    )
+    tasks_result = await db.execute(select(Task.title).where(Task.matter_id == matter_id))
     existing_tasks = [row[0] for row in tasks_result.all()]
 
     # Gather stakeholders

@@ -59,7 +59,9 @@ class TestGetUsageStats:
             mock_titles_result,
         ]
 
-        with patch("app.services.ai_usage_service.get_usage", return_value={"firm_calls_this_hour": 5}):
+        with patch(
+            "app.services.ai_usage_service.get_usage", return_value={"firm_calls_this_hour": 5}
+        ):
             result = await get_usage_stats(mock_db, firm_id=uuid4())
 
         assert result["total_calls"] == 25

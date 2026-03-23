@@ -23,15 +23,22 @@ def build_user_prompt(
     assets_summary: list[dict[str, Any]],
 ) -> str:
     """Build user prompt for trust funding analysis."""
-    trust_lines = "\n".join(
-        f"  {k}: {v}" for k, v in trust_data.items()
-        if v is not None and not str(k).startswith("_")
-    ) or "  (no extracted fields)"
+    trust_lines = (
+        "\n".join(
+            f"  {k}: {v}"
+            for k, v in trust_data.items()
+            if v is not None and not str(k).startswith("_")
+        )
+        or "  (no extracted fields)"
+    )
 
-    assets = "\n".join(
-        f"  [{a['id'][:8]}] {a['title']} ({a['type']}, {a.get('institution', 'N/A')}, transfer: {a.get('transfer_mechanism', '?')})"
-        for a in assets_summary
-    ) or "  (none)"
+    assets = (
+        "\n".join(
+            f"  [{a['id'][:8]}] {a['title']} ({a['type']}, {a.get('institution', 'N/A')}, transfer: {a.get('transfer_mechanism', '?')})"
+            for a in assets_summary
+        )
+        or "  (none)"
+    )
 
     return f"""\
 Trust Details:

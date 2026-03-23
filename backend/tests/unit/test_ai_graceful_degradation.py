@@ -283,21 +283,64 @@ class TestFrontendGracefulDegradation:
     """Verify frontend components have manual fallbacks (source-level checks)."""
 
     def test_document_panel_has_manual_classify_button(self):
-        panel_file = Path(__file__).parents[3] / "frontend" / "src" / "app" / "(dashboard)" / "matters" / "[matterId]" / "documents" / "_components" / "DocumentDetailPanel.tsx"
+        panel_file = (
+            Path(__file__).parents[3]
+            / "frontend"
+            / "src"
+            / "app"
+            / "(dashboard)"
+            / "matters"
+            / "[matterId]"
+            / "documents"
+            / "_components"
+            / "DocumentDetailPanel.tsx"
+        )
         source = panel_file.read_text()
         assert "Classify Manually" in source
 
     def test_insights_panel_shows_manual_fallback_message(self):
-        panel_file = Path(__file__).parents[3] / "frontend" / "src" / "app" / "(dashboard)" / "matters" / "[matterId]" / "_components" / "AIInsightsPanel.tsx"
+        panel_file = (
+            Path(__file__).parents[3]
+            / "frontend"
+            / "src"
+            / "app"
+            / "(dashboard)"
+            / "matters"
+            / "[matterId]"
+            / "_components"
+            / "AIInsightsPanel.tsx"
+        )
         source = panel_file.read_text()
         assert "manually" in source.lower()
 
     def test_letter_dialog_shows_fallback_message(self):
-        dialog_file = Path(__file__).parents[3] / "frontend" / "src" / "app" / "(dashboard)" / "matters" / "[matterId]" / "assets" / "_components" / "DraftLetterDialog.tsx"
+        dialog_file = (
+            Path(__file__).parents[3]
+            / "frontend"
+            / "src"
+            / "app"
+            / "(dashboard)"
+            / "matters"
+            / "[matterId]"
+            / "assets"
+            / "_components"
+            / "DraftLetterDialog.tsx"
+        )
         source = dialog_file.read_text()
         assert "manually" in source.lower() or "try again" in source.lower()
 
     def test_extract_button_shows_error_message(self):
-        panel_file = Path(__file__).parents[3] / "frontend" / "src" / "app" / "(dashboard)" / "matters" / "[matterId]" / "documents" / "_components" / "DocumentDetailPanel.tsx"
+        panel_file = (
+            Path(__file__).parents[3]
+            / "frontend"
+            / "src"
+            / "app"
+            / "(dashboard)"
+            / "matters"
+            / "[matterId]"
+            / "documents"
+            / "_components"
+            / "DocumentDetailPanel.tsx"
+        )
         source = panel_file.read_text()
         assert "extraction unavailable" in source.lower() or "enter data manually" in source.lower()

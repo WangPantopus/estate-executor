@@ -72,7 +72,8 @@ class TestAPITimeout:
             patch(
                 "app.services.ai_classification_service._call_claude",
                 side_effect=TimeoutError("API request timed out after 120s"),
-            ),pytest.raises(TimeoutError, match="timed out")
+            ),
+            pytest.raises(TimeoutError, match="timed out"),
         ):
             await classify_document(mock_db, document_id=uuid4())
 
@@ -107,7 +108,8 @@ class TestAPITimeout:
             patch(
                 "app.services.ai_extraction_service._call_claude",
                 side_effect=TimeoutError("API timeout"),
-            ),pytest.raises(TimeoutError)
+            ),
+            pytest.raises(TimeoutError),
         ):
             await extract_document_data(mock_db, document_id=mock_doc.id)
 
@@ -152,7 +154,8 @@ class TestAPITimeout:
             patch(
                 "app.services.ai_letter_service._call_claude",
                 side_effect=TimeoutError("API timeout"),
-            ),pytest.raises(TimeoutError)
+            ),
+            pytest.raises(TimeoutError),
         ):
             await draft_letter(
                 mock_db,

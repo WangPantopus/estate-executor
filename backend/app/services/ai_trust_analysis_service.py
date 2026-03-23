@@ -68,10 +68,13 @@ def _build_user_prompt(
             trust_lines.append(f"  {key}: {value}")
     trust_section = "\n".join(trust_lines) or "  (no extracted fields)"
 
-    asset_lines = "\n".join(
-        f"  - [{a['id'][:8]}] {a['title']} (type: {a['type']}, institution: {a.get('institution', 'N/A')}, value: {a.get('value', 'N/A')}, transfer: {a.get('transfer_mechanism', 'N/A')})"
-        for a in assets_summary
-    ) or "  (no assets registered)"
+    asset_lines = (
+        "\n".join(
+            f"  - [{a['id'][:8]}] {a['title']} (type: {a['type']}, institution: {a.get('institution', 'N/A')}, value: {a.get('value', 'N/A')}, transfer: {a.get('transfer_mechanism', 'N/A')})"
+            for a in assets_summary
+        )
+        or "  (no assets registered)"
+    )
 
     return f"""Analyze this trust document and compare against the asset registry:
 
@@ -244,8 +247,10 @@ async def analyze_trust_document(
     # Get extracted trust data
     extracted = doc.ai_extracted_data or {}
     trust_data = {
-        k: v for k, v in extracted.items()
-        if not k.startswith("_") and k not in ("classification_status", "extraction_status")
+        k: v
+        for k, v in extracted.items()
+        if not k.startswith("_")
+        and k not in ("classification_status", "extraction_status")
         and v is not None
     }
 
@@ -296,9 +301,7 @@ async def analyze_trust_document(
             )
 
     # Gather assets for funding analysis
-    assets_result = await db.execute(
-        select(Asset).where(Asset.matter_id == matter_id)
-    )
+    assets_result = await db.execute(select(Asset).where(Asset.matter_id == matter_id))
     assets = list(assets_result.scalars().all())
     assets_summary = [
         {
@@ -306,8 +309,12 @@ async def analyze_trust_document(
             "title": a.title,
             "type": a.asset_type.value if hasattr(a.asset_type, "value") else str(a.asset_type),
             "institution": a.institution or "N/A",
-            "value": f"${a.current_estimated_value:,.2f}" if a.current_estimated_value else "Unknown",
-            "transfer_mechanism": a.transfer_mechanism.value if hasattr(a.transfer_mechanism, "value") else str(a.transfer_mechanism),
+            "value": f"${a.current_estimated_value:,.2f}"
+            if a.current_estimated_value
+            else "Unknown",
+            "transfer_mechanism": a.transfer_mechanism.value
+            if hasattr(a.transfer_mechanism, "value")
+            else str(a.transfer_mechanism),
         }
         for a in assets
     ]

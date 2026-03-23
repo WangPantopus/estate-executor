@@ -29,7 +29,13 @@ class TestBuildUserPrompt:
                 },
             ],
             assets_summary=[
-                {"id": "asset-456", "title": "Chase Checking", "type": "bank_account", "institution": "Chase", "value": "$50,000"},
+                {
+                    "id": "asset-456",
+                    "title": "Chase Checking",
+                    "type": "bank_account",
+                    "institution": "Chase",
+                    "value": "$50,000",
+                },
             ],
             existing_tasks=["File Probate Petition"],
             stakeholder_names=["Jane Doe"],
@@ -52,7 +58,13 @@ class TestBuildUserPrompt:
         prompt = _build_user_prompt(
             documents_data=[],
             assets_summary=[
-                {"id": "abc12345-xxxx", "title": "Test", "type": "bank_account", "institution": "Bank", "value": "$100"},
+                {
+                    "id": "abc12345-xxxx",
+                    "title": "Test",
+                    "type": "bank_account",
+                    "institution": "Bank",
+                    "value": "$100",
+                },
             ],
             existing_tasks=[],
             stakeholder_names=[],
@@ -83,7 +95,9 @@ class TestBuildToolSchema:
 
     def test_type_has_valid_enum(self):
         schema = _build_tool_schema()
-        types = schema["input_schema"]["properties"]["anomalies"]["items"]["properties"]["type"]["enum"]
+        types = schema["input_schema"]["properties"]["anomalies"]["items"]["properties"]["type"][
+            "enum"
+        ]
         assert "missing_asset" in types
         assert "value_discrepancy" in types
         assert "missing_stakeholder" in types
@@ -92,7 +106,9 @@ class TestBuildToolSchema:
 
     def test_severity_enum(self):
         schema = _build_tool_schema()
-        severities = schema["input_schema"]["properties"]["anomalies"]["items"]["properties"]["severity"]["enum"]
+        severities = schema["input_schema"]["properties"]["anomalies"]["items"]["properties"][
+            "severity"
+        ]["enum"]
         assert set(severities) == {"high", "medium", "low"}
 
 

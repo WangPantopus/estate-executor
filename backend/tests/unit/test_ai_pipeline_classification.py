@@ -142,7 +142,9 @@ SAMPLE_DOCUMENTS: list[dict] = [
 ]
 
 
-def _make_mock_db(doc_id, matter_id, firm_id, storage_key="test/key.pdf", mime_type="application/pdf"):
+def _make_mock_db(
+    doc_id, matter_id, firm_id, storage_key="test/key.pdf", mime_type="application/pdf"
+):
     """Create a mock DB with document and matter records."""
     mock_db = AsyncMock()
 
@@ -283,7 +285,9 @@ class TestClassificationConfidenceValidation:
         assert resp.confidence == 0.0
 
     def test_confidence_exactly_one(self):
-        resp = AIClassifyResponse(doc_type="death_certificate", confidence=1.0, reasoning="Perfect match")
+        resp = AIClassifyResponse(
+            doc_type="death_certificate", confidence=1.0, reasoning="Perfect match"
+        )
         assert resp.confidence == 1.0
 
     def test_confidence_over_one_rejected(self):

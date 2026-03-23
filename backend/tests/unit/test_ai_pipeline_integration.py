@@ -42,9 +42,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks._run_async",
                 return_value=mock_classify_result,
             ),
-            patch(
-                "app.workers.ai_tasks.extract_document_data"
-            ) as mock_extract_task,
+            patch("app.workers.ai_tasks.extract_document_data") as mock_extract_task,
         ):
             result = classify_task("doc-123", "matter-123")
 
@@ -69,9 +67,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks._run_async",
                 return_value=mock_classify_result,
             ),
-            patch(
-                "app.workers.ai_tasks.extract_document_data"
-            ) as mock_extract_task,
+            patch("app.workers.ai_tasks.extract_document_data") as mock_extract_task,
         ):
             classify_task("doc-123", "matter-123")
 
@@ -94,9 +90,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks._run_async",
                 return_value=mock_classify_result,
             ),
-            patch(
-                "app.workers.ai_tasks.extract_document_data"
-            ) as mock_extract_task,
+            patch("app.workers.ai_tasks.extract_document_data") as mock_extract_task,
         ):
             classify_task("doc-123", "matter-123")
 
@@ -119,9 +113,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks._run_async",
                 return_value=mock_classify_result,
             ),
-            patch(
-                "app.workers.ai_tasks.extract_document_data"
-            ) as mock_extract_task,
+            patch("app.workers.ai_tasks.extract_document_data") as mock_extract_task,
         ):
             classify_task("doc-123", "matter-123")
 
@@ -144,9 +136,7 @@ class TestConfidenceThresholdChaining:
                 "app.workers.ai_tasks._run_async",
                 return_value=mock_classify_result,
             ),
-            patch(
-                "app.workers.ai_tasks.extract_document_data"
-            ) as mock_extract_task,
+            patch("app.workers.ai_tasks.extract_document_data") as mock_extract_task,
         ):
             classify_task("doc-123", "matter-123")
 

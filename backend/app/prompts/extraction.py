@@ -29,8 +29,7 @@ def build_user_prompt(extracted_text: str, doc_type: str) -> str:
     """Build user prompt for extraction."""
     schema = EXTRACTION_SCHEMAS[doc_type]
     field_list = "\n".join(
-        f"- {name}: {spec['description']}"
-        for name, spec in schema["properties"].items()
+        f"- {name}: {spec['description']}" for name, spec in schema["properties"].items()
     )
 
     return f"""\

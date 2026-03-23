@@ -46,9 +46,7 @@ class RateLimitExceededError(Exception):
         self.scope = scope
         self.limit = limit
         self.window_seconds = window_seconds
-        super().__init__(
-            f"AI rate limit exceeded for {scope}: {limit} calls per {window_seconds}s"
-        )
+        super().__init__(f"AI rate limit exceeded for {scope}: {limit} calls per {window_seconds}s")
 
 
 _RATE_LIMIT_SCRIPT = """
@@ -138,9 +136,15 @@ def check_rate_limit(*, firm_id: UUID, matter_id: UUID) -> None:
         ttl = _WINDOW_SECONDS + 60
 
         result = r.eval(
-            _CHECK_BOTH_SCRIPT, 2, firm_key, matter_key,
-            FIRM_LIMIT_PER_HOUR, MATTER_LIMIT_PER_HOUR,
-            now, window_start, ttl,
+            _CHECK_BOTH_SCRIPT,
+            2,
+            firm_key,
+            matter_key,
+            FIRM_LIMIT_PER_HOUR,
+            MATTER_LIMIT_PER_HOUR,
+            now,
+            window_start,
+            ttl,
         )
 
         if result == -1:

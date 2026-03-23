@@ -74,7 +74,10 @@ def build_tool_schema() -> dict[str, Any]:
             "type": "object",
             "properties": {
                 "subject": {"type": "string", "description": "Subject line"},
-                "body": {"type": "string", "description": "Full letter body with salutation and closing"},
+                "body": {
+                    "type": "string",
+                    "description": "Full letter body with salutation and closing",
+                },
                 "recipient_institution": {"type": "string", "description": "Recipient name"},
             },
             "required": ["subject", "body", "recipient_institution"],

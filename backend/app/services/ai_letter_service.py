@@ -149,7 +149,7 @@ def _build_user_prompt(
 
     context = "\n".join(context_lines)
 
-    return f"""Draft a formal {letter_config['label'].lower()} letter based on the following details:
+    return f"""Draft a formal {letter_config["label"].lower()} letter based on the following details:
 
 {context}
 
@@ -261,9 +261,7 @@ async def _log_ai_usage(
     await db.flush()
 
 
-async def _get_executor_info(
-    db: AsyncSession, matter_id: UUID
-) -> tuple[str | None, str]:
+async def _get_executor_info(db: AsyncSession, matter_id: UUID) -> tuple[str | None, str]:
     """Find the executor/trustee stakeholder for the matter.
 
     Returns (name, title) where title is 'Executor', 'Trustee', etc.
@@ -341,9 +339,7 @@ async def draft_letter(
     account_masked = _mask_account_number(asset.account_number_encrypted)
 
     # Format date of death
-    date_of_death_str = (
-        matter.date_of_death.strftime("%B %d, %Y") if matter.date_of_death else None
-    )
+    date_of_death_str = matter.date_of_death.strftime("%B %d, %Y") if matter.date_of_death else None
 
     # Format estate type
     estate_type_display = (
@@ -372,7 +368,9 @@ async def draft_letter(
         institution=asset.institution,
         account_number_masked=account_masked,
         asset_title=asset.title,
-        asset_type=asset.asset_type.value.replace("_", " ").title() if hasattr(asset.asset_type, "value") else str(asset.asset_type),
+        asset_type=asset.asset_type.value.replace("_", " ").title()
+        if hasattr(asset.asset_type, "value")
+        else str(asset.asset_type),
         asset_value=asset_value_str,
         court_case_number=court_case_number,
     )

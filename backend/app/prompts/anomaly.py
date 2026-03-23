@@ -41,10 +41,13 @@ def build_user_prompt(
                 doc_lines.append(f"    {field}: {value}")
     doc_section = "\n".join(doc_lines) or "  (none)"
 
-    assets = "\n".join(
-        f"  [{a['id'][:8]}] {a['title']} ({a['type']}, {a.get('institution', 'N/A')}, {a.get('value', '?')})"
-        for a in assets_summary
-    ) or "  (none)"
+    assets = (
+        "\n".join(
+            f"  [{a['id'][:8]}] {a['title']} ({a['type']}, {a.get('institution', 'N/A')}, {a.get('value', '?')})"
+            for a in assets_summary
+        )
+        or "  (none)"
+    )
 
     tasks = "\n".join(f"  - {t}" for t in existing_tasks[:50]) or "  (none)"
 
@@ -60,7 +63,7 @@ Assets:
 Tasks:
 {tasks}
 
-Stakeholders: {', '.join(stakeholder_names) or '(none)'}"""
+Stakeholders: {", ".join(stakeholder_names) or "(none)"}"""
 
 
 def build_tool_schema() -> dict[str, Any]:
@@ -78,7 +81,13 @@ def build_tool_schema() -> dict[str, Any]:
                         "properties": {
                             "type": {
                                 "type": "string",
-                                "enum": ["missing_asset", "value_discrepancy", "missing_stakeholder", "missing_task", "data_inconsistency"],
+                                "enum": [
+                                    "missing_asset",
+                                    "value_discrepancy",
+                                    "missing_stakeholder",
+                                    "missing_task",
+                                    "data_inconsistency",
+                                ],
                             },
                             "description": {"type": "string"},
                             "document_id": {"type": ["string", "null"]},

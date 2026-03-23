@@ -94,10 +94,7 @@ def classify_document(self: Any, document_id: str, matter_id: str) -> dict[str, 
         doc_type = classification_result.get("doc_type")
         confidence = classification_result.get("confidence", 0.0)
 
-        if (
-            doc_type
-            and confidence >= _AUTO_EXTRACT_CONFIDENCE_THRESHOLD
-        ):
+        if doc_type and confidence >= _AUTO_EXTRACT_CONFIDENCE_THRESHOLD:
             from app.services.ai_extraction_service import EXTRACTABLE_TYPES
 
             if doc_type in EXTRACTABLE_TYPES:
@@ -121,18 +118,14 @@ def classify_document(self: Any, document_id: str, matter_id: str) -> dict[str, 
         raise self.retry(exc=exc) from exc
 
 
-async def _mark_classification_failed(
-    session: Any, document_id: str, matter_id: str
-) -> None:
+async def _mark_classification_failed(session: Any, document_id: str, matter_id: str) -> None:
     """Mark a document as classification_failed in its metadata."""
     try:
         from sqlalchemy import select
 
         from app.models.documents import Document
 
-        result = await session.execute(
-            select(Document).where(Document.id == document_id)
-        )
+        result = await session.execute(select(Document).where(Document.id == document_id))
         doc = result.scalar_one_or_none()
         if doc is not None:
             current_meta = doc.ai_extracted_data or {}

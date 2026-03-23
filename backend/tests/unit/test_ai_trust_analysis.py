@@ -50,7 +50,14 @@ class TestBuildUserPrompt:
         prompt = _build_user_prompt(
             trust_data={"trust_name": "Doe Trust", "trustee": "Jane Doe"},
             assets_summary=[
-                {"id": "abc123", "title": "House", "type": "real_estate", "institution": "N/A", "value": "$500,000", "transfer_mechanism": "probate"},
+                {
+                    "id": "abc123",
+                    "title": "House",
+                    "type": "real_estate",
+                    "institution": "N/A",
+                    "value": "$500,000",
+                    "transfer_mechanism": "probate",
+                },
             ],
         )
         assert "Doe Trust" in prompt
@@ -179,9 +186,7 @@ class TestAnalyzeTrustDocument:
                 new_callable=AsyncMock,
             ),
         ):
-            result = await analyze_trust_document(
-                mock_db, document_id=doc_id, matter_id=matter_id
-            )
+            result = await analyze_trust_document(mock_db, document_id=doc_id, matter_id=matter_id)
 
         assert result["entity_created"] is True
         assert result["trust_name"] == "Doe Family Trust"

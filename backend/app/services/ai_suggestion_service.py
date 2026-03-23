@@ -62,16 +62,19 @@ def _build_user_prompt(
     document_types: list[str],
 ) -> str:
     """Build the user prompt with estate profile context."""
-    asset_lines = "\n".join(
-        f"  - {a['title']} ({a['type']}, institution: {a.get('institution', 'N/A')}, value: {a.get('value', 'N/A')})"
-        for a in assets_summary
-    ) or "  (no assets registered yet)"
+    asset_lines = (
+        "\n".join(
+            f"  - {a['title']} ({a['type']}, institution: {a.get('institution', 'N/A')}, value: {a.get('value', 'N/A')})"
+            for a in assets_summary
+        )
+        or "  (no assets registered yet)"
+    )
 
     task_lines = "\n".join(f"  - {t}" for t in existing_tasks) or "  (no tasks yet)"
 
-    entity_lines = "\n".join(
-        f"  - {e['name']} ({e['type']})" for e in entities_summary
-    ) or "  (no entities)"
+    entity_lines = (
+        "\n".join(f"  - {e['name']} ({e['type']})" for e in entities_summary) or "  (no entities)"
+    )
 
     "\n".join(f"  - {d}" for d in document_types) or "  (no documents)"
 
@@ -92,9 +95,9 @@ Existing Tasks:
 Trust/Entity Structures:
 {entity_lines}
 
-Stakeholder Roles: {', '.join(stakeholder_roles) if stakeholder_roles else 'None'}
+Stakeholder Roles: {", ".join(stakeholder_roles) if stakeholder_roles else "None"}
 
-Document Types on File: {', '.join(document_types) if document_types else 'None'}
+Document Types on File: {", ".join(document_types) if document_types else "None"}
 
 Based on this profile, suggest tasks that are NOT already in the existing task list \
 but SHOULD be created given the specific assets, entities, and circumstances. \
@@ -127,9 +130,15 @@ def _build_tool_schema() -> dict[str, Any]:
                             "phase": {
                                 "type": "string",
                                 "enum": [
-                                    "immediate", "asset_inventory", "notification",
-                                    "probate_filing", "tax", "transfer_distribution",
-                                    "family_communication", "closing", "custom",
+                                    "immediate",
+                                    "asset_inventory",
+                                    "notification",
+                                    "probate_filing",
+                                    "tax",
+                                    "transfer_distribution",
+                                    "family_communication",
+                                    "closing",
+                                    "custom",
                                 ],
                                 "description": "Task phase in the estate administration workflow",
                             },
@@ -232,30 +241,26 @@ async def suggest_tasks(
     check_rate_limit(firm_id=matter.firm_id, matter_id=matter.id)
 
     # Gather assets
-    assets_result = await db.execute(
-        select(Asset).where(Asset.matter_id == matter_id)
-    )
+    assets_result = await db.execute(select(Asset).where(Asset.matter_id == matter_id))
     assets = list(assets_result.scalars().all())
     assets_summary = [
         {
             "title": a.title,
             "type": a.asset_type.value if hasattr(a.asset_type, "value") else str(a.asset_type),
             "institution": a.institution or "N/A",
-            "value": f"${a.current_estimated_value:,.2f}" if a.current_estimated_value else "Unknown",
+            "value": f"${a.current_estimated_value:,.2f}"
+            if a.current_estimated_value
+            else "Unknown",
         }
         for a in assets
     ]
 
     # Gather existing tasks (titles only)
-    tasks_result = await db.execute(
-        select(Task.title).where(Task.matter_id == matter_id)
-    )
+    tasks_result = await db.execute(select(Task.title).where(Task.matter_id == matter_id))
     existing_tasks = [row[0] for row in tasks_result.all()]
 
     # Gather entities
-    entities_result = await db.execute(
-        select(Entity).where(Entity.matter_id == matter_id)
-    )
+    entities_result = await db.execute(select(Entity).where(Entity.matter_id == matter_id))
     entities = list(entities_result.scalars().all())
     entities_summary = [
         {
@@ -276,10 +281,12 @@ async def suggest_tasks(
 
     # Gather document types on file
     docs_result = await db.execute(
-        select(Document.doc_type).where(
+        select(Document.doc_type)
+        .where(
             Document.matter_id == matter_id,
             Document.doc_type.isnot(None),
-        ).distinct()
+        )
+        .distinct()
     )
     document_types = [row[0] for row in docs_result.all()]
 
@@ -289,9 +296,7 @@ async def suggest_tasks(
         if hasattr(matter.estate_type, "value")
         else str(matter.estate_type)
     )
-    phase = (
-        matter.phase.value if hasattr(matter.phase, "value") else str(matter.phase)
-    )
+    phase = matter.phase.value if hasattr(matter.phase, "value") else str(matter.phase)
 
     user_prompt = _build_user_prompt(
         decedent_name=matter.decedent_name,

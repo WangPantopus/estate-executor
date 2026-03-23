@@ -60,7 +60,13 @@ EXTRACTION_SCHEMAS: dict[str, dict[str, Any]] = {
                 "description": "Statement date or as-of date in YYYY-MM-DD format",
             },
         },
-        "required": ["institution", "account_type", "account_number_last4", "balance", "as_of_date"],
+        "required": [
+            "institution",
+            "account_type",
+            "account_number_last4",
+            "balance",
+            "as_of_date",
+        ],
     },
     "deed": {
         "properties": {
@@ -85,7 +91,13 @@ EXTRACTION_SCHEMAS: dict[str, dict[str, Any]] = {
                 "description": "Type of property (residential, commercial, land, etc.)",
             },
         },
-        "required": ["property_address", "grantee", "recording_date", "parcel_number", "property_type"],
+        "required": [
+            "property_address",
+            "grantee",
+            "recording_date",
+            "parcel_number",
+            "property_type",
+        ],
     },
     "insurance_policy": {
         "properties": {
@@ -154,9 +166,15 @@ EXTRACTION_SCHEMAS: dict[str, dict[str, Any]] = {
             },
         },
         "required": [
-            "trust_name", "trust_type", "trustee", "successor_trustee",
-            "date_established", "distribution_provisions", "special_provisions",
-            "spendthrift_clause", "special_needs_provisions",
+            "trust_name",
+            "trust_type",
+            "trustee",
+            "successor_trustee",
+            "date_established",
+            "distribution_provisions",
+            "special_provisions",
+            "spendthrift_clause",
+            "special_needs_provisions",
         ],
     },
     "appraisal": {
@@ -213,9 +231,16 @@ def _build_extraction_tool(doc_type: str) -> dict[str, Any]:
     # Make all properties nullable (allow null if not found)
     nullable_props: dict[str, Any] = {}
     for field_name, field_spec in schema["properties"].items():
-        nullable_props[field_name] = {**field_spec, "description": field_spec["description"] + ". Set to null if not present or unclear."}
+        nullable_props[field_name] = {
+            **field_spec,
+            "description": field_spec["description"] + ". Set to null if not present or unclear.",
+        }
         # Allow null for all types
-        if "type" in field_spec and field_spec["type"] != "array" and field_spec["type"] != "boolean":
+        if (
+            "type" in field_spec
+            and field_spec["type"] != "array"
+            and field_spec["type"] != "boolean"
+        ):
             nullable_props[field_name]["type"] = [field_spec["type"], "null"]
 
     return {
@@ -250,8 +275,7 @@ def _build_extraction_prompt(extracted_text: str, doc_type: str) -> tuple[str, s
     doc_type_display = doc_type.replace("_", " ")
     schema = EXTRACTION_SCHEMAS[doc_type]
     field_list = "\n".join(
-        f"- {name}: {spec['description']}"
-        for name, spec in schema["properties"].items()
+        f"- {name}: {spec['description']}" for name, spec in schema["properties"].items()
     )
 
     system_prompt = (
@@ -281,7 +305,9 @@ def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
     return round(input_cost + output_cost, 6)
 
 
-def _call_claude(system_prompt: str, user_prompt: str, tool: dict[str, Any]) -> tuple[dict[str, Any], int, int]:
+def _call_claude(
+    system_prompt: str, user_prompt: str, tool: dict[str, Any]
+) -> tuple[dict[str, Any], int, int]:
     """Call Claude API for extraction. Returns (result, input_tokens, output_tokens)."""
     import anthropic
 
@@ -408,9 +434,7 @@ async def extract_document_data(
 
     # Call Claude API
     try:
-        parsed_result, input_tokens, output_tokens = _call_claude(
-            system_prompt, user_prompt, tool
-        )
+        parsed_result, input_tokens, output_tokens = _call_claude(system_prompt, user_prompt, tool)
     except Exception as exc:
         await _log_ai_usage(
             db,

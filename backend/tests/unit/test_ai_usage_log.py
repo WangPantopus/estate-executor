@@ -104,17 +104,13 @@ class TestAIUsageLogMigration:
     def test_migration_file_exists(self):
         import importlib
 
-        mod = importlib.import_module(
-            "migrations.versions.c3d4e5f6a7b8_add_ai_usage_logs"
-        )
+        mod = importlib.import_module("migrations.versions.c3d4e5f6a7b8_add_ai_usage_logs")
         assert hasattr(mod, "upgrade")
         assert hasattr(mod, "downgrade")
 
     def test_migration_revision_chain(self):
         import importlib
 
-        mod = importlib.import_module(
-            "migrations.versions.c3d4e5f6a7b8_add_ai_usage_logs"
-        )
+        mod = importlib.import_module("migrations.versions.c3d4e5f6a7b8_add_ai_usage_logs")
         assert mod.revision == "c3d4e5f6a7b8"
         assert mod.down_revision == "b2c3d4e5f6a7"

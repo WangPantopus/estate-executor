@@ -25,9 +25,17 @@ class TestAIFeedbackModel:
         from app.models.ai_feedback import AIFeedback
 
         for col in [
-            "firm_id", "matter_id", "entity_type", "entity_id",
-            "feedback_type", "ai_output", "user_correction",
-            "corrected_by", "model_used", "metadata_", "created_at",
+            "firm_id",
+            "matter_id",
+            "entity_type",
+            "entity_id",
+            "feedback_type",
+            "ai_output",
+            "user_correction",
+            "corrected_by",
+            "model_used",
+            "metadata_",
+            "created_at",
         ]:
             assert hasattr(AIFeedback, col), f"Missing column: {col}"
 
@@ -56,9 +64,7 @@ class TestAIFeedbackMigration:
     def test_migration_exists(self):
         import importlib
 
-        mod = importlib.import_module(
-            "migrations.versions.d4e5f6a7b8c9_add_ai_feedback"
-        )
+        mod = importlib.import_module("migrations.versions.d4e5f6a7b8c9_add_ai_feedback")
         assert mod.revision == "d4e5f6a7b8c9"
         assert mod.down_revision == "c3d4e5f6a7b8"
 

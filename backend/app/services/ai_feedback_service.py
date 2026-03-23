@@ -41,7 +41,9 @@ async def log_classification_correction(
         matter_id=matter_id,
         entity_type="document",
         entity_id=document_id,
-        feedback_type="classification_correction" if is_correction else "classification_confirmation",
+        feedback_type="classification_correction"
+        if is_correction
+        else "classification_confirmation",
         ai_output={
             "doc_type": original_doc_type,
             "confidence": original_confidence,
@@ -96,10 +98,7 @@ async def log_extraction_correction(
         entity_type="document",
         entity_id=document_id,
         feedback_type="extraction_correction",
-        ai_output={
-            k: v for k, v in original.items()
-            if not k.startswith("_")
-        },
+        ai_output={k: v for k, v in original.items() if not k.startswith("_")},
         user_correction=corrected_fields,
         corrected_by=corrected_by,
         model_used=_MODEL,

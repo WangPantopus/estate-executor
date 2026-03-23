@@ -25,7 +25,12 @@ class TestBuildUserPrompt:
             jurisdiction="CA",
             phase="administration",
             assets_summary=[
-                {"title": "Chase Checking", "type": "bank_account", "institution": "Chase", "value": "$50,000"},
+                {
+                    "title": "Chase Checking",
+                    "type": "bank_account",
+                    "institution": "Chase",
+                    "value": "$50,000",
+                },
             ],
             existing_tasks=["Obtain Death Certificate", "File Probate Petition"],
             entities_summary=[{"name": "Doe Family Trust", "type": "revocable_trust"}],
@@ -89,7 +94,9 @@ class TestBuildToolSchema:
 
     def test_phase_has_valid_enum(self):
         schema = _build_tool_schema()
-        phases = schema["input_schema"]["properties"]["suggestions"]["items"]["properties"]["phase"]["enum"]
+        phases = schema["input_schema"]["properties"]["suggestions"]["items"]["properties"][
+            "phase"
+        ]["enum"]
         assert "immediate" in phases
         assert "tax" in phases
         assert "custom" in phases

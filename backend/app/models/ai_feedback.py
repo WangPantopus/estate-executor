@@ -33,9 +33,7 @@ class AIFeedback(Base):
     )
     firm_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     matter_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    entity_type: Mapped[str] = mapped_column(
-        String, nullable=False
-    )  # "document", "asset", etc.
+    entity_type: Mapped[str] = mapped_column(String, nullable=False)  # "document", "asset", etc.
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     feedback_type: Mapped[str] = mapped_column(
         String, nullable=False
@@ -46,9 +44,7 @@ class AIFeedback(Base):
     user_correction: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
         JSONB, nullable=False
     )  # What the user changed it to
-    corrected_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    corrected_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     model_used: Mapped[str | None] = mapped_column(String, nullable=True)
     metadata_: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
         "metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")

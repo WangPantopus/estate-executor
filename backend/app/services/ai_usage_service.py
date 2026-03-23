@@ -57,7 +57,9 @@ async def get_usage_stats(
     totals_result = await db.execute(
         select(
             func.count(AIUsageLog.id).label("total_calls"),
-            func.count(AIUsageLog.id).filter(AIUsageLog.status == "success").label("successful_calls"),
+            func.count(AIUsageLog.id)
+            .filter(AIUsageLog.status == "success")
+            .label("successful_calls"),
             func.count(AIUsageLog.id).filter(AIUsageLog.status == "error").label("failed_calls"),
             func.coalesce(func.sum(AIUsageLog.input_tokens), 0).label("total_input_tokens"),
             func.coalesce(func.sum(AIUsageLog.output_tokens), 0).label("total_output_tokens"),
