@@ -31,6 +31,7 @@ dependencies = [
     "python-socketio>=5.11.0",
     "reportlab>=4.0",
     "openpyxl>=3.1.0",
+    "cachetools>=5.3.0",
 ]
 
 [project.optional-dependencies]
@@ -57,7 +58,10 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
 ignore = ["B008"]  # Allow Depends() / Query() in FastAPI parameter defaults
 
 [tool.ruff.lint.per-file-ignores]
-"app/models/*.py" = ["TCH003"]
+"app/models/*.py" = ["TCH003", "TC003"]
+"app/schemas/matters.py" = ["TC001", "TC003", "TCH001", "TCH003"]
+"app/schemas/deadlines.py" = ["TC001", "TC003", "TCH001", "TCH003"]
+"app/schemas/events.py" = ["TC001", "TC003", "TCH001", "TCH003"]
 "migrations/versions/*.py" = ["E501"]
 
 [tool.mypy]

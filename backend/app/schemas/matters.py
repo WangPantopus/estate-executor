@@ -2,20 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-if TYPE_CHECKING:
-    from datetime import date, datetime
-    from decimal import Decimal
-    from uuid import UUID
+from app.models.enums import EstateType, MatterPhase, MatterStatus
 
-    from app.models.enums import EstateType, MatterPhase, MatterStatus
-
-    from .common import PaginationMeta
-    from .deadlines import DeadlineResponse
-    from .events import EventResponse
+from .common import PaginationMeta
 
 
 class MatterCreate(BaseModel):
@@ -238,5 +234,7 @@ class MatterDashboard(BaseModel):
 
 
 # Deferred imports to avoid circular dependencies
+from .deadlines import DeadlineResponse as DeadlineResponse  # noqa: E402, F811
+from .events import EventResponse as EventResponse  # noqa: E402, F811
 
 MatterDashboard.model_rebuild()

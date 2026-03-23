@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from datetime import datetime
+from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-if TYPE_CHECKING:
-    from datetime import datetime
-    from uuid import UUID
-
-    from app.models.enums import ActorType
+from app.models.enums import ActorType
 
 
 class EventResponse(BaseModel):
