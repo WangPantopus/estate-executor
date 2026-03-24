@@ -73,6 +73,40 @@ def generate_upload_url(
     return upload_url, storage_key
 
 
+def generate_presigned_put_url(*, storage_key: str, content_type: str) -> str:
+    """Generate a presigned PUT URL for a specific storage key."""
+    client = _get_s3_client()
+    url: str = client.generate_presigned_url(
+        "put_object",
+        Params={
+            "Bucket": settings.aws_s3_bucket,
+            "Key": storage_key,
+            "ContentType": content_type,
+        },
+        ExpiresIn=_PRESIGN_EXPIRY,
+    )
+    return url
+
+
+def download_file(storage_key: str) -> bytes:
+    """Download a file from S3/MinIO and return its bytes."""
+    client = _get_s3_client()
+    resp = client.get_object(Bucket=settings.aws_s3_bucket, Key=storage_key)
+    return resp["Body"].read()  # type: ignore[no-any-return]
+
+
+def upload_file(storage_key: str, data: bytes, content_type: str) -> None:
+    """Upload bytes to S3/MinIO."""
+    client = _get_s3_client()
+    client.put_object(
+        Bucket=settings.aws_s3_bucket,
+        Key=storage_key,
+        Body=data,
+        ContentType=content_type,
+    )
+    logger.info("s3_object_uploaded", extra={"storage_key": storage_key})
+
+
 def generate_download_url(*, storage_key: str) -> str:
     """Generate a presigned GET URL for document download (15-minute expiry)."""
     client = _get_s3_client()

@@ -173,6 +173,13 @@ export interface FirmUpdate {
   settings?: Record<string, unknown>;
 }
 
+export interface FirmWhiteLabel {
+  logo_url?: string | null;
+  primary_color?: string | null;
+  custom_domain?: string | null;
+  custom_domain_verified?: boolean | null;
+}
+
 export interface Firm {
   id: string;
   name: string;
@@ -180,6 +187,7 @@ export interface Firm {
   type: FirmType;
   subscription_tier: SubscriptionTier;
   settings: Record<string, unknown> | null;
+  white_label: FirmWhiteLabel | null;
   created_at: string;
   updated_at: string;
 }
@@ -961,6 +969,7 @@ export interface DistributionSummaryResponse {
 export interface PortalMatterBrief {
   matter_id: string;
   firm_id: string;
+  firm_slug: string;
   decedent_name: string;
   phase: MatterPhase;
   firm_name: string;
@@ -1127,4 +1136,413 @@ export interface EventFilters {
   per_page?: number;
   entity_type?: string;
   action?: string;
+}
+
+// ─── Billing / Subscriptions ────────────────────────────────────────────────
+
+export type SubscriptionStatus =
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'unpaid'
+  | 'incomplete'
+  | 'paused';
+
+export type BillingInterval = 'month' | 'year';
+
+export interface TierLimits {
+  max_matters: number;
+  max_users: number;
+  monthly_price_cents: number;
+  annual_price_cents: number;
+  stripe_monthly_price_id?: string | null;
+  stripe_annual_price_id?: string | null;
+}
+
+export interface SubscriptionInfo {
+  id: string;
+  firm_id: string;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  billing_interval: BillingInterval;
+  stripe_subscription_id?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at?: string | null;
+  trial_end?: string | null;
+  grace_period_end?: string | null;
+  last_payment_error?: string | null;
+  failed_payment_count: number;
+  matter_count: number;
+  user_count: number;
+  last_invoice_amount?: number | null;
+  last_invoice_paid_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageInfo {
+  matter_count: number;
+  matter_limit: number;
+  user_count: number;
+  user_limit: number;
+}
+
+export interface BillingOverview {
+  subscription: SubscriptionInfo | null;
+  tier_limits: Record<string, TierLimits>;
+  usage: UsageInfo;
+}
+
+export interface CheckoutSessionResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface PortalSessionResponse {
+  portal_url: string;
+}
+
+export interface Invoice {
+  id: string;
+  amount_due: number;
+  amount_paid: number;
+  currency: string;
+  status?: string | null;
+  invoice_url?: string | null;
+  invoice_pdf?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  created?: string | null;
+}
+
+export interface InvoiceListResponse {
+  invoices: Invoice[];
+  has_more: boolean;
+}
+
+export interface CreateCheckoutRequest {
+  tier: string;
+  billing_interval?: string;
+  success_url?: string;
+  cancel_url?: string;
+}
+
+export interface CreatePortalSessionRequest {
+  return_url?: string;
+}
+
+// ─── Integrations ───────────────────────────────────────────────────────────
+
+export type IntegrationProvider = 'clio' | 'quickbooks' | 'xero' | 'docusign';
+export type IntegrationConnectionStatus = 'connected' | 'disconnected' | 'error' | 'pending';
+export type SyncStatusType = 'idle' | 'syncing' | 'success' | 'failed';
+
+export interface IntegrationConnection {
+  id: string;
+  firm_id: string;
+  provider: IntegrationProvider;
+  status: IntegrationConnectionStatus;
+  external_account_id?: string | null;
+  external_account_name?: string | null;
+  last_sync_at?: string | null;
+  last_sync_status: SyncStatusType;
+  last_sync_error?: string | null;
+  settings: Record<string, unknown>;
+  connected_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntegrationListResponse {
+  connections: IntegrationConnection[];
+}
+
+export interface OAuthInitResponse {
+  authorize_url: string;
+  state: string;
+}
+
+export interface SyncRequest {
+  resource: 'matters' | 'time_entries' | 'contacts' | 'distributions' | 'transactions' | 'account_balances';
+  direction?: string;
+  matter_id?: string;
+}
+
+export interface SyncResultResponse {
+  resource: string;
+  direction: string;
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+  synced_at?: string | null;
+}
+
+export interface ClioSettingsUpdate {
+  auto_sync_matters?: boolean;
+  auto_sync_time_entries?: boolean;
+  auto_sync_contacts?: boolean;
+  sync_interval_minutes?: number;
+  default_practice_area?: string;
+}
+
+export interface QBAccountBalance {
+  qbo_id: string;
+  name: string;
+  account_type: string;
+  account_sub_type: string;
+  current_balance: number;
+  currency: string;
+  active: boolean;
+}
+
+export interface QBBalancesResponse {
+  resource: string;
+  direction: string;
+  accounts: QBAccountBalance[];
+  errors: string[];
+  synced_at?: string | null;
+}
+
+export interface DisconnectResponse {
+  disconnected: boolean;
+  provider: string;
+}
+
+// ─── DocuSign / Signatures ──────────────────────────────────────────────────
+
+export type SignatureRequestStatus =
+  | 'draft' | 'sent' | 'delivered' | 'signed'
+  | 'completed' | 'declined' | 'voided' | 'expired';
+
+export type SignatureRequestType =
+  | 'distribution_consent' | 'beneficiary_acknowledgment'
+  | 'executor_oath' | 'general';
+
+export interface SignerInfo {
+  email: string;
+  name: string;
+  role?: string;
+  stakeholder_id?: string;
+}
+
+export interface SendForSignatureRequest {
+  document_id: string;
+  request_type?: SignatureRequestType;
+  subject: string;
+  message?: string;
+  signers: SignerInfo[];
+}
+
+export interface SignatureRequest {
+  id: string;
+  matter_id: string;
+  document_id?: string | null;
+  request_type: SignatureRequestType;
+  status: SignatureRequestStatus;
+  envelope_id?: string | null;
+  subject: string;
+  message?: string | null;
+  signers: Array<{
+    email: string;
+    name: string;
+    role: string;
+    status?: string | null;
+    signed_at?: string | null;
+    stakeholder_id?: string | null;
+  }>;
+  sent_by: string;
+  sent_at?: string | null;
+  completed_at?: string | null;
+  voided_at?: string | null;
+  expires_at?: string | null;
+  signed_document_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SignatureRequestListResponse {
+  data: SignatureRequest[];
+  total: number;
+}
+
+export interface VoidEnvelopeRequest {
+  reason?: string;
+}
+
+// ─── White-Label / Branding ─────────────────────────────────────────────────
+
+export interface WhiteLabelConfig {
+  logo_url?: string | null;
+  logo_dark_url?: string | null;
+  favicon_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
+  firm_display_name?: string | null;
+  portal_welcome_text?: string | null;
+  email_footer_text?: string | null;
+  custom_domain?: string | null;
+  custom_domain_verified?: boolean;
+  powered_by_visible?: boolean;
+}
+
+export interface WhiteLabelUpdate {
+  logo_url?: string | null;
+  logo_dark_url?: string | null;
+  favicon_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
+  firm_display_name?: string | null;
+  portal_welcome_text?: string | null;
+  email_footer_text?: string | null;
+  custom_domain?: string | null;
+  powered_by_visible?: boolean;
+}
+
+export interface LogoUploadResponse {
+  upload_url: string;
+  logo_url: string;
+  field: string;
+}
+
+// ─── Enterprise SSO ─────────────────────────────────────────────────────────
+
+export interface SSOConfig {
+  id: string;
+  firm_id: string;
+  protocol: 'saml' | 'oidc';
+  saml_metadata_url?: string | null;
+  saml_entity_id?: string | null;
+  saml_sso_url?: string | null;
+  oidc_discovery_url?: string | null;
+  oidc_client_id?: string | null;
+  auth0_connection_id?: string | null;
+  auth0_connection_name?: string | null;
+  enabled: boolean;
+  enforce_sso: boolean;
+  auto_provision: boolean;
+  default_role: string;
+  allowed_domains: string[];
+  verified: boolean;
+  verified_at?: string | null;
+  last_login_at?: string | null;
+  configured_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SSOConfigCreate {
+  protocol: 'saml' | 'oidc';
+  saml_metadata_url?: string;
+  saml_metadata_xml?: string;
+  oidc_discovery_url?: string;
+  oidc_client_id?: string;
+  oidc_client_secret?: string;
+  enforce_sso?: boolean;
+  auto_provision?: boolean;
+  default_role?: string;
+  allowed_domains?: string[];
+}
+
+export interface SSOConfigUpdate {
+  enabled?: boolean;
+  enforce_sso?: boolean;
+  auto_provision?: boolean;
+  default_role?: string;
+  allowed_domains?: string[];
+  saml_metadata_url?: string;
+  oidc_discovery_url?: string;
+  oidc_client_id?: string;
+  oidc_client_secret?: string;
+}
+
+export interface SSOLoginUrlResponse {
+  login_url: string;
+  connection_name: string;
+  protocol: string;
+}
+
+// ─── Developer API Keys ─────────────────────────────────────────────────────
+
+export interface APIKey {
+  id: string;
+  firm_id: string;
+  name: string;
+  description?: string | null;
+  key_prefix: string;
+  scopes: string[];
+  rate_limit_per_minute: number;
+  is_active: boolean;
+  last_used_at?: string | null;
+  expires_at?: string | null;
+  created_by: string;
+  total_requests: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface APIKeyCreate {
+  name: string;
+  description?: string;
+  scopes?: string[];
+  rate_limit_per_minute?: number;
+  expires_at?: string;
+}
+
+export interface APIKeyCreatedResponse {
+  key: APIKey;
+  raw_key: string;
+}
+
+// ─── Webhooks ────────────────────────────────────────────────────────────────
+
+export interface Webhook {
+  id: string;
+  firm_id: string;
+  url: string;
+  description?: string | null;
+  // secret is NOT returned in list responses — only at creation/rotation
+  events: string[];
+  is_active: boolean;
+  last_triggered_at?: string | null;
+  failure_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WebhookCreatedResponse extends Webhook {
+  secret: string; // Only returned at creation and secret rotation
+}
+
+export interface WebhookCreate {
+  url: string;
+  events: string[];
+  description?: string;
+}
+
+export interface WebhookUpdate {
+  url?: string;
+  events?: string[];
+  description?: string;
+  is_active?: boolean;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  webhook_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  status_code?: number | null;
+  response_body?: string | null;
+  error_message?: string | null;
+  success: boolean;
+  duration_ms?: number | null;
+  attempt: number;
+  created_at: string;
 }

@@ -1,5 +1,6 @@
 from app.models.ai_feedback import AIFeedback
 from app.models.ai_usage_logs import AIUsageLog
+from app.models.api_keys import APIKey
 from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
 from app.models.base import BaseModel
@@ -16,6 +17,7 @@ from app.models.enums import (
     ActorType,
     AssetStatus,
     AssetType,
+    BillingInterval,
     CommunicationType,
     CommunicationVisibility,
     DeadlineSource,
@@ -28,12 +30,19 @@ from app.models.enums import (
     FirmRole,
     FirmType,
     FundingStatus,
+    IntegrationProvider,
+    IntegrationStatus,
     InviteStatus,
     MatterPhase,
     MatterStatus,
     OwnershipType,
+    SignatureRequestStatus,
+    SignatureRequestType,
     StakeholderRole,
+    SubscriptionStatus,
     SubscriptionTier,
+    SyncDirection,
+    SyncStatus,
     TaskPhase,
     TaskPriority,
     TaskStatus,
@@ -42,14 +51,19 @@ from app.models.enums import (
 from app.models.events import Event
 from app.models.firm_memberships import FirmMembership
 from app.models.firms import Firm
+from app.models.integration_connections import IntegrationConnection
 from app.models.matters import Matter
+from app.models.signature_requests import SignatureRequest
+from app.models.sso_configs import SSOConfig
 from app.models.stakeholders import Stakeholder
+from app.models.subscriptions import Subscription
 from app.models.task_comments import TaskComment
 from app.models.task_dependencies import TaskDependency
 from app.models.task_documents import task_documents
 from app.models.tasks import Task
 from app.models.time_entries import TimeEntry
 from app.models.users import User
+from app.models.webhooks import Webhook, WebhookDelivery
 
 __all__ = [
     # Enums
@@ -70,7 +84,9 @@ __all__ = [
     "MatterStatus",
     "OwnershipType",
     "StakeholderRole",
+    "SubscriptionStatus",
     "SubscriptionTier",
+    "BillingInterval",
     "TaskPhase",
     "TaskPriority",
     "TaskStatus",
@@ -105,4 +121,17 @@ __all__ = [
     "TimeEntry",
     "AIUsageLog",
     "AIFeedback",
+    "Subscription",
+    "SignatureRequest",
+    "SSOConfig",
+    "IntegrationConnection",
+    "APIKey",
+    "Webhook",
+    "WebhookDelivery",
+    "SignatureRequestStatus",
+    "SignatureRequestType",
+    "IntegrationProvider",
+    "IntegrationStatus",
+    "SyncDirection",
+    "SyncStatus",
 ]

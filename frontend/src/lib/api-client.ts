@@ -6,6 +6,38 @@
  */
 
 import type {
+  APIKey,
+  APIKeyCreate,
+  APIKeyCreatedResponse,
+  SSOConfig,
+  SSOConfigCreate,
+  SSOConfigUpdate,
+  Webhook,
+  WebhookCreate,
+  WebhookCreatedResponse,
+  WebhookDelivery,
+  WebhookUpdate,
+  WhiteLabelConfig,
+  WhiteLabelUpdate,
+  LogoUploadResponse,
+  BillingOverview,
+  CheckoutSessionResponse,
+  ClioSettingsUpdate,
+  CreateCheckoutRequest,
+  CreatePortalSessionRequest,
+  DisconnectResponse,
+  IntegrationConnection,
+  IntegrationListResponse,
+  InvoiceListResponse,
+  OAuthInitResponse,
+  PortalSessionResponse,
+  SendForSignatureRequest,
+  SignatureRequest,
+  SignatureRequestListResponse,
+  SyncRequest,
+  SyncResultResponse,
+  UsageInfo,
+  VoidEnvelopeRequest,
   AcceptInviteResponse,
   AIAnomalyResponse,
   AIUsageStats,
@@ -312,6 +344,118 @@ export class ApiClient {
     membershipId: string,
   ): Promise<void> {
     return this.del(`/firms/${firmId}/members/${membershipId}`);
+  }
+
+  // ─── Branding ────────────────────────────────────────────────────────
+
+  async getBranding(firmId: string): Promise<WhiteLabelConfig> {
+    return this.get(`/firms/${firmId}/branding`);
+  }
+
+  async updateBranding(
+    firmId: string,
+    data: WhiteLabelUpdate,
+  ): Promise<WhiteLabelConfig> {
+    return this.patch(`/firms/${firmId}/branding`, data);
+  }
+
+  // ─── SSO ──────────────────────────────────────────────────────────
+
+  async getSSOConfig(firmId: string): Promise<SSOConfig | null> {
+    return this.get(`/firms/${firmId}/sso`);
+  }
+
+  async createSSOConfig(firmId: string, data: SSOConfigCreate): Promise<SSOConfig> {
+    return this.post(`/firms/${firmId}/sso`, data);
+  }
+
+  async updateSSOConfig(firmId: string, data: SSOConfigUpdate): Promise<SSOConfig> {
+    return this.patch(`/firms/${firmId}/sso`, data);
+  }
+
+  async deleteSSOConfig(firmId: string): Promise<void> {
+    return this.del(`/firms/${firmId}/sso`);
+  }
+
+  async enableSSO(firmId: string): Promise<SSOConfig> {
+    return this.post(`/firms/${firmId}/sso/enable`);
+  }
+
+  async disableSSO(firmId: string): Promise<SSOConfig> {
+    return this.post(`/firms/${firmId}/sso/disable`);
+  }
+
+  // ─── API Keys ───────────────────────────────────────────────────────
+
+  async listAPIKeys(firmId: string): Promise<APIKey[]> {
+    return this.get(`/firms/${firmId}/developer/api-keys`);
+  }
+
+  async createAPIKey(firmId: string, data: APIKeyCreate): Promise<APIKeyCreatedResponse> {
+    return this.post(`/firms/${firmId}/developer/api-keys`, data);
+  }
+
+  async revokeAPIKey(firmId: string, keyId: string): Promise<APIKey> {
+    return this.post(`/firms/${firmId}/developer/api-keys/${keyId}/revoke`);
+  }
+
+  async regenerateAPIKey(firmId: string, keyId: string): Promise<APIKeyCreatedResponse> {
+    return this.post(`/firms/${firmId}/developer/api-keys/${keyId}/regenerate`);
+  }
+
+  async deleteAPIKey(firmId: string, keyId: string): Promise<void> {
+    return this.del(`/firms/${firmId}/developer/api-keys/${keyId}`);
+  }
+
+  // ─── Webhooks ───────────────────────────────────────────────────────
+
+  async listWebhooks(firmId: string): Promise<Webhook[]> {
+    return this.get(`/firms/${firmId}/developer/webhooks`);
+  }
+
+  async createWebhook(firmId: string, data: WebhookCreate): Promise<WebhookCreatedResponse> {
+    return this.post(`/firms/${firmId}/developer/webhooks`, data);
+  }
+
+  async updateWebhook(firmId: string, webhookId: string, data: WebhookUpdate): Promise<Webhook> {
+    return this.patch(`/firms/${firmId}/developer/webhooks/${webhookId}`, data);
+  }
+
+  async deleteWebhook(firmId: string, webhookId: string): Promise<void> {
+    return this.del(`/firms/${firmId}/developer/webhooks/${webhookId}`);
+  }
+
+  async testWebhook(firmId: string, webhookId: string): Promise<WebhookDelivery> {
+    return this.post(`/firms/${firmId}/developer/webhooks/${webhookId}/test`);
+  }
+
+  async rotateWebhookSecret(firmId: string, webhookId: string): Promise<Webhook> {
+    return this.post(`/firms/${firmId}/developer/webhooks/${webhookId}/rotate-secret`);
+  }
+
+  async listWebhookDeliveries(
+    firmId: string,
+    webhookId: string,
+    limit = 50,
+    offset = 0,
+  ): Promise<WebhookDelivery[]> {
+    return this.get(
+      `/firms/${firmId}/developer/webhooks/${webhookId}/deliveries?limit=${limit}&offset=${offset}`,
+    );
+  }
+
+  async getSupportedWebhookEvents(firmId: string): Promise<{ events: string[] }> {
+    return this.get(`/firms/${firmId}/developer/webhooks/events`);
+  }
+
+  async getLogoUploadUrl(
+    firmId: string,
+    field: string = 'logo_url',
+    contentType: string = 'image/png',
+  ): Promise<LogoUploadResponse> {
+    return this.post(
+      `/firms/${firmId}/branding/logo-upload?field=${field}&content_type=${contentType}`,
+    );
   }
 
   // ─── Matters ──────────────────────────────────────────────────────────
@@ -1096,6 +1240,161 @@ export class ApiClient {
   ): Promise<PortalMessageItem> {
     return this.post(
       `/portal/matters/${matterId}/messages/${commId}/acknowledge`,
+    );
+  }
+
+  // ─── Billing ──────────────────────────────────────────────────────────
+
+  private billingBase(firmId: string) {
+    return `/firms/${firmId}/billing`;
+  }
+
+  async getBillingOverview(firmId: string): Promise<BillingOverview> {
+    return this.get(this.billingBase(firmId));
+  }
+
+  async createCheckoutSession(
+    firmId: string,
+    data: CreateCheckoutRequest,
+  ): Promise<CheckoutSessionResponse> {
+    return this.post(`${this.billingBase(firmId)}/checkout`, data);
+  }
+
+  async createPortalSession(
+    firmId: string,
+    data?: CreatePortalSessionRequest,
+  ): Promise<PortalSessionResponse> {
+    return this.post(`${this.billingBase(firmId)}/portal`, data ?? {});
+  }
+
+  async getInvoices(firmId: string): Promise<InvoiceListResponse> {
+    return this.get(`${this.billingBase(firmId)}/invoices`);
+  }
+
+  async getBillingUsage(firmId: string): Promise<UsageInfo> {
+    return this.get(`${this.billingBase(firmId)}/usage`);
+  }
+
+  // ─── Integrations ─────────────────────────────────────────────────────
+
+  private intBase(firmId: string) {
+    return `/firms/${firmId}/integrations`;
+  }
+
+  async getIntegrations(firmId: string): Promise<IntegrationListResponse> {
+    return this.get(this.intBase(firmId));
+  }
+
+  async getClioConnection(firmId: string): Promise<IntegrationConnection | null> {
+    return this.get(`${this.intBase(firmId)}/clio`);
+  }
+
+  async connectClio(firmId: string): Promise<OAuthInitResponse> {
+    return this.post(`${this.intBase(firmId)}/clio/connect`);
+  }
+
+  async disconnectClio(firmId: string): Promise<DisconnectResponse> {
+    return this.post(`${this.intBase(firmId)}/clio/disconnect`);
+  }
+
+  async updateClioSettings(
+    firmId: string,
+    data: ClioSettingsUpdate,
+  ): Promise<IntegrationConnection> {
+    return this.patch(`${this.intBase(firmId)}/clio/settings`, data);
+  }
+
+  async syncClio(
+    firmId: string,
+    data: SyncRequest,
+  ): Promise<SyncResultResponse> {
+    return this.post(`${this.intBase(firmId)}/clio/sync`, data);
+  }
+
+  // ─── DocuSign ─────────────────────────────────────────────────────────
+
+  async getDocuSignConnection(firmId: string): Promise<IntegrationConnection | null> {
+    return this.get(`${this.intBase(firmId)}/docusign`);
+  }
+
+  async connectDocuSign(firmId: string): Promise<OAuthInitResponse> {
+    return this.post(`${this.intBase(firmId)}/docusign/connect`);
+  }
+
+  async disconnectDocuSign(firmId: string): Promise<DisconnectResponse> {
+    return this.post(`${this.intBase(firmId)}/docusign/disconnect`);
+  }
+
+  async sendForSignature(
+    firmId: string,
+    matterId: string,
+    data: SendForSignatureRequest,
+  ): Promise<SignatureRequest> {
+    return this.post(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/send`,
+      data,
+    );
+  }
+
+  async getSignatureRequests(
+    firmId: string,
+    matterId: string,
+  ): Promise<SignatureRequestListResponse> {
+    return this.get(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests`,
+    );
+  }
+
+  async getSignatureRequest(
+    firmId: string,
+    matterId: string,
+    requestId: string,
+  ): Promise<SignatureRequest> {
+    return this.get(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests/${requestId}`,
+    );
+  }
+
+  async refreshSignatureStatus(
+    firmId: string,
+    matterId: string,
+    requestId: string,
+  ): Promise<SignatureRequest> {
+    return this.post(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests/${requestId}/refresh`,
+    );
+  }
+
+  // ─── QuickBooks ────────────────────────────────────────────────────
+
+  async getQuickBooksConnection(firmId: string): Promise<IntegrationConnection | null> {
+    return this.get(`${this.intBase(firmId)}/quickbooks`);
+  }
+
+  async connectQuickBooks(firmId: string): Promise<OAuthInitResponse> {
+    return this.post(`${this.intBase(firmId)}/quickbooks/connect`);
+  }
+
+  async disconnectQuickBooks(firmId: string): Promise<DisconnectResponse> {
+    return this.post(`${this.intBase(firmId)}/quickbooks/disconnect`);
+  }
+
+  async syncQuickBooks(
+    firmId: string,
+    data: SyncRequest,
+  ): Promise<SyncResultResponse> {
+    return this.post(`${this.intBase(firmId)}/quickbooks/sync`, data);
+  }
+
+  async voidSignatureRequest(
+    firmId: string,
+    matterId: string,
+    requestId: string,
+    data?: VoidEnvelopeRequest,
+  ): Promise<SignatureRequest> {
+    return this.post(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests/${requestId}/void`,
+      data ?? {},
     );
   }
 }

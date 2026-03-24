@@ -10,6 +10,27 @@ export {
   useInviteFirmMember,
   useUpdateFirmMember,
   useRemoveFirmMember,
+  // Branding
+  useFirmBranding,
+  useUpdateBranding,
+  // API Keys
+  useAPIKeys,
+  useCreateAPIKey,
+  useRevokeAPIKey,
+  useDeleteAPIKey,
+  // Webhooks
+  useWebhooks,
+  useCreateWebhook,
+  useDeleteWebhook,
+  useTestWebhook,
+  useWebhookDeliveries,
+  // SSO
+  useSSOConfig,
+  useCreateSSOConfig,
+  useUpdateSSOConfig,
+  useDeleteSSOConfig,
+  useEnableSSO,
+  useDisableSSO,
   // Matters
   useMatters,
   usePortfolio,
@@ -80,6 +101,29 @@ export {
   // Disputes
   useUpdateDisputeStatus,
   useActiveDisputes,
+  // Billing
+  useBillingOverview,
+  useBillingInvoices,
+  useCreateCheckout,
+  useCreatePortalSession,
+  // Integrations — Clio
+  useClioConnection,
+  useConnectClio,
+  useDisconnectClio,
+  useUpdateClioSettings,
+  useSyncClio,
+  // Integrations — DocuSign
+  useDocuSignConnection,
+  useConnectDocuSign,
+  useDisconnectDocuSign,
+  useSignatureRequests,
+  useSendForSignature,
+  useVoidSignatureRequest,
+  // Integrations — QuickBooks
+  useQuickBooksConnection,
+  useConnectQuickBooks,
+  useDisconnectQuickBooks,
+  useSyncQuickBooks,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

@@ -8,10 +8,24 @@ import {
 } from "@tanstack/react-query";
 import { useApi } from "./use-api";
 import type {
+  APIKeyCreate,
+  SSOConfigCreate,
+  SSOConfigUpdate,
+  WebhookCreate,
+  WebhookUpdate,
+  WhiteLabelUpdate,
   AssetCreate,
   AssetFilters,
   AssetUpdate,
   AssetValuation,
+  BillingOverview,
+  ClioSettingsUpdate,
+  CreateCheckoutRequest,
+  CreatePortalSessionRequest,
+  InvoiceListResponse,
+  SendForSignatureRequest,
+  SyncRequest,
+  VoidEnvelopeRequest,
   CommunicationCreate,
   CommunicationFilters,
   DeadlineCreate,
@@ -48,6 +62,12 @@ export const queryKeys = {
   firms: ["firms"] as const,
   firm: (firmId: string) => ["firms", firmId] as const,
   firmMembers: (firmId: string) => ["firms", firmId, "members"] as const,
+  firmBranding: (firmId: string) => ["firms", firmId, "branding"] as const,
+  ssoConfig: (firmId: string) => ["firms", firmId, "sso"] as const,
+  apiKeys: (firmId: string) => ["firms", firmId, "api-keys"] as const,
+  webhooks: (firmId: string) => ["firms", firmId, "webhooks"] as const,
+  webhookDeliveries: (firmId: string, webhookId: string) =>
+    ["firms", firmId, "webhooks", webhookId, "deliveries"] as const,
   matters: (firmId: string, filters?: MatterFilters) =>
     ["firms", firmId, "matters", filters] as const,
   matterDashboard: (firmId: string, matterId: string) =>
@@ -93,6 +113,21 @@ export const queryKeys = {
     ["firms", firmId, "matters", matterId, "distributions"] as const,
   distributionSummary: (firmId: string, matterId: string) =>
     ["firms", firmId, "matters", matterId, "distributions", "summary"] as const,
+  billing: (firmId: string) => ["firms", firmId, "billing"] as const,
+  billingInvoices: (firmId: string) =>
+    ["firms", firmId, "billing", "invoices"] as const,
+  billingUsage: (firmId: string) =>
+    ["firms", firmId, "billing", "usage"] as const,
+  integrations: (firmId: string) =>
+    ["firms", firmId, "integrations"] as const,
+  clioConnection: (firmId: string) =>
+    ["firms", firmId, "integrations", "clio"] as const,
+  docusignConnection: (firmId: string) =>
+    ["firms", firmId, "integrations", "docusign"] as const,
+  quickbooksConnection: (firmId: string) =>
+    ["firms", firmId, "integrations", "quickbooks"] as const,
+  signatureRequests: (firmId: string, matterId: string) =>
+    ["firms", firmId, "matters", matterId, "signature-requests"] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -170,6 +205,188 @@ export function useRemoveFirmMember(firmId: string) {
     mutationFn: (membershipId: string) => api.removeFirmMember(firmId, membershipId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
+  });
+}
+
+// ─── Branding ───────────────────────────────────────────────────────────────
+
+export function useFirmBranding(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.firmBranding(firmId),
+    queryFn: () => api.getBranding(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useUpdateBranding(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WhiteLabelUpdate) => api.updateBranding(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmBranding(firmId) });
+      qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+    },
+  });
+}
+
+// ─── API Keys ────────────────────────────────────────────────────────────────
+
+export function useAPIKeys(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.apiKeys(firmId),
+    queryFn: () => api.listAPIKeys(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateAPIKey(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: APIKeyCreate) => api.createAPIKey(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.apiKeys(firmId) });
+    },
+  });
+}
+
+export function useRevokeAPIKey(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (keyId: string) => api.revokeAPIKey(firmId, keyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.apiKeys(firmId) });
+    },
+  });
+}
+
+export function useDeleteAPIKey(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (keyId: string) => api.deleteAPIKey(firmId, keyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.apiKeys(firmId) });
+    },
+  });
+}
+
+// ─── Webhooks ────────────────────────────────────────────────────────────────
+
+export function useWebhooks(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.webhooks(firmId),
+    queryFn: () => api.listWebhooks(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateWebhook(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WebhookCreate) => api.createWebhook(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.webhooks(firmId) });
+    },
+  });
+}
+
+export function useDeleteWebhook(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (webhookId: string) => api.deleteWebhook(firmId, webhookId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.webhooks(firmId) });
+    },
+  });
+}
+
+export function useTestWebhook(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (webhookId: string) => api.testWebhook(firmId, webhookId),
+  });
+}
+
+export function useWebhookDeliveries(firmId: string, webhookId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.webhookDeliveries(firmId, webhookId),
+    queryFn: () => api.listWebhookDeliveries(firmId, webhookId),
+    enabled: !!firmId && !!webhookId,
+  });
+}
+
+// ─── SSO ────────────────────────────────────────────────────────────────────
+
+export function useSSOConfig(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.ssoConfig(firmId),
+    queryFn: () => api.getSSOConfig(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateSSOConfig(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SSOConfigCreate) => api.createSSOConfig(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useUpdateSSOConfig(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SSOConfigUpdate) => api.updateSSOConfig(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useDeleteSSOConfig(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deleteSSOConfig(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useEnableSSO(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.enableSSO(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useDisableSSO(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disableSSO(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
     },
   });
 }
@@ -975,6 +1192,208 @@ export function useAcknowledgeDistribution(firmId: string, matterId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.distributions(firmId, matterId) });
       qc.invalidateQueries({ queryKey: queryKeys.distributionSummary(firmId, matterId) });
+    },
+  });
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+export function useBillingOverview(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.billing(firmId),
+    queryFn: () => api.getBillingOverview(firmId),
+    enabled: !!firmId,
+    // Short stale time so data refetches when returning from Stripe
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useBillingInvoices(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.billingInvoices(firmId),
+    queryFn: () => api.getInvoices(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useCreateCheckout(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data: CreateCheckoutRequest) =>
+      api.createCheckoutSession(firmId, data),
+  });
+}
+
+export function useCreatePortalSession(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data?: CreatePortalSessionRequest) =>
+      api.createPortalSession(firmId, data),
+  });
+}
+
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
+export function useClioConnection(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.clioConnection(firmId),
+    queryFn: () => api.getClioConnection(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectClio(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.connectClio(firmId),
+  });
+}
+
+export function useDisconnectClio(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectClio(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
+  });
+}
+
+export function useUpdateClioSettings(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ClioSettingsUpdate) =>
+      api.updateClioSettings(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
+  });
+}
+
+export function useSyncClio(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SyncRequest) => api.syncClio(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
+  });
+}
+
+// ─── DocuSign ─────────────────────────────────────────────────────────────────
+
+export function useDocuSignConnection(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.docusignConnection(firmId),
+    queryFn: () => api.getDocuSignConnection(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectDocuSign(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.connectDocuSign(firmId),
+  });
+}
+
+export function useDisconnectDocuSign(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectDocuSign(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.docusignConnection(firmId) });
+    },
+  });
+}
+
+export function useSignatureRequests(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.signatureRequests(firmId, matterId),
+    queryFn: () => api.getSignatureRequests(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useSendForSignature(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SendForSignatureRequest) =>
+      api.sendForSignature(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.signatureRequests(firmId, matterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.documents(firmId, matterId) });
+    },
+  });
+}
+
+export function useVoidSignatureRequest(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ requestId, data }: { requestId: string; data?: VoidEnvelopeRequest }) =>
+      api.voidSignatureRequest(firmId, matterId, requestId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.signatureRequests(firmId, matterId) });
+    },
+  });
+}
+
+// ─── QuickBooks ───────────────────────────────────────────────────────────────
+
+export function useQuickBooksConnection(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.quickbooksConnection(firmId),
+    queryFn: () => api.getQuickBooksConnection(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectQuickBooks(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.connectQuickBooks(firmId),
+  });
+}
+
+export function useDisconnectQuickBooks(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectQuickBooks(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.quickbooksConnection(firmId) });
+    },
+  });
+}
+
+export function useSyncQuickBooks(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SyncRequest) => api.syncQuickBooks(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.quickbooksConnection(firmId) });
     },
   });
 }

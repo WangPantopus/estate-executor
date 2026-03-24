@@ -44,6 +44,34 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # Clio Integration
+    clio_client_id: str = ""
+    clio_client_secret: str = ""
+    clio_redirect_uri: str = ""  # e.g. http://localhost:8000/api/v1/integrations/clio/callback
+    clio_webhook_secret: str = ""
+    clio_api_base_url: str = "https://app.clio.com"
+    clio_auth_url: str = "https://app.clio.com/oauth/authorize"
+    clio_token_url: str = "https://app.clio.com/oauth/token"
+
+    # QuickBooks Online Integration
+    qbo_client_id: str = ""
+    qbo_client_secret: str = ""
+    qbo_redirect_uri: str = ""
+    qbo_webhook_verifier: str = ""
+    qbo_environment: str = "sandbox"  # "sandbox" or "production"
+    qbo_auth_url: str = "https://appcenter.intuit.com/connect/oauth2"
+    qbo_token_url: str = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
+
+    # DocuSign Integration
+    docusign_integration_key: str = ""  # OAuth client ID
+    docusign_secret_key: str = ""
+    docusign_redirect_uri: str = ""
+    docusign_webhook_secret: str = ""  # HMAC key for Connect
+    docusign_base_url: str = "https://account-d.docusign.com"  # demo; prod: account.docusign.com
+    docusign_auth_url: str = "https://account-d.docusign.com/oauth/auth"
+    docusign_token_url: str = "https://account-d.docusign.com/oauth/token"
+    docusign_api_base_url: str = "https://demo.docusign.net/restapi"  # prod: na*.docusign.net
+
     # Email
     resend_api_key: str = ""
     email_from: str = "Estate Executor <notifications@estate-executor.com>"

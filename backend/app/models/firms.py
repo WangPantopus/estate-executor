@@ -12,6 +12,7 @@ from app.models.enums import FirmType, SubscriptionTier
 if TYPE_CHECKING:
     from app.models.firm_memberships import FirmMembership
     from app.models.matters import Matter
+    from app.models.subscriptions import Subscription
 
 
 class Firm(BaseModel):
@@ -35,4 +36,7 @@ class Firm(BaseModel):
     )
     matters: Mapped[list[Matter]] = relationship(
         back_populates="firm", cascade="all, delete-orphan"
+    )
+    subscription: Mapped[Subscription | None] = relationship(
+        back_populates="firm", cascade="all, delete-orphan", uselist=False
     )

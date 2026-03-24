@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, User, ChevronDown, Home, FileText, MessageSquare } from "lucide-react";
@@ -15,6 +15,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SocketProvider } from "@/components/providers/SocketProvider";
 import { ToastProvider } from "@/components/layout/Toaster";
+import { usePortalMatters } from "@/hooks/use-portal-queries";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface PortalBranding {
+  firm_name: string;
+  logo_url?: string | null;
+  logo_dark_url?: string | null;
+  favicon_url?: string | null;
+  primary_color?: string | null;
+  accent_color?: string | null;
+  portal_welcome_text?: string | null;
+  powered_by_visible?: boolean;
+}
+
+const DEFAULT_BRANDING: PortalBranding = {
+  firm_name: "Estate Executor",
+  logo_url: null,
+  primary_color: null,
+  powered_by_visible: true,
+};
 
 // ─── Portal nav items ─────────────────────────────────────────────────────────
 
@@ -42,28 +63,57 @@ function extractMatterId(pathname: string): string | null {
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const matterId = extractMatterId(pathname);
+  const { data: mattersData } = usePortalMatters();
+  const [branding, setBranding] = useState<PortalBranding>(DEFAULT_BRANDING);
 
-  // Placeholder user info — in production, comes from useCurrentUser
+  // Fetch branding based on the first matter's firm slug
+  useEffect(() => {
+    const firmSlug = mattersData?.matters?.[0]?.firm_slug;
+    if (!firmSlug) return;
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+    fetch(`${apiBase}/portal/branding/${firmSlug}`)
+      .then((r) => (r.ok ? r.json() : DEFAULT_BRANDING))
+      .then((data) => setBranding({ ...DEFAULT_BRANDING, ...data }))
+      .catch(() => {});
+  }, [mattersData?.matters]);
+
   const userName = "Beneficiary";
   const userInitials = "B";
-
   const navItems = matterId ? getPortalNavItems(matterId) : [];
+
+  // Dynamic CSS custom properties for branding colors
+  const brandStyle: React.CSSProperties & Record<string, string> = {};
+  if (branding.primary_color) {
+    brandStyle["--portal-primary"] = branding.primary_color;
+  }
 
   return (
     <ToastProvider>
       <SocketProvider>
-        <div className="flex min-h-screen flex-col bg-background">
+        <div className="flex min-h-screen flex-col bg-background" style={brandStyle}>
           {/* Top navigation bar */}
           <header className="sticky top-0 z-40 border-b border-border/40 bg-white/80 backdrop-blur-md">
             <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-              {/* Left: Logo / estate title */}
+              {/* Left: Logo / firm name */}
               <div className="flex items-center gap-4">
                 <Link href={matterId ? `/portal/${matterId}` : "/portal"} className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-white text-xs font-semibold">
-                    EE
-                  </div>
+                  {branding.logo_url ? (
+                    <img
+                      src={branding.logo_url}
+                      alt={branding.firm_name}
+                      className="h-8 w-auto max-w-[120px] object-contain"
+                    />
+                  ) : (
+                    <div
+                      className="flex size-8 items-center justify-center rounded-lg text-white text-xs font-semibold"
+                      style={{ backgroundColor: branding.primary_color || "var(--primary)" }}
+                    >
+                      {branding.firm_name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <span className="hidden sm:inline text-sm font-medium text-foreground/80">
-                    Estate Executor
+                    {branding.firm_name}
                   </span>
                 </Link>
 
@@ -157,7 +207,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             )}
           </header>
 
-          {/* Page content — generous white space for calm feel */}
+          {/* Page content */}
           <main className="flex-1">
             <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12 animate-in fade-in duration-300">
               {children}
@@ -168,7 +218,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <footer className="border-t border-border/30 bg-muted/20 py-6">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
               <p className="text-center text-xs text-muted-foreground">
-                Powered by Estate Executor OS
+                {branding.powered_by_visible !== false
+                  ? `Powered by Estate Executor OS`
+                  : `\u00A9 ${new Date().getFullYear()} ${branding.firm_name}`}
               </p>
             </div>
           </footer>

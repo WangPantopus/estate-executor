@@ -3,9 +3,12 @@ from fastapi import APIRouter
 from app.api.v1.ai import router as ai_router
 from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.billing import router as billing_router
+from app.api.v1.billing import webhook_router
 from app.api.v1.communications import dispute_flag_router
 from app.api.v1.communications import router as communications_router
 from app.api.v1.deadlines import router as deadlines_router
+from app.api.v1.developer import router as developer_router
 from app.api.v1.distributions import router as distributions_router
 from app.api.v1.documents import router as documents_router
 from app.api.v1.entities import entity_map_router
@@ -13,10 +16,13 @@ from app.api.v1.entities import router as entities_router
 from app.api.v1.events import router as events_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
+from app.api.v1.integrations import router as integrations_router
+from app.api.v1.integrations import webhook_router as integrations_webhook_router
 from app.api.v1.matters import router as matters_router
 from app.api.v1.milestones import router as milestones_router
 from app.api.v1.portal import router as portal_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.sso import router as sso_router
 from app.api.v1.stakeholders import router as stakeholders_router
 from app.api.v1.tasks import router as tasks_router
 from app.api.v1.time_tracking import router as time_tracking_router
@@ -102,6 +108,36 @@ api_router.include_router(
     ai_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/ai",
     tags=["ai"],
+)
+api_router.include_router(
+    billing_router,
+    prefix="/firms/{firm_id}/billing",
+    tags=["billing"],
+)
+api_router.include_router(
+    integrations_router,
+    prefix="/firms/{firm_id}/integrations",
+    tags=["integrations"],
+)
+api_router.include_router(
+    webhook_router,
+    prefix="/webhooks",
+    tags=["webhooks"],
+)
+api_router.include_router(
+    integrations_webhook_router,
+    prefix="/webhooks",
+    tags=["webhooks"],
+)
+api_router.include_router(
+    sso_router,
+    prefix="/firms/{firm_id}/sso",
+    tags=["sso"],
+)
+api_router.include_router(
+    developer_router,
+    prefix="/firms/{firm_id}/developer",
+    tags=["developer"],
 )
 api_router.include_router(
     portal_router,

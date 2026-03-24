@@ -190,3 +190,63 @@ class ActorType(enum.StrEnum):
     user = "user"
     system = "system"
     ai = "ai"
+
+
+class SubscriptionStatus(enum.StrEnum):
+    trialing = "trialing"
+    active = "active"
+    past_due = "past_due"
+    canceled = "canceled"
+    unpaid = "unpaid"
+    incomplete = "incomplete"
+    paused = "paused"
+
+
+class BillingInterval(enum.StrEnum):
+    month = "month"
+    year = "year"
+
+
+class IntegrationProvider(enum.StrEnum):
+    clio = "clio"
+    quickbooks = "quickbooks"
+    xero = "xero"
+    docusign = "docusign"
+
+
+class IntegrationStatus(enum.StrEnum):
+    connected = "connected"
+    disconnected = "disconnected"
+    error = "error"
+    pending = "pending"
+
+
+class SyncDirection(enum.StrEnum):
+    push = "push"
+    pull = "pull"
+    bidirectional = "bidirectional"
+
+
+class SyncStatus(enum.StrEnum):
+    idle = "idle"
+    syncing = "syncing"
+    success = "success"
+    failed = "failed"
+
+
+class SignatureRequestStatus(enum.StrEnum):
+    draft = "draft"
+    sent = "sent"
+    delivered = "delivered"
+    signed = "signed"
+    completed = "completed"
+    declined = "declined"
+    voided = "voided"
+    expired = "expired"
+
+
+class SignatureRequestType(enum.StrEnum):
+    distribution_consent = "distribution_consent"
+    beneficiary_acknowledgment = "beneficiary_acknowledgment"
+    executor_oath = "executor_oath"
+    general = "general"
