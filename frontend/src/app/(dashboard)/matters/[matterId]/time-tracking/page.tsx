@@ -60,11 +60,34 @@ export default function TimeTrackingPage() {
   const entries = entriesData?.data ?? [];
   const tasks = tasksData?.data ?? [];
 
-  const handleExportCsv = () => {
-    window.open(
-      `${API_BASE_URL}/firms/${firmId}/matters/${matterId}/time/export?format=csv`,
-      "_blank"
-    );
+  const handleExportCsv = async () => {
+    try {
+      const token = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("appSession"))
+        ? undefined
+        : undefined;
+
+      const res = await fetch(
+        `${API_BASE_URL}/firms/${firmId}/matters/${matterId}/time/export?format=csv`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "time-tracking-export.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: open in new tab (works if session cookie auth is enabled)
+      window.open(
+        `${API_BASE_URL}/firms/${firmId}/matters/${matterId}/time/export?format=csv`,
+        "_blank"
+      );
+    }
   };
 
   return (
@@ -201,7 +224,7 @@ export default function TimeTrackingPage() {
                   {entries.map((entry: TimeEntry) => (
                     <tr
                       key={entry.id}
-                      className="border-b last:border-0 hover:bg-surface-elevated transition-colors"
+                      className="group border-b last:border-0 hover:bg-surface-elevated transition-colors"
                     >
                       <td className="py-2.5 pr-3 whitespace-nowrap">
                         {formatDate(entry.entry_date)}

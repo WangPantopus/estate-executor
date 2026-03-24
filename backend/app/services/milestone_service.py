@@ -193,10 +193,25 @@ async def fire_milestone_notification(
 
     subject = _get_milestone_subject(milestone_key)
 
+    # Resolve sender_id: use actor_id if provided, otherwise find a matter_admin
+    sender_id = actor_id
+    if sender_id is None:
+        admin_result = await db.execute(
+            select(Stakeholder.id).where(
+                Stakeholder.matter_id == matter_id,
+                Stakeholder.role == StakeholderRole.matter_admin,
+            ).limit(1)
+        )
+        admin_row = admin_result.scalar_one_or_none()
+        if admin_row is None:
+            logger.warning("No matter_admin found for milestone sender", extra={"matter_id": str(matter_id)})
+            return None
+        sender_id = admin_row
+
     # Create the milestone communication record
     comm = Communication(
         matter_id=matter_id,
-        sender_id=actor_id or matter_id,  # system-generated if no actor
+        sender_id=sender_id,
         type=CommunicationType.milestone_notification,
         subject=subject,
         body=defn["description"],

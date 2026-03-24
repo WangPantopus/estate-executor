@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,13 @@ export function LogTimeDialog({
 }: LogTimeDialogProps) {
   const createEntry = useCreateTimeEntry(firmId, matterId);
   const [taskId, setTaskId] = useState(preselectedTaskId || "");
+
+  // Sync preselectedTaskId when dialog opens with a new task
+  useEffect(() => {
+    if (open) {
+      setTaskId(preselectedTaskId || "");
+    }
+  }, [open, preselectedTaskId]);
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
   const [description, setDescription] = useState("");

@@ -447,7 +447,6 @@ async def request_document(
             "target_stakeholder_id": str(target_stakeholder_id),
             "doc_type_needed": doc_type_needed,
             "task_id": str(task_id) if task_id else None,
-            "upload_token": doc_request.upload_token,
         },
     )
 

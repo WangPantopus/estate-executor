@@ -250,6 +250,10 @@ export class ApiClient {
     return this.request<T>('PATCH', path, body);
   }
 
+  private put<T>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>('PUT', path, body);
+  }
+
   private del<T = void>(path: string): Promise<T> {
     return this.request<T>('DELETE', path);
   }
@@ -881,7 +885,7 @@ export class ApiClient {
     matterId: string,
     entryId: string,
   ): Promise<void> {
-    return this.delete(`${this.timeBase(firmId, matterId)}/${entryId}`);
+    return this.del(`${this.timeBase(firmId, matterId)}/${entryId}`);
   }
 
   async getTimeSummary(

@@ -814,8 +814,9 @@ def send_document_upload_complete(
                     "firm_name": firm.name if firm else None,
                     "task_title": doc_request.task.title if doc_request.task else None,
                     "document_url": (
-                        f"{settings.frontend_url}/matters/{matter_id}/documents"
-                        f"?doc={document.id}" if document else ""
+                        f"{settings.frontend_url}/matters/{matter_id}/documents?doc={document.id}"
+                        if document
+                        else ""
                     ),
                 }
 
