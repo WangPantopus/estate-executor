@@ -1,0 +1,95 @@
+# Hawaii — State-specific tasks and deadline rules
+
+tasks:
+  - key: "hi_file_probate_circuit_court"
+    title: "File Petition with Hawaii Circuit Court"
+    description: "File petition for probate with the Circuit Court in the appropriate circuit"
+    instructions: "Hawaii follows the Uniform Probate Code. File the petition with the Circuit Court in the circuit where the decedent was domiciled. Hawaii allows both informal (registrar) and formal (judicial) probate. Informal is appropriate for uncontested matters."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "hi_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $100,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Hawaii allows transfer by affidavit for personal property valued at $100,000 or less, after 30 days from death. No court filing required. This is a simpler alternative to full probate."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "hi_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Hawaii)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "Hawaii requires the personal representative to publish notice to creditors. Publication must appear in a newspaper of general circulation in the circuit. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "hi_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "hi_file_estate_tax"
+    title: "File Hawaii Estate Tax Return"
+    description: "File Hawaii estate tax return if estate exceeds state threshold"
+    instructions: "Hawaii imposes an estate tax on estates exceeding $5.49 million. File the Hawaii estate tax return within 9 months of death. Hawaii's estate tax rates range from 10% to 20%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "hi_creditor_claim_period"
+    title: "Hawaii Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "hi_estate_tax_deadline"
+    title: "Hawaii Estate Tax Return Deadline"
+    description: "Hawaii estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "hi_inventory_deadline"
+    title: "Hawaii Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

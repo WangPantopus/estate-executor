@@ -1,0 +1,95 @@
+# Oregon — State-specific tasks and deadline rules
+
+tasks:
+  - key: "or_file_probate_circuit_court"
+    title: "File Petition with Oregon Circuit Court"
+    description: "File petition for probate with the Circuit Court in the appropriate county"
+    instructions: "File the petition with the Circuit Court in the county where the decedent was domiciled. Oregon has its own probate code. The court will appoint the personal representative and issue letters. Oregon requires the will to be filed promptly."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "or_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $75,000 Personal / $200,000 Real)"
+    description: "Determine if estate qualifies for simplified transfer"
+    instructions: "Oregon allows transfer by affidavit for personal property valued at $75,000 or less and real property valued at $200,000 or less, after a waiting period. This avoids full probate."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "or_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Oregon)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "Oregon requires notice to creditors by publication once a week for three consecutive weeks in a newspaper of general circulation. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "or_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "or_file_estate_tax"
+    title: "File Oregon Estate Tax Return"
+    description: "File Oregon estate tax return if estate exceeds $1 million threshold"
+    instructions: "Oregon imposes an estate tax on estates exceeding $1 million (one of the lowest thresholds in the US). File the Oregon estate tax return within 9 months of death. Oregon's estate tax rates range from 10% to 16%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "or_creditor_claim_period"
+    title: "Oregon Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "or_estate_tax_deadline"
+    title: "Oregon Estate Tax Return Deadline"
+    description: "Oregon estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "or_inventory_deadline"
+    title: "Oregon Inventory Deadline (60 Days)"
+    description: "Inventory must be filed within 60 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

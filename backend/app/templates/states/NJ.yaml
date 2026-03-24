@@ -1,0 +1,94 @@
+# New Jersey — State-specific tasks and deadline rules
+
+tasks:
+  - key: "nj_file_surrogate_court"
+    title: "File with New Jersey Surrogate's Court"
+    description: "File petition for probate with the Surrogate's Court in the appropriate county"
+    instructions: "New Jersey handles probate through the Surrogate's Court in each county. For uncontested matters, the Surrogate can admit the will and issue letters. Contested matters are transferred to the Superior Court (Chancery Division, Probate Part)."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "nj_small_estate"
+    title: "Consider Small Estate (Under $50,000)"
+    description: "Determine if estate qualifies for simplified transfer"
+    instructions: "New Jersey allows simplified transfer for estates with personal property valued at $50,000 or less. The surviving spouse or certain beneficiaries can collect assets with a simple affidavit without full administration."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "nj_publish_notice_creditors"
+    title: "Publish Notice to Creditors (New Jersey)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "New Jersey requires the executor to publish notice to creditors. Publication must appear in a newspaper of general circulation in the county. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "nj_file_surrogate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "nj_file_estate_tax"
+    title: "File New Jersey Estate Tax Return (If Applicable)"
+    description: "New Jersey repealed its estate tax effective January 1, 2018"
+    instructions: "New Jersey repealed its estate tax effective January 1, 2018. However, New Jersey still imposes an inheritance tax on transfers to certain beneficiaries. Class A beneficiaries (spouse, children, parents, grandchildren) are exempt. Class C and D beneficiaries are taxed."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 8
+    dependencies:
+      - "inventory_bank_investment_accounts"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "nj_creditor_claim_period"
+    title: "New Jersey Creditor Claim Period (9 Months)"
+    description: "Creditors generally have 9 months from date of death to file claims"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "nj_inheritance_tax_deadline"
+    title: "New Jersey Inheritance Tax Deadline (8 Months)"
+    description: "New Jersey inheritance tax return due within 8 months of death"
+    relative_to: "date_of_death"
+    offset_months: 8
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "nj_inventory_deadline"
+    title: "New Jersey Inventory Deadline (60 Days)"
+    description: "Inventory should be prepared within 60 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

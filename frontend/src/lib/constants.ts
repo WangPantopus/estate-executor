@@ -95,6 +95,16 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   other: "Other",
 };
 
+/** States with dedicated jurisdiction-specific task templates and deadline rules. */
+export const STATES_WITH_TEMPLATES: Set<string> = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
+  "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
+  "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
+  "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+  "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI",
+  "WY",
+]);
+
 export const MATTER_FLAGS = [
   { key: "multi_state_assets", label: "Multi-state assets" },
   { key: "business_ownership", label: "Business ownership involved" },

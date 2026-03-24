@@ -1,0 +1,94 @@
+# Iowa — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ia_file_probate_district_court"
+    title: "File Petition with Iowa District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "File the petition for probate with the District Court in the county where the decedent was domiciled. Iowa follows the Iowa Probate Code (not UPC). Iowa requires the will to be filed within a reasonable time after death."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ia_small_estate"
+    title: "Consider Small Estate (Under $100,000)"
+    description: "Determine if estate qualifies for real estate affidavit or small succession"
+    instructions: "Iowa allows affidavit transfer for estates with personal property valued at $50,000 or less. For real property valued under $100,000, a simplified real estate affidavit is available. These avoid full probate administration."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ia_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Iowa)"
+    description: "Publish notice in a newspaper once a week for two consecutive weeks"
+    instructions: "Iowa requires notice to creditors by publication once a week for two consecutive weeks in a newspaper of general circulation in the county. The executor must also send notice to known creditors."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ia_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ia_file_inheritance_tax"
+    title: "File Iowa Inheritance Tax Return"
+    description: "File Iowa inheritance tax return — Iowa imposes an inheritance tax (not estate tax)"
+    instructions: "Iowa imposes an inheritance tax (being phased out, fully repealed for deaths after January 1, 2025). For deaths before that date, file the Iowa inheritance tax return within 9 months. Transfers to surviving spouses and lineal descendants/ascendants are exempt. Verify current status of the repeal."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ia_creditor_claim_period"
+    title: "Iowa Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from second publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ia_inheritance_tax_deadline"
+    title: "Iowa Inheritance Tax Return Deadline"
+    description: "Iowa inheritance tax return due within 9 months of death (if applicable)"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ia_inventory_deadline"
+    title: "Iowa Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

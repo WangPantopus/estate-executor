@@ -1,0 +1,85 @@
+# Indiana — State-specific tasks and deadline rules
+
+tasks:
+  - key: "in_file_probate_circuit_court"
+    title: "File Petition with Indiana Circuit/Superior Court"
+    description: "File petition for probate with the appropriate court in the county"
+    instructions: "File the petition for probate with the Circuit Court or Superior Court (depending on county) where the decedent was domiciled. Indiana allows unsupervised administration (no ongoing court oversight) and supervised administration. Unsupervised is preferred for straightforward estates."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "in_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Indiana allows transfer by affidavit for estates with personal property valued at $50,000 or less, after 45 days from death. Real property is excluded. This avoids full probate. File the affidavit with entities holding the decedent's property."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "in_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Indiana)"
+    description: "Publish notice in a newspaper once a week for two consecutive weeks"
+    instructions: "Indiana requires notice to creditors by publication in a newspaper of general circulation in the county once a week for two consecutive weeks. Known creditors must receive individual notice by mail or delivery."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "in_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "in_file_inheritance_tax"
+    title: "File Indiana Inheritance Tax Return (If Applicable)"
+    description: "Indiana repealed its inheritance tax effective January 1, 2013"
+    instructions: "Indiana repealed its inheritance tax for decedents dying after December 31, 2012. No state inheritance tax return is required. However, if the estate is subject to federal estate tax, ensure the federal Form 706 is filed."
+    phase: "tax"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule: null
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "high_value_estate"
+    subtasks: []
+
+deadlines:
+  - key: "in_creditor_claim_period"
+    title: "Indiana Creditor Claim Period (3 Months)"
+    description: "Creditors have 3 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "in_inventory_deadline"
+    title: "Indiana Inventory Deadline (2 Months)"
+    description: "Inventory must be filed within 2 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

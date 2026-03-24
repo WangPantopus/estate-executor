@@ -1,0 +1,69 @@
+# Utah — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ut_file_probate_district_court"
+    title: "File Petition with Utah District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "Utah follows the Uniform Probate Code. File the petition with the District Court in the county where the decedent was domiciled. Informal (registrar) and formal (judicial) probate are available. Informal probate is appropriate for uncontested matters."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ut_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $100,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Utah allows transfer by affidavit for estates with personal property valued at $100,000 or less, after 30 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ut_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Utah)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "Utah requires notice to creditors by publication. The personal representative must publish notice in a newspaper of general circulation in the county and on the Utah Public Notice Website. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ut_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ut_creditor_claim_period"
+    title: "Utah Creditor Claim Period (3 Months)"
+    description: "Creditors have 3 months from publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ut_inventory_deadline"
+    title: "Utah Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

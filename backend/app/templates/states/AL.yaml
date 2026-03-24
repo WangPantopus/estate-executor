@@ -1,0 +1,96 @@
+# Alabama — State-specific tasks and deadline rules
+
+tasks:
+  - key: "al_file_probate_court"
+    title: "File Petition with Alabama Probate Court"
+    description: "File petition for probate or administration with the county Probate Court"
+    instructions: "File the petition for probate with the Probate Court in the county where the decedent was domiciled at death. Alabama probate courts handle all estate matters. If the will is self-proving, no witnesses need to appear."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "al_small_estate_affidavit"
+    title: "Consider Small Estate (Under $36,250)"
+    description: "Determine if estate qualifies for summary distribution without full administration"
+    instructions: "Alabama allows summary distribution for estates with personal property valued at $36,250 or less (after deducting liens and encumbrances). No waiting period is required. File a petition for summary distribution with the Probate Court."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "al_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Alabama)"
+    description: "Publish notice in a newspaper in the county once a week for three consecutive weeks"
+    instructions: "Alabama requires the personal representative to publish notice to creditors once a week for three consecutive weeks in a newspaper in the county where letters were granted. Known creditors must also receive direct notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "al_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "al_file_estate_tax"
+    title: "File Alabama Estate Tax Return (If Applicable)"
+    description: "Alabama repealed its estate tax but may still require a filing for federal credit purposes"
+    instructions: "Alabama repealed its state estate tax effective January 1, 2005. However, if a federal estate tax return (Form 706) is required, a copy may need to be filed with the Alabama Department of Revenue. Confirm current requirements."
+    phase: "tax"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "high_value_estate"
+    subtasks: []
+
+deadlines:
+  - key: "al_creditor_claim_period"
+    title: "Alabama Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "al_inventory_deadline"
+    title: "Alabama Inventory Deadline (2 Months)"
+    description: "Inventory must be filed within 2 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "al_will_contest_period"
+    title: "Alabama Will Contest Period (6 Months)"
+    description: "Will contests must be filed within 6 months of probate"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "mixed_probate_trust"]

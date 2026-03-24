@@ -1,0 +1,94 @@
+# Kentucky — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ky_file_probate_district_court"
+    title: "File Petition with Kentucky District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "File the petition with the District Court in the county where the decedent was domiciled. Kentucky's District Courts have exclusive probate jurisdiction. The will must be produced within a reasonable time."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ky_small_estate"
+    title: "Consider Dispensing with Administration (Under $15,000)"
+    description: "Determine if estate qualifies for simplified process"
+    instructions: "Kentucky allows dispensing with administration for estates with personal property valued at $15,000 or less. The surviving spouse or next of kin can petition for a release of assets without full administration."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ky_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Kentucky)"
+    description: "Publish notice in a newspaper in the county"
+    instructions: "Kentucky requires the executor to publish notice to creditors in a newspaper published in the county. Known creditors must receive individual notice. Creditors generally have 6 months from appointment to file claims."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ky_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ky_file_inheritance_tax"
+    title: "File Kentucky Inheritance Tax Return"
+    description: "Kentucky imposes an inheritance tax on certain beneficiaries"
+    instructions: "Kentucky imposes an inheritance tax on transfers to non-exempt beneficiaries. Class A beneficiaries (spouse, children, parents, siblings) are exempt. Class B and C beneficiaries are taxed at graduated rates. File within 18 months of death."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 18
+    dependencies:
+      - "inventory_bank_investment_accounts"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ky_creditor_claim_period"
+    title: "Kentucky Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from appointment to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ky_inheritance_tax_deadline"
+    title: "Kentucky Inheritance Tax Deadline (18 Months)"
+    description: "Kentucky inheritance tax return due within 18 months of death"
+    relative_to: "date_of_death"
+    offset_months: 18
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ky_inventory_deadline"
+    title: "Kentucky Inventory Deadline (2 Months)"
+    description: "Inventory must be filed within 2 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -124,6 +124,14 @@ export {
   useConnectQuickBooks,
   useDisconnectQuickBooks,
   useSyncQuickBooks,
+  // Privacy
+  useMyPrivacyRequests,
+  usePrivacyQueue,
+  useCreatePrivacyRequest,
+  useReviewPrivacyRequest,
+  useDownloadDataExport,
+  // Search
+  useSearch,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

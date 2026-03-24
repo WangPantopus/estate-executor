@@ -1,6 +1,6 @@
 """Unit tests for the template registry."""
 
-from app.services.template_registry import template_registry
+from app.services.template_registry import ALL_JURISDICTIONS, template_registry
 
 
 class TestTemplateRegistryLoading:
@@ -24,10 +24,10 @@ class TestTemplateRegistryLoading:
             assert len(template_registry._estate_type_templates[et]) > 0
 
     def test_states_loaded(self):
-        """State templates are loaded for all 5 states."""
-        expected_states = ["CA", "TX", "NY", "FL", "IL"]
-        for state in expected_states:
+        """State templates are loaded for all 51 jurisdictions (50 states + DC)."""
+        for state in ALL_JURISDICTIONS:
             assert state in template_registry.loaded_states, f"Missing state {state}"
+        assert len(template_registry.loaded_states) == 51
 
     def test_base_templates_have_required_fields(self):
         """Every base template has the required fields."""
@@ -44,6 +44,66 @@ class TestTemplateRegistryLoading:
         for et, templates in template_registry._estate_type_templates.items():
             keys = [t["key"] for t in templates]
             assert len(keys) == len(set(keys)), f"Duplicate keys in {et} templates"
+
+    def test_all_state_templates_have_required_fields(self):
+        """Every state template task should have required fields."""
+        required = {"key", "title", "phase", "priority"}
+        for state, templates in template_registry._state_templates.items():
+            for tmpl in templates:
+                for field in required:
+                    assert field in tmpl, (
+                        f"State {state} template '{tmpl.get('key')}' missing '{field}'"
+                    )
+
+    def test_all_state_template_keys_unique(self):
+        """Template keys should be unique within each state."""
+        for state, templates in template_registry._state_templates.items():
+            keys = [t["key"] for t in templates]
+            assert len(keys) == len(set(keys)), f"Duplicate keys in {state} templates"
+
+    def test_all_state_deadline_keys_unique(self):
+        """Deadline keys should be unique within each state."""
+        for state, deadlines in template_registry._state_deadlines.items():
+            keys = [d["key"] for d in deadlines]
+            assert len(keys) == len(set(keys)), f"Duplicate deadline keys in {state}"
+
+    def test_every_state_has_tasks_and_deadlines(self):
+        """Every loaded state should have both tasks and deadlines."""
+        for state in template_registry.loaded_states:
+            assert state in template_registry._state_templates, (
+                f"State {state} loaded but has no tasks"
+            )
+            assert len(template_registry._state_templates[state]) > 0, (
+                f"State {state} has empty tasks list"
+            )
+            assert state in template_registry._state_deadlines, (
+                f"State {state} loaded but has no deadlines"
+            )
+            assert len(template_registry._state_deadlines[state]) > 0, (
+                f"State {state} has empty deadlines list"
+            )
+
+    def test_all_state_template_keys_globally_unique(self):
+        """Template keys should be globally unique across ALL states."""
+        all_keys: dict[str, str] = {}
+        for state, templates in template_registry._state_templates.items():
+            for tmpl in templates:
+                key = tmpl["key"]
+                assert key not in all_keys, (
+                    f"Duplicate key '{key}' in {state} (also in {all_keys[key]})"
+                )
+                all_keys[key] = state
+
+    def test_all_state_deadline_keys_globally_unique(self):
+        """Deadline keys should be globally unique across ALL states."""
+        all_keys: dict[str, str] = {}
+        for state, deadlines in template_registry._state_deadlines.items():
+            for dl in deadlines:
+                key = dl["key"]
+                assert key not in all_keys, (
+                    f"Duplicate deadline key '{key}' in {state} (also in {all_keys[key]})"
+                )
+                all_keys[key] = state
 
 
 class TestGetTemplates:
@@ -162,3 +222,102 @@ class TestGetStateDeadlines:
 
         # Trust contest period is trust-only
         assert "ca_trust_contest_period" in trust_keys
+
+    def test_all_state_deadlines_have_required_fields(self):
+        """Every state deadline should have key, title, and date calc fields."""
+        for state, deadlines in template_registry._state_deadlines.items():
+            for dl in deadlines:
+                assert "key" in dl, f"State {state} deadline missing 'key'"
+                assert "title" in dl, f"State {state} deadline missing 'title'"
+                has_date_calc = "offset_months" in dl or "offset_days" in dl
+                assert has_date_calc, (
+                    f"State {state} deadline '{dl.get('key')}' missing date calculation"
+                )
+
+    def test_all_states_produce_templates_for_testate_probate(self):
+        """Every state should generate templates when used with testate_probate."""
+        for state in template_registry.loaded_states:
+            templates = template_registry.get_templates("testate_probate", state)
+            # Should always get at least base + estate-type templates
+            assert len(templates) >= 20, (
+                f"State {state} produced only {len(templates)} templates for testate_probate"
+            )
+
+    def test_estate_tax_states_have_tax_deadline(self):
+        """States with estate/inheritance tax should include a tax deadline."""
+        # States known to have estate or inheritance taxes
+        tax_states = {
+            "CT",
+            "DC",
+            "HI",
+            "IL",
+            "IA",
+            "KY",
+            "ME",
+            "MD",
+            "MA",
+            "MN",
+            "NE",
+            "NJ",
+            "NY",
+            "OR",
+            "PA",
+            "RI",
+            "VT",
+            "WA",
+        }
+        for state in tax_states:
+            deadlines = template_registry.get_state_deadlines(state, "testate_probate")
+            deadline_keys = {dl["key"] for dl in deadlines}
+            has_tax_deadline = any("tax" in key or "inheritance" in key for key in deadline_keys)
+            assert has_tax_deadline, f"Tax state {state} missing a tax/inheritance deadline"
+
+    def test_community_property_states_have_community_task(self):
+        """Community property states should have a community property identification task."""
+        # All 9 community property states
+        community_property_states = {"AZ", "CA", "ID", "LA", "NM", "NV", "TX", "WA", "WI"}
+        for state in community_property_states:
+            templates = template_registry.get_templates(
+                "testate_probate", state, flags=["surviving_spouse"]
+            )
+            keys = {t["key"] for t in templates}
+            has_cp_task = any(
+                "community" in key or "marital" in key or "spousal" in key for key in keys
+            )
+            assert has_cp_task, f"Community property state {state} missing community property task"
+
+
+class TestStateCoverage:
+    """Tests for the coverage API data."""
+
+    def test_get_state_coverage_returns_correct_structure(self):
+        """get_state_coverage should return expected dict shape."""
+        coverage = template_registry.get_state_coverage("CA")
+        assert "supported" in coverage
+        assert "task_count" in coverage
+        assert "deadline_count" in coverage
+        assert "has_tasks" in coverage
+        assert "has_deadlines" in coverage
+        assert coverage["supported"] is True
+        assert coverage["task_count"] > 0
+        assert coverage["deadline_count"] > 0
+
+    def test_unsupported_state_coverage(self):
+        """An unknown state should return unsupported with zero counts."""
+        coverage = template_registry.get_state_coverage("ZZ")
+        assert coverage["supported"] is False
+        assert coverage["task_count"] == 0
+        assert coverage["deadline_count"] == 0
+
+    def test_all_jurisdictions_have_coverage(self):
+        """Every jurisdiction in ALL_JURISDICTIONS should be supported."""
+        for state in ALL_JURISDICTIONS:
+            coverage = template_registry.get_state_coverage(state)
+            assert coverage["supported"] is True, f"State {state} not supported"
+            assert coverage["has_tasks"] is True, f"State {state} has no tasks"
+            assert coverage["has_deadlines"] is True, f"State {state} has no deadlines"
+
+    def test_all_jurisdictions_count(self):
+        """ALL_JURISDICTIONS should have exactly 51 entries."""
+        assert len(ALL_JURISDICTIONS) == 51
+        assert len(set(ALL_JURISDICTIONS)) == 51  # no duplicates

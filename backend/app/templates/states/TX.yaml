@@ -51,6 +51,24 @@ tasks:
       estate_types: ["testate_probate", "intestate_probate"]
     subtasks: []
 
+  - key: "tx_community_property"
+    title: "Identify Community Property (Texas)"
+    description: "Texas is a community property state — determine community vs. separate property"
+    instructions: "Texas is a community property state. Property acquired during marriage is presumed to be community property. The surviving spouse automatically owns their half of community property. Texas also recognizes separate property (acquired before marriage, by gift, or inheritance). Proper characterization is critical for estate administration and tax reporting."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
   - key: "tx_notice_creditors"
     title: "Publish Notice to Creditors (Texas)"
     description: "Publish notice to creditors in a county newspaper"

@@ -31,6 +31,7 @@ import {
   ASSET_TYPE_LABELS,
   MATTER_FLAGS,
   US_STATES,
+  STATES_WITH_TEMPLATES,
 } from "@/lib/constants";
 import type { AssetType, EstateType, MatterCreate } from "@/lib/types";
 
@@ -356,7 +357,14 @@ function Step1BasicInfo({ form }: { form: UseFormReturn<MatterFormData> }) {
           <SelectContent>
             {US_STATES.map((s) => (
               <SelectItem key={s.value} value={s.value}>
-                {s.label}
+                <div className="flex items-center gap-2">
+                  <span>{s.label}</span>
+                  {STATES_WITH_TEMPLATES.has(s.value) && (
+                    <span className="inline-flex items-center rounded-full bg-success-light px-1.5 py-0.5 text-[10px] font-medium text-success">
+                      Full coverage
+                    </span>
+                  )}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
@@ -364,6 +372,11 @@ function Step1BasicInfo({ form }: { form: UseFormReturn<MatterFormData> }) {
         {errors.jurisdiction_state && (
           <p className="text-xs text-danger">
             {errors.jurisdiction_state.message}
+          </p>
+        )}
+        {watch("jurisdiction_state") && STATES_WITH_TEMPLATES.has(watch("jurisdiction_state")) && (
+          <p className="text-xs text-success">
+            State-specific tasks, deadlines, and compliance rules will be auto-generated.
           </p>
         )}
       </div>
@@ -501,7 +514,10 @@ function Step3Review({ form }: { form: UseFormReturn<MatterFormData> }) {
           <ReviewRow label="Matter Title" value={values.title} />
           <ReviewRow label="Decedent" value={values.decedent_name} />
           <ReviewRow label="Estate Type" value={estateLabel} />
-          <ReviewRow label="Jurisdiction" value={stateLabel} />
+          <ReviewRow
+            label="Jurisdiction"
+            value={`${stateLabel}${STATES_WITH_TEMPLATES.has(values.jurisdiction_state) ? " — Full coverage" : ""}`}
+          />
           {values.date_of_death && (
             <ReviewRow label="Date of Death" value={values.date_of_death} />
           )}

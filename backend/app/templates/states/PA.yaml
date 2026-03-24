@@ -1,0 +1,103 @@
+# Pennsylvania — State-specific tasks and deadline rules
+
+tasks:
+  - key: "pa_file_register_of_wills"
+    title: "File with Pennsylvania Register of Wills"
+    description: "File petition for probate with the Register of Wills in the appropriate county"
+    instructions: "Pennsylvania handles probate through the Register of Wills in each county. File the petition in the county where the decedent was domiciled. The Register of Wills grants letters and admits the will to probate."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "pa_small_estate"
+    title: "Consider Small Estate (Under $50,000)"
+    description: "Determine if estate qualifies for simplified petition"
+    instructions: "Pennsylvania allows a simplified small estate petition for estates with personal property valued at $50,000 or less (excluding real estate and certain assets). The petition is filed with the Register of Wills."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "pa_publish_notice_creditors"
+    title: "Publish Notice of Estate (Pennsylvania)"
+    description: "Publish notice in a newspaper and the legal journal once a week for three weeks"
+    instructions: "Pennsylvania requires the personal representative to publish a notice of the grant of letters in a newspaper of general circulation and in the county legal journal once a week for three consecutive weeks. This serves as notice to creditors."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "pa_file_register_of_wills"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "pa_file_inheritance_tax"
+    title: "File Pennsylvania Inheritance Tax Return"
+    description: "Pennsylvania imposes an inheritance tax on all estates"
+    instructions: "Pennsylvania imposes an inheritance tax on virtually all estates (no minimum threshold). Rates: 0% to surviving spouse, 4.5% to lineal descendants, 12% to siblings, 15% to all others. File Form REV-1500 within 9 months of death. A 5% discount is available for early payment (within 3 months)."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "pa_creditor_claim_period"
+    title: "Pennsylvania Creditor Claim Period (1 Year)"
+    description: "Creditors generally have 1 year from date of death to file claims"
+    relative_to: "date_of_death"
+    offset_months: 12
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "pa_inheritance_tax_deadline"
+    title: "Pennsylvania Inheritance Tax Deadline (9 Months)"
+    description: "Inheritance tax return due within 9 months of death (5% discount if paid within 3 months)"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "pa_inheritance_tax_discount"
+    title: "Pennsylvania Inheritance Tax Early Payment Discount (3 Months)"
+    description: "5% discount available if inheritance tax paid within 3 months of death"
+    relative_to: "date_of_death"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "pa_inventory_deadline"
+    title: "Pennsylvania Inventory Deadline (3 Months)"
+    description: "Inventory must be filed within 3 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

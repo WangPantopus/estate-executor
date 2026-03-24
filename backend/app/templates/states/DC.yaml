@@ -1,0 +1,95 @@
+# District of Columbia — State-specific tasks and deadline rules
+
+tasks:
+  - key: "dc_file_probate_superior_court"
+    title: "File with DC Superior Court (Probate Division)"
+    description: "File petition for probate with the DC Superior Court's Probate Division"
+    instructions: "File the petition for probate with the Probate Division of the DC Superior Court. DC follows its own probate code (not the UPC). All estates with assets over $40,000 must go through full probate. The will must be filed within 90 days of the decedent's death."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "dc_small_estate"
+    title: "Consider Small Estate (Under $40,000)"
+    description: "Determine if estate qualifies for simplified probate"
+    instructions: "DC allows a small estate proceeding for estates with personal property valued at $40,000 or less. File a petition for small estate with the Probate Division. No formal administration is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "dc_publish_notice_creditors"
+    title: "Publish Notice to Creditors (DC)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "The personal representative must publish notice to creditors in a newspaper of general circulation in DC once a week for three consecutive weeks. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "dc_file_probate_superior_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "dc_file_estate_tax"
+    title: "File DC Estate Tax Return"
+    description: "File DC estate tax return if estate exceeds DC exemption threshold"
+    instructions: "DC imposes an estate tax on estates exceeding $4,528,800 (2024 threshold). File Form D-76/D-76EZ within 9 months of death. DC's estate tax rates range from 11.2% to 16%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "dc_creditor_claim_period"
+    title: "DC Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "dc_estate_tax_deadline"
+    title: "DC Estate Tax Return Deadline"
+    description: "DC estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "dc_will_filing_deadline"
+    title: "DC Will Filing Deadline (90 Days)"
+    description: "Will must be filed with the court within 90 days of death"
+    relative_to: "date_of_death"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "mixed_probate_trust"]

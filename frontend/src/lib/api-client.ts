@@ -31,6 +31,10 @@ import type {
   InvoiceListResponse,
   OAuthInitResponse,
   PortalSessionResponse,
+  PrivacyRequest,
+  PrivacyRequestCreate,
+  PrivacyRequestListResponse,
+  PrivacyRequestReview,
   SendForSignatureRequest,
   SignatureRequest,
   SignatureRequestListResponse,
@@ -103,6 +107,7 @@ import type {
   ReportJobStatus,
   ReportType,
   RegisterVersionRequest,
+  SearchResponse,
   Stakeholder,
   StakeholderInvite,
   StakeholderUpdate,
@@ -1384,6 +1389,57 @@ export class ApiClient {
     data: SyncRequest,
   ): Promise<SyncResultResponse> {
     return this.post(`${this.intBase(firmId)}/quickbooks/sync`, data);
+  }
+
+  // ─── Search ──────────────────────────────────────────────────────────────
+
+  async search(
+    firmId: string,
+    params: { q: string; entity_types?: string; matter_id?: string; limit?: number },
+  ): Promise<SearchResponse> {
+    const qs = new URLSearchParams();
+    qs.set("q", params.q);
+    if (params.entity_types) qs.set("entity_types", params.entity_types);
+    if (params.matter_id) qs.set("matter_id", params.matter_id);
+    if (params.limit) qs.set("limit", String(params.limit));
+    return this.get(`/firms/${firmId}/search?${qs.toString()}`);
+  }
+
+  // ─── Privacy ─────────────────────────────────────────────────────────────
+
+  async createPrivacyRequest(
+    firmId: string,
+    data: PrivacyRequestCreate,
+  ): Promise<PrivacyRequest> {
+    return this.post(`/firms/${firmId}/privacy/request`, data);
+  }
+
+  async getMyPrivacyRequests(firmId: string): Promise<PrivacyRequest[]> {
+    return this.get(`/firms/${firmId}/privacy/my-requests`);
+  }
+
+  async downloadDataExport(firmId: string): Promise<unknown> {
+    return this.get(`/firms/${firmId}/privacy/export`);
+  }
+
+  async getPrivacyQueue(
+    firmId: string,
+    params?: { status?: string; page?: number; per_page?: number },
+  ): Promise<PrivacyRequestListResponse> {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set("status", params.status);
+    if (params?.page) qs.set("page", String(params.page));
+    if (params?.per_page) qs.set("per_page", String(params.per_page));
+    const query = qs.toString();
+    return this.get(`/firms/${firmId}/privacy/admin/queue${query ? `?${query}` : ""}`);
+  }
+
+  async reviewPrivacyRequest(
+    firmId: string,
+    requestId: string,
+    data: PrivacyRequestReview,
+  ): Promise<PrivacyRequest> {
+    return this.post(`/firms/${firmId}/privacy/admin/${requestId}/review`, data);
   }
 
   async voidSignatureRequest(

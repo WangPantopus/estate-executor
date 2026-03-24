@@ -1,0 +1,87 @@
+# Georgia — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ga_file_probate_court"
+    title: "File Petition with Georgia Probate Court"
+    description: "File petition for probate with the Probate Court in the appropriate county"
+    instructions: "Georgia has dedicated Probate Courts in each county. File the petition in the county where the decedent was domiciled. Georgia requires the will to be filed within a reasonable time. The executor must petition for letters testamentary."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ga_no_administration_needed"
+    title: "Consider No Administration Necessary (Georgia)"
+    description: "Determine if estate qualifies for 'no administration necessary' petition"
+    instructions: "Georgia allows a 'no administration necessary' petition when all heirs agree and there are no debts, or when the estate qualifies for a Year's Support. This avoids full administration. File with the Probate Court."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ga_years_support"
+    title: "File Year's Support Petition (Georgia)"
+    description: "File petition for Year's Support for surviving spouse and/or minor children"
+    instructions: "Georgia's Year's Support allows the surviving spouse and minor children to set aside property from the estate for their support. This takes priority over other claims. File the petition with the Probate Court. It must be filed before the estate is fully administered."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "ga_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Georgia)"
+    description: "Publish notice in the official county newspaper once a week for four weeks"
+    instructions: "Georgia requires publication of the citation in the official newspaper of the county once a week for four weeks. This serves as notice to creditors and other interested parties."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ga_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ga_creditor_claim_period"
+    title: "Georgia Creditor Claim Period (3 Months)"
+    description: "Creditors have 3 months from publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ga_inventory_deadline"
+    title: "Georgia Inventory Deadline (6 Months)"
+    description: "Inventory and returns must be filed within 6 months of qualification"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -1,0 +1,112 @@
+# Maryland — State-specific tasks and deadline rules
+
+tasks:
+  - key: "md_file_register_of_wills"
+    title: "File with Maryland Register of Wills"
+    description: "File petition for probate with the Register of Wills in the appropriate county"
+    instructions: "Maryland handles probate through the Register of Wills (in each county and Baltimore City) and the Orphans' Court. File the petition in the county where the decedent was domiciled. Maryland has regular estate (judicial) and small estate (administrative) processes."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "md_small_estate"
+    title: "Consider Small Estate (Under $50,000 / $100,000 with Surviving Spouse)"
+    description: "Determine if estate qualifies for simplified administration"
+    instructions: "Maryland allows small estate administration for estates with personal property valued at $50,000 or less ($100,000 if the surviving spouse is the sole heir). The Register of Wills handles small estates without Orphans' Court involvement."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "md_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Maryland)"
+    description: "Publish notice in a newspaper in the county once a week for three consecutive weeks"
+    instructions: "Maryland requires notice to creditors by publication once a week for three successive weeks in a newspaper of general circulation in the county. Known creditors must receive individual notice within the period specified by law."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "md_file_register_of_wills"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "md_file_estate_tax"
+    title: "File Maryland Estate Tax Return"
+    description: "File Maryland estate tax return if estate exceeds state threshold"
+    instructions: "Maryland imposes both an estate tax (on estates exceeding $5 million) and an inheritance tax (on transfers to non-exempt beneficiaries at 10%). File the estate tax return within 9 months of death. Maryland is the only state with both an estate tax and an inheritance tax."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "md_file_inheritance_tax"
+    title: "File Maryland Inheritance Tax Return"
+    description: "File Maryland inheritance tax return for non-exempt beneficiaries"
+    instructions: "Maryland's inheritance tax of 10% applies to distributions to non-exempt beneficiaries (anyone other than spouse, children, parents, grandparents, grandchildren, siblings, and certain charitable organizations). File with the Register of Wills."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "md_creditor_claim_period"
+    title: "Maryland Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from date of appointment to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "md_estate_tax_deadline"
+    title: "Maryland Estate Tax Return Deadline"
+    description: "Maryland estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "md_inventory_deadline"
+    title: "Maryland Inventory Deadline (3 Months)"
+    description: "Inventory must be filed within 3 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

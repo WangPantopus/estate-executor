@@ -18,6 +18,7 @@ import {
   ArrowUpRight,
   Download,
   RefreshCw,
+  Shield,
   Plug,
   Unplug,
   Clock,
@@ -95,8 +96,13 @@ import {
   useConnectQuickBooks,
   useDisconnectQuickBooks,
   useSyncQuickBooks,
+  useMyPrivacyRequests,
+  usePrivacyQueue,
+  useCreatePrivacyRequest,
+  useReviewPrivacyRequest,
+  useDownloadDataExport,
 } from "@/hooks";
-import type { FirmRole, TierLimits, Invoice, SyncRequest } from "@/lib/types";
+import type { FirmRole, TierLimits, Invoice, SyncRequest, PrivacyRequest } from "@/lib/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -195,6 +201,10 @@ export default function SettingsPage() {
               Developer
             </TabsTrigger>
           )}
+          <TabsTrigger value="privacy" className="gap-1.5">
+            <Shield className="size-3.5" />
+            Privacy
+          </TabsTrigger>
         </TabsList>
 
         {/* ─── General Tab ────────────────────────────────────────────────── */}
@@ -442,6 +452,11 @@ export default function SettingsPage() {
             <WebhooksCard firmId={FIRM_ID} isAdmin={isAdmin} />
           </TabsContent>
         )}
+
+        {/* ─── Privacy Tab ────────────────────────────────────────────────── */}
+        <TabsContent value="privacy" className="space-y-4">
+          <PrivacyTabContent firmId={FIRM_ID} isAdmin={isAdmin} />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -1856,5 +1871,261 @@ function WebhooksCard({ firmId, isAdmin }: { firmId: string; isAdmin: boolean })
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ─── Privacy Tab Content ─────────────────────────────────────────────────────
+
+function PrivacyTabContent({ firmId, isAdmin }: { firmId: string; isAdmin: boolean }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { data: myRequests } = useMyPrivacyRequests(firmId);
+  const { data: queue, isLoading: loadingQueue } = usePrivacyQueue(isAdmin ? firmId : "", undefined);
+  const createRequest = useCreatePrivacyRequest(firmId);
+  const reviewRequest = useReviewPrivacyRequest(firmId);
+  const downloadExport = useDownloadDataExport(firmId);
+
+  const handleExport = async () => {
+    try {
+      const data = await downloadExport.mutateAsync();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Error handled by mutation
+    }
+  };
+
+  const handleDeletionRequest = async () => {
+    try {
+      await createRequest.mutateAsync({ request_type: "data_deletion" });
+      setShowDeleteConfirm(false);
+    } catch {
+      // Error handled by mutation state
+    }
+  };
+
+  const STATUS_COLORS: Record<string, string> = {
+    pending: "bg-yellow-100 text-yellow-700",
+    approved: "bg-blue-100 text-blue-700",
+    processing: "bg-blue-100 text-blue-700",
+    completed: "bg-green-100 text-green-700",
+    rejected: "bg-red-100 text-red-700",
+  };
+
+  return (
+    <>
+      {/* Your Data */}
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h3 className="text-sm font-semibold">Your Data</h3>
+          <p className="text-xs text-muted-foreground">
+            Under GDPR and CCPA, you have the right to access, export, and request deletion of your personal data.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={downloadExport.isPending}
+            >
+              {downloadExport.isPending ? (
+                <Loader2 className="size-4 animate-spin mr-2" />
+              ) : (
+                <Download className="size-4 mr-2" />
+              )}
+              Export My Data (JSON)
+            </Button>
+            <Button
+              variant="outline"
+              className="text-danger border-danger/30 hover:bg-danger/5"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="size-4 mr-2" />
+              Request Data Deletion
+            </Button>
+          </div>
+          {downloadExport.isError && (
+            <p className="text-xs text-danger">Failed to export data. Please try again.</p>
+          )}
+          {createRequest.isError && (
+            <p className="text-xs text-danger">Failed to submit request. Please try again.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* My Privacy Requests */}
+      {myRequests && myRequests.length > 0 && (
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <h3 className="text-sm font-semibold">My Requests</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Note</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {myRequests.map((req: PrivacyRequest) => (
+                  <TableRow key={req.id}>
+                    <TableCell className="text-xs font-medium">
+                      {req.request_type === "data_export" ? "Data Export" : "Data Deletion"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`text-[10px] ${STATUS_COLORS[req.status] ?? ""}`}>
+                        {req.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(req.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {req.review_note ?? "\u2014"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Admin: Deletion Request Queue */}
+      {isAdmin && (
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Deletion Request Queue (Admin)</h3>
+              {queue && (
+                <Badge variant="secondary" className="text-xs">
+                  {queue.total} request{queue.total !== 1 ? "s" : ""}
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Review and approve or reject data deletion requests. Approved requests
+              anonymize PII while retaining structural data for audit integrity.
+            </p>
+
+            {loadingQueue ? (
+              <div className="flex items-center gap-2 py-4 text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                <span className="text-xs">Loading...</span>
+              </div>
+            ) : queue?.data.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-4 text-center">
+                No pending requests.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {queue?.data.map((req: PrivacyRequest) => (
+                    <TableRow key={req.id}>
+                      <TableCell className="text-xs">
+                        <p className="font-medium">{req.user_name ?? "Unknown"}</p>
+                        <p className="text-muted-foreground">{req.user_email}</p>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {req.request_type === "data_export" ? "Export" : "Deletion"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`text-[10px] ${STATUS_COLORS[req.status] ?? ""}`}>
+                          {req.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(req.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {req.status === "pending" && (
+                          <div className="flex gap-1 justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() =>
+                                reviewRequest.mutate({
+                                  requestId: req.id,
+                                  data: { action: "approve" },
+                                })
+                              }
+                              disabled={reviewRequest.isPending}
+                            >
+                              <CheckCircle2 className="size-3 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs text-danger"
+                              onClick={() =>
+                                reviewRequest.mutate({
+                                  requestId: req.id,
+                                  data: { action: "reject", note: "Rejected by admin" },
+                                })
+                              }
+                              disabled={reviewRequest.isPending}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Data Deletion</DialogTitle>
+            <DialogDescription>
+              This will submit a request to delete your personal data. An admin must
+              approve the request before processing. Your name, email, and phone will
+              be anonymized, but structural data (task history, matter records) will
+              be retained for audit integrity.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeletionRequest}
+              disabled={createRequest.isPending}
+            >
+              {createRequest.isPending ? (
+                <Loader2 className="size-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="size-4 mr-2" />
+              )}
+              Submit Deletion Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

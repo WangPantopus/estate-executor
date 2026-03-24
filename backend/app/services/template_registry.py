@@ -190,6 +190,73 @@ class TemplateRegistry:
         """Return list of states with loaded templates."""
         return sorted(set(list(self._state_templates.keys()) + list(self._state_deadlines.keys())))
 
+    def get_state_coverage(self, state: str) -> dict[str, Any]:
+        """Return coverage info for a single state (task count, deadline count, etc.)."""
+        tasks = self._state_templates.get(state, [])
+        deadlines = self._state_deadlines.get(state, [])
+        return {
+            "supported": state in set(self.loaded_states),
+            "task_count": len(tasks),
+            "deadline_count": len(deadlines),
+            "has_tasks": bool(tasks),
+            "has_deadlines": bool(deadlines),
+        }
+
+
+# All 50 US states + DC — canonical list used by the coverage API and tests.
+ALL_JURISDICTIONS = [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+]
 
 # Module-level singleton (loaded once at import time)
 template_registry = TemplateRegistry()

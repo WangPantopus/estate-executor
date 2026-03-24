@@ -1,0 +1,69 @@
+# New Hampshire — State-specific tasks and deadline rules
+
+tasks:
+  - key: "nh_file_probate_court"
+    title: "File with New Hampshire Circuit Court (Probate Division)"
+    description: "File petition for administration with the Circuit Court's Probate Division"
+    instructions: "New Hampshire handles probate through the Probate Division of the Circuit Court. File the petition in the county where the decedent was domiciled. New Hampshire does not follow the UPC but has its own probate statutes."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "nh_small_estate"
+    title: "Consider Small Estate (Under $10,000)"
+    description: "Determine if estate qualifies for summary administration"
+    instructions: "New Hampshire allows summary administration for estates with personal property valued at $10,000 or less. A simplified petition can be filed with the Probate Division."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "nh_publish_notice_creditors"
+    title: "Publish Notice to Creditors (New Hampshire)"
+    description: "Publish notice as directed by the Probate Court"
+    instructions: "New Hampshire requires notice to creditors. The Probate Division will direct publication in an appropriate newspaper. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "nh_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "nh_creditor_claim_period"
+    title: "New Hampshire Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from appointment to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "nh_inventory_deadline"
+    title: "New Hampshire Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -1,0 +1,113 @@
+# Washington — State-specific tasks and deadline rules
+
+tasks:
+  - key: "wa_file_probate_superior_court"
+    title: "File Petition with Washington Superior Court"
+    description: "File petition for probate with the Superior Court in the appropriate county"
+    instructions: "File the petition with the Superior Court in the county where the decedent was domiciled. Washington allows nonintervention powers (similar to independent administration) if the will grants them. This avoids ongoing court supervision for most actions."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "wa_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $100,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Washington allows a small estate affidavit for estates with personal property valued at $100,000 or less, after 40 days from death. No court filing is required. There is no separate simplified process for real property."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "wa_community_property"
+    title: "Identify Community Property (Washington)"
+    description: "Washington is a community property state — determine community vs. separate property"
+    instructions: "Washington is a community property state. Property acquired during the marriage is presumed community property. The surviving spouse automatically owns their half. Washington also has a community property agreement option."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "wa_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Washington)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "Washington requires notice to creditors by publication once a week for three consecutive weeks in a newspaper of general circulation in the county. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "wa_file_probate_superior_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "wa_file_estate_tax"
+    title: "File Washington Estate Tax Return"
+    description: "File Washington estate tax return if estate exceeds $2,193,000"
+    instructions: "Washington imposes an estate tax on estates exceeding $2,193,000 (2024 threshold, indexed for inflation). File within 9 months of death. Washington's estate tax rates range from 10% to 20% (one of the highest in the US)."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "wa_creditor_claim_period"
+    title: "Washington Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims (or 30 days from mailed notice)"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "wa_estate_tax_deadline"
+    title: "Washington Estate Tax Return Deadline"
+    description: "Washington estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "wa_inventory_deadline"
+    title: "Washington Inventory Deadline (3 Months)"
+    description: "Inventory should be completed within 3 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -21,10 +21,13 @@ from app.api.v1.integrations import webhook_router as integrations_webhook_route
 from app.api.v1.matters import router as matters_router
 from app.api.v1.milestones import router as milestones_router
 from app.api.v1.portal import router as portal_router
+from app.api.v1.privacy import router as privacy_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.search import router as search_router
 from app.api.v1.sso import router as sso_router
 from app.api.v1.stakeholders import router as stakeholders_router
 from app.api.v1.tasks import router as tasks_router
+from app.api.v1.templates import router as templates_router
 from app.api.v1.time_tracking import router as time_tracking_router
 from app.api.v1.upload import router as upload_router
 
@@ -110,6 +113,11 @@ api_router.include_router(
     tags=["ai"],
 )
 api_router.include_router(
+    search_router,
+    prefix="/firms/{firm_id}/search",
+    tags=["search"],
+)
+api_router.include_router(
     billing_router,
     prefix="/firms/{firm_id}/billing",
     tags=["billing"],
@@ -140,9 +148,19 @@ api_router.include_router(
     tags=["developer"],
 )
 api_router.include_router(
+    privacy_router,
+    prefix="/firms/{firm_id}/privacy",
+    tags=["privacy"],
+)
+api_router.include_router(
     portal_router,
     prefix="/portal",
     tags=["portal"],
+)
+api_router.include_router(
+    templates_router,
+    prefix="/templates",
+    tags=["templates"],
 )
 api_router.include_router(
     upload_router,

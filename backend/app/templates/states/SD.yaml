@@ -1,0 +1,69 @@
+# South Dakota — State-specific tasks and deadline rules
+
+tasks:
+  - key: "sd_file_probate_circuit_court"
+    title: "File Petition with South Dakota Circuit Court"
+    description: "File petition for probate with the Circuit Court in the appropriate county"
+    instructions: "South Dakota follows the Uniform Probate Code. File the petition with the Circuit Court in the county where the decedent was domiciled. Informal (registrar) and formal (judicial) proceedings are available."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "sd_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "South Dakota allows transfer by affidavit for estates with personal property valued at $50,000 or less, after 30 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "sd_publish_notice_creditors"
+    title: "Publish Notice to Creditors (South Dakota)"
+    description: "Publish notice in a newspaper once a week for two consecutive weeks"
+    instructions: "South Dakota requires notice to creditors by publication once a week for two consecutive weeks in a legal newspaper in the county. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "sd_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "sd_creditor_claim_period"
+    title: "South Dakota Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "sd_inventory_deadline"
+    title: "South Dakota Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

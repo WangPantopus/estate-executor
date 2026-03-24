@@ -1,0 +1,69 @@
+# North Carolina — State-specific tasks and deadline rules
+
+tasks:
+  - key: "nc_file_clerk_superior_court"
+    title: "File with NC Clerk of Superior Court"
+    description: "File petition for probate with the Clerk of Superior Court"
+    instructions: "In North Carolina, the Clerk of Superior Court has exclusive jurisdiction over probate matters. File in the county where the decedent was domiciled. The Clerk can admit the will to probate and appoint the executor without a hearing."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "nc_small_estate_affidavit"
+    title: "Consider Small Estate by Affidavit (Under $20,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "North Carolina allows collection of personal property by affidavit for estates valued at $20,000 or less (or $30,000 if the surviving spouse is the sole heir). The affidavit can be used 30 days after death."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "nc_publish_notice_creditors"
+    title: "Publish Notice to Creditors (North Carolina)"
+    description: "Publish notice in a newspaper once a week for four consecutive weeks"
+    instructions: "North Carolina requires the personal representative to publish a general notice to creditors once a week for four successive weeks in a newspaper qualified for legal advertising. Known creditors must also receive written notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "nc_file_clerk_superior_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "nc_creditor_claim_period"
+    title: "North Carolina Creditor Claim Period (3 Months)"
+    description: "Creditors have 3 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "nc_inventory_deadline"
+    title: "North Carolina Inventory Deadline (3 Months)"
+    description: "Inventory must be filed within 3 months of qualification"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -1546,3 +1546,65 @@ export interface WebhookDelivery {
   attempt: number;
   created_at: string;
 }
+
+// ─── Search ─────────────────────────────────────────────────────────────────
+
+export type SearchEntityType = 'matter' | 'task' | 'asset' | 'document' | 'communication';
+
+export interface SearchResult {
+  entity_type: SearchEntityType;
+  entity_id: string;
+  matter_id: string;
+  title: string;
+  subtitle: string | null;
+  snippet: string;
+  rank: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  total: number;
+  results: SearchResult[];
+  groups: Record<string, number>;
+}
+
+// ─── Privacy (GDPR/CCPA) ───────────────────────────────────────────────────
+
+export type PrivacyRequestType = 'data_export' | 'data_deletion';
+export type PrivacyRequestStatus = 'pending' | 'approved' | 'processing' | 'completed' | 'rejected';
+
+export interface PrivacyRequest {
+  id: string;
+  firm_id: string;
+  user_id: string;
+  request_type: PrivacyRequestType;
+  status: PrivacyRequestStatus;
+  reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  completed_at: string | null;
+  export_storage_key: string | null;
+  deletion_summary: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  user_email: string | null;
+  user_name: string | null;
+}
+
+export interface PrivacyRequestCreate {
+  request_type: PrivacyRequestType;
+  reason?: string;
+}
+
+export interface PrivacyRequestReview {
+  action: 'approve' | 'reject';
+  note?: string;
+}
+
+export interface PrivacyRequestListResponse {
+  data: PrivacyRequest[];
+  total: number;
+  page: number;
+  per_page: number;
+}

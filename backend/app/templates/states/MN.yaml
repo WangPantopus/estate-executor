@@ -1,0 +1,95 @@
+# Minnesota — State-specific tasks and deadline rules
+
+tasks:
+  - key: "mn_file_probate_district_court"
+    title: "File Petition with Minnesota District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "Minnesota follows the Uniform Probate Code. File the petition with the District Court (Probate Division) in the county where the decedent was domiciled. Minnesota allows informal (registrar) and formal (judicial) probate. Informal is available for uncontested matters."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "mn_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $75,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Minnesota allows transfer by affidavit for estates with personal property valued at $75,000 or less, after 30 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "mn_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Minnesota)"
+    description: "Publish notice in a qualified newspaper"
+    instructions: "Minnesota requires notice to creditors by publication in a qualified newspaper in the county. Known creditors must receive individual notice. Creditors then have 4 months to file claims."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "mn_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "mn_file_estate_tax"
+    title: "File Minnesota Estate Tax Return"
+    description: "File Minnesota estate tax return if estate exceeds state threshold"
+    instructions: "Minnesota imposes an estate tax on estates exceeding $3 million. File the Minnesota estate tax return within 9 months of death. Minnesota's estate tax rates range from 13% to 16%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "mn_creditor_claim_period"
+    title: "Minnesota Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "mn_estate_tax_deadline"
+    title: "Minnesota Estate Tax Return Deadline"
+    description: "Minnesota estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "mn_inventory_deadline"
+    title: "Minnesota Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

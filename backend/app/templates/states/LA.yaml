@@ -1,0 +1,106 @@
+# Louisiana — State-specific tasks and deadline rules
+# NOTE: Louisiana follows a civil law (Napoleonic Code) system, unique among US states.
+
+tasks:
+  - key: "la_file_succession_district_court"
+    title: "Open Succession with Louisiana District Court"
+    description: "File petition to open succession with the District Court in the appropriate parish"
+    instructions: "Louisiana uses 'succession' instead of 'probate.' File the petition with the District Court in the parish where the decedent was domiciled. Louisiana has two types: testate (with a will) and intestate (without). Louisiana's civil law system is fundamentally different from common law states — engage a Louisiana-licensed attorney."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "la_small_succession_affidavit"
+    title: "Consider Small Succession (Under $125,000)"
+    description: "Determine if succession qualifies for simplified affidavit process"
+    instructions: "Louisiana allows a small succession affidavit for successions valued at $125,000 or less when all heirs are of full age and agree. This avoids full judicial succession proceedings."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "la_forced_heirship"
+    title: "Evaluate Forced Heirship Rules (Louisiana)"
+    description: "Louisiana has forced heirship rules — certain children cannot be disinherited"
+    instructions: "Louisiana's forced heirship provisions protect children under 24 and children of any age with disabilities from being disinherited. These 'forced heirs' are entitled to a 'legitime' (minimum portion of the estate). This must be evaluated early as it affects distribution planning."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+      flags:
+        - "minor_beneficiaries"
+    subtasks: []
+
+  - key: "la_community_property"
+    title: "Identify Community Property (Louisiana)"
+    description: "Louisiana is a community property state — determine community vs. separate property"
+    instructions: "Louisiana is a community property state. Property acquired during the marriage is presumed to be community property. The surviving spouse owns their half outright. This characterization affects the taxable estate and distribution plan."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "la_publish_notice"
+    title: "Publish Notice (Louisiana)"
+    description: "Publish notice of succession opening"
+    instructions: "The succession representative must publish notice of the succession opening. Louisiana does not have a traditional creditor claims period like common law states — instead, creditors have the right to file ordinary actions against the succession. The executor should still publish notice for public awareness."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "la_file_succession_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "la_prescription_period"
+    title: "Louisiana Creditor Prescription Period"
+    description: "Creditors generally have prescriptive periods to file claims against the succession"
+    relative_to: "matter_created"
+    offset_months: 12
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "la_inventory_deadline"
+    title: "Louisiana Inventory Deadline (60 Days)"
+    description: "Detailed descriptive list should be filed within 60 days of qualification"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

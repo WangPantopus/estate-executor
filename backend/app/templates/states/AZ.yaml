@@ -1,0 +1,87 @@
+# Arizona — State-specific tasks and deadline rules
+
+tasks:
+  - key: "az_file_probate_superior_court"
+    title: "File Petition with Arizona Superior Court"
+    description: "File petition for probate with the Superior Court in the appropriate county"
+    instructions: "Arizona follows the Uniform Probate Code. File the petition with the Superior Court in the county where the decedent was domiciled. Arizona allows informal probate (registrar approval without hearing) and formal probate. Informal is faster and appropriate for uncontested estates."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "az_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $75,000 Personal / $100,000 Real)"
+    description: "Determine if estate qualifies for simplified transfer by affidavit"
+    instructions: "Arizona allows transfer by affidavit for personal property valued at $75,000 or less and real property valued at $100,000 or less. The affidavit can be used 30 days after death. This avoids the need for probate entirely."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "az_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Arizona)"
+    description: "Publish notice in a newspaper in the county once a week for three consecutive weeks"
+    instructions: "Arizona requires the personal representative to publish notice to creditors in a newspaper of general circulation in the county. Individual notice must be mailed to known creditors. Creditors then have 4 months from first publication to file claims."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "az_file_probate_superior_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "az_community_property"
+    title: "Identify Community Property (Arizona)"
+    description: "Arizona is a community property state — determine community vs. separate property"
+    instructions: "Arizona is a community property state. All property acquired during marriage is presumed community property. The surviving spouse automatically owns their half of community property. Properly characterizing assets as community or separate property is critical for estate administration."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+deadlines:
+  - key: "az_creditor_claim_period"
+    title: "Arizona Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "az_inventory_deadline"
+    title: "Arizona Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

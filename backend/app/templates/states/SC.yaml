@@ -1,0 +1,69 @@
+# South Carolina — State-specific tasks and deadline rules
+
+tasks:
+  - key: "sc_file_probate_court"
+    title: "File with South Carolina Probate Court"
+    description: "File petition for probate with the Probate Court in the appropriate county"
+    instructions: "South Carolina has dedicated Probate Courts in each county. File the petition in the county where the decedent was domiciled. South Carolina allows informal probate for uncontested matters and formal probate with a hearing."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "sc_small_estate"
+    title: "Consider Small Estate (Under $25,000)"
+    description: "Determine if estate qualifies for simplified process"
+    instructions: "South Carolina allows a small estate affidavit for personal property valued at $25,000 or less, after 30 days from death. No court filing is required for the affidavit process."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "sc_publish_notice_creditors"
+    title: "Publish Notice to Creditors (South Carolina)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "South Carolina requires notice to creditors by publication once a week for three consecutive weeks in a newspaper of general circulation in the county. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "sc_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "sc_creditor_claim_period"
+    title: "South Carolina Creditor Claim Period (8 Months)"
+    description: "Non-claims statute bars creditors 8 months from first publication"
+    relative_to: "matter_created"
+    offset_months: 8
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "sc_inventory_deadline"
+    title: "South Carolina Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

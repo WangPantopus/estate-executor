@@ -1,0 +1,69 @@
+# Missouri — State-specific tasks and deadline rules
+
+tasks:
+  - key: "mo_file_probate_circuit_court"
+    title: "File Petition with Missouri Circuit Court (Probate Division)"
+    description: "File petition for probate with the Circuit Court's Probate Division"
+    instructions: "File the petition with the Probate Division of the Circuit Court in the county where the decedent was domiciled. Missouri has independent and supervised administration. Independent administration is preferred when the will allows it."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "mo_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $40,000)"
+    description: "Determine if estate qualifies for simplified transfer"
+    instructions: "Missouri allows transfer by affidavit for estates with personal property valued at $40,000 or less, after 30 days from death. This avoids full probate administration."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "mo_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Missouri)"
+    description: "Publish notice in a newspaper once a week for four consecutive weeks"
+    instructions: "Missouri requires notice to creditors by publication in the county's designated newspaper once a week for four consecutive weeks. Known creditors must receive individual notice by mail."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "mo_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "mo_creditor_claim_period"
+    title: "Missouri Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "mo_inventory_deadline"
+    title: "Missouri Inventory Deadline (30 Days)"
+    description: "Inventory must be filed within 30 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 30
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

@@ -53,6 +53,8 @@ import type {
   FirmUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
+  PrivacyRequestCreate,
+  PrivacyRequestReview,
 } from "@/lib/types";
 
 // ─── Query key factories ────────────────────────────────────────────────────
@@ -1395,5 +1397,77 @@ export function useSyncQuickBooks(firmId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.quickbooksConnection(firmId) });
     },
+  });
+}
+
+// ─── Privacy ─────────────────────────────────────────────────────────────────
+
+export function useMyPrivacyRequests(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "privacy", "my-requests"] as const,
+    queryFn: () => api.getMyPrivacyRequests(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function usePrivacyQueue(firmId: string, status?: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "privacy", "queue", status] as const,
+    queryFn: () => api.getPrivacyQueue(firmId, { status }),
+    enabled: !!firmId,  // disabled when firmId is empty (non-admin)
+  });
+}
+
+export function useCreatePrivacyRequest(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: PrivacyRequestCreate) => api.createPrivacyRequest(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["firms", firmId, "privacy"] });
+    },
+  });
+}
+
+export function useReviewPrivacyRequest(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { requestId: string; data: PrivacyRequestReview }) =>
+      api.reviewPrivacyRequest(firmId, params.requestId, params.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["firms", firmId, "privacy"] });
+    },
+  });
+}
+
+export function useDownloadDataExport(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.downloadDataExport(firmId),
+  });
+}
+
+// ─── Search ──────────────────────────────────────────────────────────────────
+
+export function useSearch(
+  firmId: string,
+  query: string,
+  options?: { entityTypes?: string; matterId?: string; limit?: number; enabled?: boolean },
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "search", query, options?.entityTypes, options?.matterId, options?.limit] as const,
+    queryFn: () =>
+      api.search(firmId, {
+        q: query,
+        entity_types: options?.entityTypes,
+        matter_id: options?.matterId,
+        limit: options?.limit,
+      }),
+    enabled: (options?.enabled ?? true) && query.length >= 2,
+    staleTime: 30_000,
   });
 }
