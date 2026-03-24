@@ -43,8 +43,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     _startup_logger = _logging.getLogger("app.startup")
     secret_warnings = settings.validate_production_secrets()
-    for warning in secret_warnings:
-        _startup_logger.warning("SECURITY: %s", warning)
+    if secret_warnings:
+        _startup_logger.warning(
+            "SECURITY: %d configuration issue(s) detected during startup",
+            len(secret_warnings),
+        )
     if secret_warnings and settings.is_production:
         raise RuntimeError(
             f"Production startup blocked — {len(secret_warnings)} security issue(s) detected. "

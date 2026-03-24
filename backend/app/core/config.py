@@ -104,6 +104,21 @@ class Settings(BaseSettings):
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
+    def model_post_init(self, __context: object) -> None:
+        """Auto-disable rate limiting and CSRF in test environment unless explicitly set."""
+        if self.app_env == "test":
+            # Only override if the env var was NOT explicitly set (i.e. still at default)
+            import os
+
+            if "RATE_LIMIT_ENABLED" not in os.environ:
+                object.__setattr__(self, "rate_limit_enabled", False)
+            if "CSRF_ENABLED" not in os.environ:
+                object.__setattr__(self, "csrf_enabled", False)
+
+    @property
+    def is_test(self) -> bool:
+        return self.app_env == "test"
+
     @property
     def is_development(self) -> bool:
         return self.app_env == "development" or self.environment == "dev"
