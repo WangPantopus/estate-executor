@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Enum, ForeignKey, Index, String
@@ -13,8 +14,6 @@ from app.models.base import BaseModel
 from app.models.enums import PrivacyRequestStatus, PrivacyRequestType
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from app.models.users import User
 
 
