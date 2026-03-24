@@ -102,5 +102,5 @@ class TimeTrackingSummary(BaseModel):
     total_decimal_hours: float
     billable_hours: float
     non_billable_hours: float
-    by_stakeholder: list[dict]
-    by_task: list[dict]
+    by_stakeholder: list[dict[str, object]]
+    by_task: list[dict[str, object]]

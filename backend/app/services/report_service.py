@@ -13,7 +13,7 @@ from __future__ import annotations
 import io
 import logging
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
@@ -216,8 +216,8 @@ def _create_workbook() -> Any:
     return wb
 
 
-def _style_excel_header(ws: Any, col_count: int) -> None:
-    """Style the first row as a navy header with white text."""
+def _style_excel_header(ws: Any, col_count: int, *, row: int = 1) -> None:
+    """Style a row as a navy header with white text."""
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
     navy_fill = PatternFill(start_color="1A2332", end_color="1A2332", fill_type="solid")
@@ -227,7 +227,7 @@ def _style_excel_header(ws: Any, col_count: int) -> None:
     )
 
     for col in range(1, col_count + 1):
-        cell = ws.cell(row=1, column=col)
+        cell = ws.cell(row=row, column=col)
         cell.fill = navy_fill
         cell.font = white_font
         cell.alignment = Alignment(horizontal="left", vertical="center")
@@ -728,7 +728,7 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
     """Generate a time tracking export with all entries and a summary sheet."""
     from app.models.time_entries import TimeEntry
 
-    matter, firm = await _get_matter_with_firm(db, matter_id)
+    matter = await _get_matter_with_firm(db, matter_id)
 
     # Fetch all time entries with relationships
     result = await db.execute(
@@ -786,9 +786,7 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
     # Summary by professional
     ws2.append(["Matter:", matter.title])
     ws2.append(["Decedent:", matter.decedent_name])
-    from datetime import UTC as _UTC
-
-    ws2.append(["Generated:", datetime.now(_UTC).strftime("%Y-%m-%d %H:%M UTC")])
+    ws2.append(["Generated:", datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")])
     ws2.append([])
     ws2.append(["Summary by Professional"])
     ws2.append(["Professional", "Total Hours", "Billable Hours", "Non-Billable Hours"])

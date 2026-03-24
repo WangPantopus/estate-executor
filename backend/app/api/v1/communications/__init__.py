@@ -153,7 +153,7 @@ async def list_active_disputes(
     _membership: FirmMembership = Depends(require_firm_member),
     _stakeholder: Stakeholder = Depends(require_stakeholder),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, object]:
     """List entity IDs with active (non-resolved) disputes.
 
     Returns a map of entity_type → list of disputed entity_ids.
@@ -186,7 +186,7 @@ async def list_active_disputes(
         .distinct()
     )
 
-    disputes: dict[str, list[dict]] = {}
+    disputes: dict[str, list[dict[str, object]]] = {}
     for row in result.all():
         etype = row[0] or "unknown"
         if etype not in disputes:
