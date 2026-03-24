@@ -1546,3 +1546,24 @@ export interface WebhookDelivery {
   attempt: number;
   created_at: string;
 }
+
+// ─── Search ─────────────────────────────────────────────────────────────────
+
+export type SearchEntityType = 'matter' | 'task' | 'asset' | 'document' | 'communication';
+
+export interface SearchResult {
+  entity_type: SearchEntityType;
+  entity_id: string;
+  matter_id: string;
+  title: string;
+  subtitle: string | null;
+  snippet: string;
+  rank: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  total: number;
+  results: SearchResult[];
+  groups: Record<string, number>;
+}

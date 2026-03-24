@@ -103,6 +103,7 @@ import type {
   ReportJobStatus,
   ReportType,
   RegisterVersionRequest,
+  SearchResponse,
   Stakeholder,
   StakeholderInvite,
   StakeholderUpdate,
@@ -1384,6 +1385,20 @@ export class ApiClient {
     data: SyncRequest,
   ): Promise<SyncResultResponse> {
     return this.post(`${this.intBase(firmId)}/quickbooks/sync`, data);
+  }
+
+  // ─── Search ──────────────────────────────────────────────────────────────
+
+  async search(
+    firmId: string,
+    params: { q: string; entity_types?: string; matter_id?: string; limit?: number },
+  ): Promise<SearchResponse> {
+    const qs = new URLSearchParams();
+    qs.set("q", params.q);
+    if (params.entity_types) qs.set("entity_types", params.entity_types);
+    if (params.matter_id) qs.set("matter_id", params.matter_id);
+    if (params.limit) qs.set("limit", String(params.limit));
+    return this.get(`/firms/${firmId}/search?${qs.toString()}`);
   }
 
   async voidSignatureRequest(

@@ -1397,3 +1397,25 @@ export function useSyncQuickBooks(firmId: string) {
     },
   });
 }
+
+// ─── Search ──────────────────────────────────────────────────────────────────
+
+export function useSearch(
+  firmId: string,
+  query: string,
+  options?: { entityTypes?: string; matterId?: string; limit?: number; enabled?: boolean },
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "search", query, options?.entityTypes, options?.matterId] as const,
+    queryFn: () =>
+      api.search(firmId, {
+        q: query,
+        entity_types: options?.entityTypes,
+        matter_id: options?.matterId,
+        limit: options?.limit,
+      }),
+    enabled: (options?.enabled ?? true) && query.length >= 2,
+    staleTime: 30_000,
+  });
+}
