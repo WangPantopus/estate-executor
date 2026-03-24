@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:chromium": "playwright test --project=chromium"
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.16.0",
@@ -56,6 +57,7 @@
     "jsdom": "^29.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

@@ -139,7 +139,19 @@ class TemplateRegistry:
 
         Merge order: base → estate_type-specific → state-specific.
         Later entries with the same key override earlier ones.
+
+        Results are cached in Redis (1 hour TTL) keyed by
+        estate_type + state + sorted flags.
         """
+        from app.core.cache import get_cached_templates, set_cached_templates
+
+        # Build a stable cache key from flags
+        flags_key = ",".join(sorted(flags)) if flags else "_none_"
+
+        cached = get_cached_templates(estate_type, state, flags_key)
+        if cached is not None:
+            return cached
+
         seen_keys: set[str] = set()
         result: list[dict[str, Any]] = []
 
@@ -161,6 +173,7 @@ class TemplateRegistry:
             seen_keys.add(key)
             result.append(tmpl)
 
+        set_cached_templates(estate_type, state, flags_key, result)
         return result
 
     def get_state_deadlines(

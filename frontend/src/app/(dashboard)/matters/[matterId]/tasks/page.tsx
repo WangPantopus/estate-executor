@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useMemo, useCallback } from "react";
+import { use, useState, useMemo, useCallback, memo } from "react";
 import {
   Plus,
   Filter,
@@ -48,10 +48,12 @@ import { TaskDetailPanel } from "./_components/TaskDetailPanel";
 import { CreateTaskDialog } from "./_components/CreateTaskDialog";
 import { WaiveTaskDialog } from "./_components/WaiveTaskDialog";
 import { BulkActionsBar } from "./_components/BulkActionsBar";
+import { useClientPagination } from "@/components/shared/VirtualList";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FIRM_ID = "current";
+const TASKS_PAGE_SIZE = 100;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -69,7 +71,7 @@ export default function TasksPage({
   const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useTasks(
     FIRM_ID,
     matterId,
-    { per_page: 500 },
+    { per_page: 200 },
   );
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
 
@@ -133,6 +135,14 @@ export default function TasksPage({
 
     return result;
   }, [allTasks, filters]);
+
+  // Client-side pagination for large task lists
+  const {
+    visibleItems: paginatedTasks,
+    hasMore: hasMoreTasks,
+    remainingCount,
+    loadMore: loadMoreTasks,
+  } = useClientPagination(filteredTasks, TASKS_PAGE_SIZE);
 
   const activeFilterCount = countActiveFilters(filters);
 
@@ -432,23 +442,32 @@ export default function TasksPage({
           }
         />
       ) : viewMode === "list" ? (
-        <TaskListView
-          tasks={filteredTasks}
-          stakeholders={stakeholders}
-          groupBy={groupBy}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onSelectAll={selectAll}
-          onTaskClick={(id) => setDetailTaskId(id)}
-          onComplete={handleComplete}
-          onWaive={handleWaive}
-          onAssign={handleAssign}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <>
+          <TaskListView
+            tasks={paginatedTasks}
+            stakeholders={stakeholders}
+            groupBy={groupBy}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onSelectAll={selectAll}
+            onTaskClick={(id) => setDetailTaskId(id)}
+            onComplete={handleComplete}
+            onWaive={handleWaive}
+            onAssign={handleAssign}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+          {hasMoreTasks && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" size="sm" onClick={loadMoreTasks}>
+                Load more ({remainingCount} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <TaskBoardView
-          tasks={filteredTasks}
+          tasks={paginatedTasks}
           stakeholders={stakeholders}
           onTaskClick={(id) => setDetailTaskId(id)}
           onStatusChange={handleStatusChange}
