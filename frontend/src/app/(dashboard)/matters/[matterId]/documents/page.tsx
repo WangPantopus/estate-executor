@@ -37,10 +37,12 @@ import {
   AddAssetDialog,
   type AssetPrefillData,
 } from "../assets/_components/AddAssetDialog";
+import { useClientPagination } from "@/components/shared/VirtualList";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FIRM_ID = "current";
+const DOCS_PAGE_SIZE = 60;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -58,7 +60,7 @@ export default function DocumentsPage({
     error,
   } = useDocuments(FIRM_ID, matterId);
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
-  const { data: tasksData } = useTasks(FIRM_ID, matterId, { per_page: 200 });
+  const { data: tasksData } = useTasks(FIRM_ID, matterId, { per_page: 50 });
 
   const allDocs = docsData?.data ?? [];
   const stakeholders = stakeholdersData?.data ?? [];
@@ -104,6 +106,14 @@ export default function DocumentsPage({
 
     return result;
   }, [allDocs, filters]);
+
+  // Client-side pagination for large document lists
+  const {
+    visibleItems: paginatedDocs,
+    hasMore: hasMoreDocs,
+    remainingCount: remainingDocCount,
+    loadMore: loadMoreDocs,
+  } = useClientPagination(filteredDocs, DOCS_PAGE_SIZE);
 
   const activeFilterCount = countActiveDocFilters(filters);
 
@@ -249,20 +259,38 @@ export default function DocumentsPage({
           description="Upload documents or request them from stakeholders."
         />
       ) : viewMode === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredDocs.map((doc) => (
-            <DocumentCard
-              key={doc.id}
-              doc={doc}
-              onClick={() => setDetailDocId(doc.id)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {paginatedDocs.map((doc) => (
+              <DocumentCard
+                key={doc.id}
+                doc={doc}
+                onClick={() => setDetailDocId(doc.id)}
+              />
+            ))}
+          </div>
+          {hasMoreDocs && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" size="sm" onClick={loadMoreDocs}>
+                Load more ({remainingDocCount} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
-        <DocumentListView
-          documents={filteredDocs}
-          onDocClick={(id) => setDetailDocId(id)}
-        />
+        <>
+          <DocumentListView
+            documents={paginatedDocs}
+            onDocClick={(id) => setDetailDocId(id)}
+          />
+          {hasMoreDocs && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" size="sm" onClick={loadMoreDocs}>
+                Load more ({remainingDocCount} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Document detail side panel */}

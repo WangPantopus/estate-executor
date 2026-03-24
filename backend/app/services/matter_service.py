@@ -216,9 +216,55 @@ async def get_dashboard(
 ) -> dict[str, Any]:
     """Build dashboard data using SQL aggregation queries.
 
+    Results are cached in Redis for 60 seconds to reduce DB load on
+    repeated dashboard loads.
+
     Returns a dict with: task_summary, asset_summary, stakeholder_count,
     upcoming_deadlines, recent_events.
     """
+    from app.core.cache import get_cached_dashboard, set_cached_dashboard
+
+    cache_key_role = (
+        stakeholder_role.value if hasattr(stakeholder_role, "value") else str(stakeholder_role)
+    )
+    cached = get_cached_dashboard(str(matter_id), cache_key_role)
+    if cached is not None:
+        # The cached dict contains only serializable aggregate fields
+        # (task_summary, asset_summary, stakeholder_count). Deadlines and
+        # events are ORM objects and cannot be JSON-cached, so we fetch them
+        # on every request. They are cheap LIMIT-5/LIMIT-10 queries.
+        today = date.today()
+        deadline_q = (
+            select(Deadline)
+            .where(
+                Deadline.matter_id == matter_id,
+                Deadline.status == DeadlineStatus.upcoming,
+                Deadline.due_date >= today,
+            )
+            .order_by(Deadline.due_date)
+            .limit(5)
+        )
+        deadline_result = await db.execute(deadline_q)
+        upcoming_deadlines = list(deadline_result.scalars().all())
+
+        event_q = (
+            select(Event)
+            .where(Event.matter_id == matter_id)
+            .order_by(Event.created_at.desc())
+            .limit(10)
+        )
+        event_result = await db.execute(event_q)
+        recent_events = list(event_result.scalars().all())
+
+        if stakeholder_role == StakeholderRole.beneficiary:
+            recent_events = []
+
+        return {
+            **cached,
+            "upcoming_deadlines": upcoming_deadlines,
+            "recent_events": recent_events,
+        }
+
     today = date.today()
 
     # --- Task summary: single aggregation query ---
@@ -328,13 +374,26 @@ async def get_dashboard(
         }
         recent_events = []
 
-    return {
+    result = {
         "task_summary": task_summary,
         "asset_summary": asset_summary,
         "stakeholder_count": stakeholder_count,
         "upcoming_deadlines": upcoming_deadlines,
         "recent_events": recent_events,
     }
+
+    # Cache the serializable parts (deadlines/events are ORM objects — cache summary only)
+    try:
+        cacheable = {
+            "task_summary": task_summary,
+            "asset_summary": asset_summary,
+            "stakeholder_count": stakeholder_count,
+        }
+        set_cached_dashboard(str(matter_id), cache_key_role, cacheable)
+    except Exception:
+        pass  # fail-open
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -380,6 +439,12 @@ async def update_matter(
             action="updated",
             changes=changes,
         )
+
+        # Invalidate caches affected by matter updates
+        from app.core.cache import invalidate_dashboard, invalidate_portfolio
+
+        invalidate_dashboard(str(matter.id))
+        invalidate_portfolio(str(matter.firm_id))
 
     return matter
 

@@ -1,19 +1,55 @@
 "use client";
 
-import { use } from "react";
+import { use, Suspense, lazy } from "react";
 import { useMatterDashboard, useTasks, useStakeholders } from "@/hooks";
 import { usePermissions } from "@/hooks/use-permissions";
 import { LoadingState } from "@/components/layout/LoadingState";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Core components loaded eagerly (above the fold)
 import { MatterHeader } from "./_components/MatterHeader";
 import { MetricsRow } from "./_components/MetricsRow";
-import { TasksByPhase } from "./_components/TasksByPhase";
-import { RecentActivity } from "./_components/RecentActivity";
-import { AssetSummaryCard } from "./_components/AssetSummaryCard";
-import { StakeholdersCard } from "./_components/StakeholdersCard";
-import { UpcomingDeadlinesCard } from "./_components/UpcomingDeadlinesCard";
 import { AlertsPanel } from "./_components/AlertsPanel";
-import { AIInsightsPanel } from "./_components/AIInsightsPanel";
+import { TasksByPhase } from "./_components/TasksByPhase";
+
+// Below-the-fold and conditional components loaded lazily
+const RecentActivity = lazy(() =>
+  import("./_components/RecentActivity").then((m) => ({
+    default: m.RecentActivity,
+  })),
+);
+const AssetSummaryCard = lazy(() =>
+  import("./_components/AssetSummaryCard").then((m) => ({
+    default: m.AssetSummaryCard,
+  })),
+);
+const StakeholdersCard = lazy(() =>
+  import("./_components/StakeholdersCard").then((m) => ({
+    default: m.StakeholdersCard,
+  })),
+);
+const UpcomingDeadlinesCard = lazy(() =>
+  import("./_components/UpcomingDeadlinesCard").then((m) => ({
+    default: m.UpcomingDeadlinesCard,
+  })),
+);
+const AIInsightsPanel = lazy(() =>
+  import("./_components/AIInsightsPanel").then((m) => ({
+    default: m.AIInsightsPanel,
+  })),
+);
+
+function CardSkeleton() {
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-20 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
 
 // Placeholder firmId — will come from context/auth in production
 const FIRM_ID = "current";
@@ -25,7 +61,8 @@ export default function MatterDashboardPage({
 }) {
   const { matterId } = use(params);
   const { data: dashboard, isLoading, error } = useMatterDashboard(FIRM_ID, matterId);
-  const { data: tasksData } = useTasks(FIRM_ID, matterId, { per_page: 100 });
+  // Only fetch enough tasks for the dashboard phase summary (not the full list)
+  const { data: tasksData } = useTasks(FIRM_ID, matterId, { per_page: 50 });
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
   const { can, isReadOnly } = usePermissions(matterId);
 
@@ -73,7 +110,6 @@ export default function MatterDashboardPage({
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Left column (60%) */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Beneficiary/read_only: simplified tasks view (progress only) */}
           <TasksByPhase
             tasks={tasks}
             firmId={FIRM_ID}
@@ -81,7 +117,9 @@ export default function MatterDashboardPage({
           />
           {/* Activity feed: hidden for beneficiary/read_only */}
           {can("event:read") && (
-            <RecentActivity events={recent_events} matterId={matterId} />
+            <Suspense fallback={<CardSkeleton />}>
+              <RecentActivity events={recent_events} matterId={matterId} />
+            </Suspense>
           )}
         </div>
 
@@ -89,24 +127,31 @@ export default function MatterDashboardPage({
         <div className="lg:col-span-2 space-y-6">
           {/* AI Insights: visible to professionals/admins */}
           {can("task:create") && (
-            <AIInsightsPanel firmId={FIRM_ID} matterId={matterId} />
+            <Suspense fallback={<CardSkeleton />}>
+              <AIInsightsPanel firmId={FIRM_ID} matterId={matterId} />
+            </Suspense>
           )}
           {/* Asset summary: hidden for read_only */}
           {!isReadOnly && (
-            <AssetSummaryCard
-              assetSummary={asset_summary}
+            <Suspense fallback={<CardSkeleton />}>
+              <AssetSummaryCard
+                assetSummary={asset_summary}
+                matterId={matterId}
+              />
+            </Suspense>
+          )}
+          <Suspense fallback={<CardSkeleton />}>
+            <StakeholdersCard
+              stakeholders={stakeholders}
               matterId={matterId}
             />
-          )}
-          {/* Stakeholders card: visible to all (but card can adapt internally) */}
-          <StakeholdersCard
-            stakeholders={stakeholders}
-            matterId={matterId}
-          />
-          <UpcomingDeadlinesCard
-            deadlines={upcoming_deadlines}
-            matterId={matterId}
-          />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <UpcomingDeadlinesCard
+              deadlines={upcoming_deadlines}
+              matterId={matterId}
+            />
+          </Suspense>
         </div>
       </div>
     </div>

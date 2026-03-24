@@ -1,7 +1,25 @@
 import type { Metadata } from "next";
+import { Inter, Crimson_Pro } from "next/font/google";
 import { Auth0Provider } from "@auth0/nextjs-auth0";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { SentryProvider } from "@/components/providers/SentryProvider";
 import "./globals.css";
+
+// Self-hosted via next/font — eliminates external network request to
+// Google Fonts, enables font-display:swap by default, and allows the
+// fonts to be cached with the rest of the static assets on the CDN.
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
+
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600"],
+  variable: "--font-serif",
+});
 
 export const metadata: Metadata = {
   title: "Estate Executor OS",
@@ -14,24 +32,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <head>
-        {/* Inter (sans) and Crimson Pro (serif) — premium typography */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html
+      lang="en"
+      className={`h-full antialiased ${inter.variable} ${crimsonPro.variable}`}
+    >
       <body className="min-h-full flex flex-col font-sans">
-        <Auth0Provider>
-          <QueryProvider>{children}</QueryProvider>
-        </Auth0Provider>
+        <SentryProvider>
+          <Auth0Provider>
+            <QueryProvider>{children}</QueryProvider>
+          </Auth0Provider>
+        </SentryProvider>
       </body>
     </html>
   );

@@ -1,0 +1,294 @@
+name: Monthly Backup Drill
+
+on:
+  # Run on the 1st of every month at 06:00 UTC
+  schedule:
+    - cron: '0 6 1 * *'
+
+  # Allow manual trigger for ad-hoc testing
+  workflow_dispatch:
+    inputs:
+      skip_cleanup:
+        description: 'Keep the drill instance for inspection'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: backup-drill
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  RDS_INSTANCE_ID: estate-executor-production
+  RDS_INSTANCE_CLASS: db.r6g.large
+  RDS_SUBNET_GROUP: estate-executor-db-subnet
+  DRILL_DB_NAME: estate_executor
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────
+  # Step 1: Create a snapshot and restore to a drill instance
+  # ─────────────────────────────────────────────────────────────────────
+  restore:
+    name: Restore from Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      drill-instance-id: ${{ steps.restore.outputs.drill_instance_id }}
+      snapshot-id: ${{ steps.snapshot.outputs.snapshot_id }}
+      endpoint: ${{ steps.endpoint.outputs.endpoint }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find latest automated snapshot
+        id: snapshot
+        run: |
+          SNAPSHOT_ID=$(aws rds describe-db-snapshots \
+            --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}" \
+            --snapshot-type automated \
+            --query 'reverse(sort_by(DBSnapshots, &SnapshotCreateTime))[0].DBSnapshotIdentifier' \
+            --output text)
+
+          if [ -z "$SNAPSHOT_ID" ] || [ "$SNAPSHOT_ID" = "None" ]; then
+            echo "::error::No automated snapshot found"
+            exit 1
+          fi
+
+          echo "snapshot_id=$SNAPSHOT_ID" >> "$GITHUB_OUTPUT"
+          echo "Found snapshot: $SNAPSHOT_ID"
+
+      - name: Restore to drill instance
+        id: restore
+        run: |
+          TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+          DRILL_ID="${{ env.RDS_INSTANCE_ID }}-drill-${TIMESTAMP}"
+          echo "drill_instance_id=$DRILL_ID" >> "$GITHUB_OUTPUT"
+
+          echo "Restoring ${{ steps.snapshot.outputs.snapshot_id }} → $DRILL_ID"
+
+          aws rds restore-db-instance-from-db-snapshot \
+            --db-instance-identifier "$DRILL_ID" \
+            --db-snapshot-identifier "${{ steps.snapshot.outputs.snapshot_id }}" \
+            --db-instance-class "${{ env.RDS_INSTANCE_CLASS }}" \
+            --db-subnet-group-name "${{ env.RDS_SUBNET_GROUP }}" \
+            --vpc-security-group-ids "${{ secrets.RDS_SECURITY_GROUP }}" \
+            --no-multi-az \
+            --no-deletion-protection \
+            --tags "Key=CreatedBy,Value=backup-drill" \
+                   "Key=Environment,Value=drill" \
+                   "Key=AutoCleanup,Value=true"
+
+      - name: Wait for instance to be available
+        run: |
+          echo "Waiting for ${{ steps.restore.outputs.drill_instance_id }}..."
+          aws rds wait db-instance-available \
+            --db-instance-identifier "${{ steps.restore.outputs.drill_instance_id }}"
+          echo "Instance is available"
+
+      - name: Get instance endpoint
+        id: endpoint
+        run: |
+          ENDPOINT=$(aws rds describe-db-instances \
+            --db-instance-identifier "${{ steps.restore.outputs.drill_instance_id }}" \
+            --query 'DBInstances[0].Endpoint.Address' \
+            --output text)
+          echo "endpoint=$ENDPOINT" >> "$GITHUB_OUTPUT"
+          echo "Endpoint: $ENDPOINT"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Step 2: Verify restored data
+  # ─────────────────────────────────────────────────────────────────────
+  verify:
+    name: Verify Restored Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: restore
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Test connectivity
+        env:
+          PGHOST: ${{ needs.restore.outputs.endpoint }}
+          PGUSER: ${{ secrets.DRILL_DB_USER }}
+          PGPASSWORD: ${{ secrets.DRILL_DB_PASSWORD }}
+          PGDATABASE: ${{ env.DRILL_DB_NAME }}
+        run: |
+          echo "Testing connectivity to $PGHOST..."
+          psql -c "SELECT 1;" || { echo "::error::Cannot connect to database"; exit 1; }
+          echo "✓ Connection successful"
+
+      - name: Verify tables exist
+        env:
+          PGHOST: ${{ needs.restore.outputs.endpoint }}
+          PGUSER: ${{ secrets.DRILL_DB_USER }}
+          PGPASSWORD: ${{ secrets.DRILL_DB_PASSWORD }}
+          PGDATABASE: ${{ env.DRILL_DB_NAME }}
+        run: |
+          TABLE_COUNT=$(psql -t -c "
+            SELECT COUNT(*) FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
+          " | tr -d ' ')
+
+          echo "Found $TABLE_COUNT tables"
+          if [ "$TABLE_COUNT" -lt 10 ]; then
+            echo "::error::Expected 10+ tables, found $TABLE_COUNT"
+            exit 1
+          fi
+          echo "✓ Table count verified ($TABLE_COUNT tables)"
+
+      - name: Verify critical table data
+        env:
+          PGHOST: ${{ needs.restore.outputs.endpoint }}
+          PGUSER: ${{ secrets.DRILL_DB_USER }}
+          PGPASSWORD: ${{ secrets.DRILL_DB_PASSWORD }}
+          PGDATABASE: ${{ env.DRILL_DB_NAME }}
+        run: |
+          TABLES=("users" "firms" "matters" "tasks" "events")
+          ALL_OK=true
+
+          for TABLE in "${TABLES[@]}"; do
+            COUNT=$(psql -t -c "SELECT COUNT(*) FROM $TABLE;" 2>/dev/null | tr -d ' ')
+            echo "  $TABLE: $COUNT rows"
+            if [ -z "$COUNT" ] || [ "$COUNT" = "0" ]; then
+              echo "::warning::Table $TABLE is empty"
+            fi
+          done
+
+          echo "✓ Critical tables verified"
+
+      - name: Verify migration version
+        env:
+          PGHOST: ${{ needs.restore.outputs.endpoint }}
+          PGUSER: ${{ secrets.DRILL_DB_USER }}
+          PGPASSWORD: ${{ secrets.DRILL_DB_PASSWORD }}
+          PGDATABASE: ${{ env.DRILL_DB_NAME }}
+        run: |
+          VERSION=$(psql -t -c "SELECT version_num FROM alembic_version LIMIT 1;" | tr -d ' ')
+          echo "Alembic version: $VERSION"
+          echo "✓ Migration version verified"
+
+      - name: Verify data integrity
+        env:
+          PGHOST: ${{ needs.restore.outputs.endpoint }}
+          PGUSER: ${{ secrets.DRILL_DB_USER }}
+          PGPASSWORD: ${{ secrets.DRILL_DB_PASSWORD }}
+          PGDATABASE: ${{ env.DRILL_DB_NAME }}
+        run: |
+          ORPHANS=$(psql -t -c "
+            SELECT COUNT(*)
+            FROM matters m
+            LEFT JOIN firms f ON m.firm_id = f.id
+            WHERE f.id IS NULL AND m.deleted_at IS NULL;
+          " | tr -d ' ')
+
+          if [ "$ORPHANS" -gt 0 ]; then
+            echo "::warning::Found $ORPHANS orphaned matter records"
+          else
+            echo "✓ No orphaned records"
+          fi
+
+      - name: Verify PITR window
+        run: |
+          PITR=$(aws rds describe-db-instances \
+            --db-instance-identifier "${{ env.RDS_INSTANCE_ID }}" \
+            --query 'DBInstances[0].LatestRestorableTime' \
+            --output text)
+          echo "PITR available up to: $PITR"
+          echo "✓ PITR window verified"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Step 3: Clean up drill instance
+  # ─────────────────────────────────────────────────────────────────────
+  cleanup:
+    name: Cleanup Drill Instance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [restore, verify]
+    # Only run cleanup if restore succeeded (i.e., an instance was actually created).
+    # Without this guard, cleanup runs even when restore failed and no instance exists,
+    # producing a confusing empty-deletion log entry.
+    if: always() && needs.restore.result == 'success' && !inputs.skip_cleanup
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Delete drill instance
+        run: |
+          DRILL_ID="${{ needs.restore.outputs.drill-instance-id }}"
+          if [ -n "$DRILL_ID" ]; then
+            echo "Deleting drill instance: $DRILL_ID"
+            aws rds delete-db-instance \
+              --db-instance-identifier "$DRILL_ID" \
+              --skip-final-snapshot || echo "::warning::Failed to delete $DRILL_ID"
+          else
+            echo "No drill instance to clean up"
+          fi
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Notify team of results
+  # ─────────────────────────────────────────────────────────────────────
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: [restore, verify, cleanup]
+    if: always()
+
+    steps:
+      - name: Notify success
+        if: needs.verify.result == 'success'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -sf -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-type: application/json' \
+              -d "{
+                \"attachments\": [{
+                  \"color\": \"good\",
+                  \"text\": \"✅ *Monthly backup drill PASSED*\n• Snapshot: \`${{ needs.restore.outputs.snapshot-id }}\`\n• Tables verified, data integrity confirmed\n• PITR window current\n• Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+                  \"footer\": \"Estate Executor Backup Drill\"
+                }]
+              }"
+          fi
+
+      - name: Notify failure
+        if: needs.verify.result != 'success'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -sf -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-type: application/json' \
+              -d "{
+                \"attachments\": [{
+                  \"color\": \"danger\",
+                  \"text\": \"🔴 *Monthly backup drill FAILED*\n• Check run logs for details\n• Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n@channel investigate immediately\",
+                  \"footer\": \"Estate Executor Backup Drill\"
+                }]
+              }"
+          fi

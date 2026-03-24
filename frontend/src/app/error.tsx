@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
+import { captureError } from "@/lib/sentry";
 
 export default function Error({
   error,
@@ -12,6 +13,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error("Application error:", error);
+    captureError(error, { digest: error.digest });
   }, [error]);
 
   return (

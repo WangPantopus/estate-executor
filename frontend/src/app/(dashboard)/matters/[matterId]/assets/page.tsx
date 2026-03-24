@@ -25,10 +25,12 @@ import {
 import { AssetCard } from "./_components/AssetCard";
 import { AssetDetailPanel } from "./_components/AssetDetailPanel";
 import { AddAssetDialog } from "./_components/AddAssetDialog";
+import { useClientPagination } from "@/components/shared/VirtualList";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FIRM_ID = "current";
+const ASSETS_PAGE_SIZE = 60;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -85,6 +87,14 @@ export default function AssetsPage({
 
     return result;
   }, [allAssets, filters]);
+
+  // Client-side pagination for large asset lists
+  const {
+    visibleItems: paginatedAssets,
+    hasMore: hasMoreAssets,
+    remainingCount: remainingAssetCount,
+    loadMore: loadMoreAssets,
+  } = useClientPagination(filteredAssets, ASSETS_PAGE_SIZE);
 
   const activeFilterCount = countActiveAssetFilters(filters);
 
@@ -185,15 +195,24 @@ export default function AssetsPage({
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredAssets.map((asset) => (
-            <AssetCard
-              key={asset.id}
-              asset={asset}
-              onClick={() => setDetailAssetId(asset.id)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {paginatedAssets.map((asset) => (
+              <AssetCard
+                key={asset.id}
+                asset={asset}
+                onClick={() => setDetailAssetId(asset.id)}
+              />
+            ))}
+          </div>
+          {hasMoreAssets && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" size="sm" onClick={loadMoreAssets}>
+                Load more ({remainingAssetCount} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Asset detail side panel */}

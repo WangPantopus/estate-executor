@@ -12,9 +12,11 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:chromium": "playwright test --project=chromium"
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.45.0",
     "@auth0/nextjs-auth0": "^4.16.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -56,6 +58,7 @@
     "jsdom": "^29.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

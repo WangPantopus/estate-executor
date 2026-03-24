@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/yingpengwang/Downloads/estate-executor diff master...HEAD --name-only)",
+      "Bash(python3 -c \"import backend.app.core.metrics\")",
+      "Bash(python3 -m py_compile backend/app/core/metrics.py backend/app/services/alerting_service.py frontend/src/lib/sentry.ts)",
+      "Bash(grep -v \"^$\")",
+      "Bash(head -50 backend/migrations/versions/*performance*.py)"
+    ]
+  }
+}

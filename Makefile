@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-services dev-backend dev-frontend migrate test lint clean worker beat
+.PHONY: setup dev dev-services dev-backend dev-frontend migrate test lint clean worker beat backup-status backup-snapshot backup-list backup-drill backup-cleanup
 
 # Install all dependencies
 setup:
@@ -47,3 +47,25 @@ beat:
 # Stop and clean up docker services
 clean:
 	docker compose down -v
+
+# ── Database Backup Operations ───────────────────────────────────────────────
+
+# Show backup configuration and health
+backup-status:
+	./scripts/db-backup.sh status
+
+# Create a manual snapshot (usage: make backup-snapshot MSG="pre-deploy v2.1")
+backup-snapshot:
+	./scripts/db-backup.sh snapshot "$(MSG)"
+
+# List available backups and PITR window
+backup-list:
+	./scripts/db-backup.sh list
+
+# Run monthly backup restoration drill
+backup-drill:
+	./scripts/db-backup.sh drill
+
+# Clean up old drill/test instances
+backup-cleanup:
+	./scripts/db-backup.sh cleanup
