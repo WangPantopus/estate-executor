@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import logging
+import uuid as uuid_mod
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -32,6 +32,9 @@ logger = logging.getLogger(__name__)
 ANONYMIZED_NAME = "[Deleted User]"
 ANONYMIZED_EMAIL = "deleted@anonymized.invalid"
 ANONYMIZED_PHONE = None
+
+# Sentinel UUID for firm-level events (events table requires non-null matter_id)
+_SYSTEM_MATTER_ID = uuid_mod.UUID("00000000-0000-0000-0000-000000000000")
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +81,7 @@ async def create_request(
 
     await event_logger.log(
         db,
-        matter_id=None,
+        matter_id=_SYSTEM_MATTER_ID,
         actor_id=user_id,
         actor_type=ActorType.user,
         entity_type="privacy_request",
@@ -195,7 +198,7 @@ async def review_request(
 
     await event_logger.log(
         db,
-        matter_id=None,
+        matter_id=_SYSTEM_MATTER_ID,
         actor_id=reviewer_id,
         actor_type=ActorType.user,
         entity_type="privacy_request",
@@ -389,7 +392,7 @@ async def process_deletion(
 
     await event_logger.log(
         db,
-        matter_id=None,
+        matter_id=_SYSTEM_MATTER_ID,
         actor_id=None,
         actor_type=ActorType.system,
         entity_type="privacy_request",

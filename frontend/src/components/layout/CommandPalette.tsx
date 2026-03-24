@@ -19,7 +19,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeSnippet } from "@/lib/utils";
 import { useSearch, useCurrentUser } from "@/hooks";
 import type { SearchEntityType, SearchResult } from "@/lib/types";
 
@@ -152,7 +152,10 @@ export function CommandPalette() {
         )
       : commands;
 
-  const totalItems = filtered.length + searchResults.length;
+  // +1 for the "View all results" button when searching
+  const totalItems = isSearching
+    ? searchResults.length + (searchResults.length > 0 ? 1 : 0)
+    : filtered.length;
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -237,7 +240,7 @@ export function CommandPalette() {
                         <p className="font-medium truncate">{result.title}</p>
                         <p
                           className="text-xs text-muted-foreground truncate [&_mark]:bg-yellow-200 [&_mark]:text-foreground [&_mark]:rounded-sm"
-                          dangerouslySetInnerHTML={{ __html: result.snippet }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeSnippet(result.snippet) }}
                         />
                       </div>
                       <span className="text-[10px] text-muted-foreground/60 shrink-0">

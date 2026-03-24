@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSearch, useCurrentUser } from "@/hooks";
+import { sanitizeSnippet } from "@/lib/utils";
 import type { SearchEntityType, SearchResult } from "@/lib/types";
 
 const ENTITY_TYPE_CONFIG: Record<
@@ -74,7 +75,7 @@ export default function SearchPage() {
   const { data: user } = useCurrentUser();
   const firmId = user?.firm_id ?? "";
 
-  const { data, isLoading, isFetching } = useSearch(firmId, query, {
+  const { data, isLoading, isFetching, isError } = useSearch(firmId, query, {
     entityTypes: activeFilter ?? undefined,
     enabled: !!firmId,
   });
@@ -148,6 +149,10 @@ export default function SearchPage() {
         <p className="text-sm text-muted-foreground text-center py-12">
           Type at least 2 characters to search.
         </p>
+      ) : isError ? (
+        <p className="text-sm text-danger text-center py-12">
+          Search failed. Please try again.
+        </p>
       ) : isLoading ? (
         <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
@@ -191,7 +196,7 @@ export default function SearchPage() {
                           )}
                           <p
                             className="text-xs text-muted-foreground mt-1 line-clamp-2 [&_mark]:bg-yellow-200 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
-                            dangerouslySetInnerHTML={{ __html: result.snippet }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeSnippet(result.snippet) }}
                           />
                         </div>
                         <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">

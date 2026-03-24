@@ -39,10 +39,14 @@ async def search(
 
     Returns:
         List of result dicts with entity_type, id, matter_id, title,
-        subtitle, snippet, rank, and url.
+        subtitle, snippet, and rank.
     """
     if not query or not query.strip():
         return []
+
+    # Treat empty list same as None (search all types)
+    if entity_types is not None and len(entity_types) == 0:
+        entity_types = None
 
     # websearch_to_tsquery handles natural language: "hello world" → 'hello' & 'world'
     tsquery = func.websearch_to_tsquery("english", query)

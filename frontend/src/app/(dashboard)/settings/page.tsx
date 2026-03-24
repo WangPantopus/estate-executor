@@ -1879,7 +1879,7 @@ function WebhooksCard({ firmId, isAdmin }: { firmId: string; isAdmin: boolean })
 function PrivacyTabContent({ firmId, isAdmin }: { firmId: string; isAdmin: boolean }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { data: myRequests } = useMyPrivacyRequests(firmId);
-  const { data: queue, isLoading: loadingQueue } = usePrivacyQueue(firmId, undefined);
+  const { data: queue, isLoading: loadingQueue } = usePrivacyQueue(isAdmin ? firmId : "", undefined);
   const createRequest = useCreatePrivacyRequest(firmId);
   const reviewRequest = useReviewPrivacyRequest(firmId);
   const downloadExport = useDownloadDataExport(firmId);
@@ -1900,8 +1900,12 @@ function PrivacyTabContent({ firmId, isAdmin }: { firmId: string; isAdmin: boole
   };
 
   const handleDeletionRequest = async () => {
-    await createRequest.mutateAsync({ request_type: "data_deletion" });
-    setShowDeleteConfirm(false);
+    try {
+      await createRequest.mutateAsync({ request_type: "data_deletion" });
+      setShowDeleteConfirm(false);
+    } catch {
+      // Error handled by mutation state
+    }
   };
 
   const STATUS_COLORS: Record<string, string> = {
@@ -1944,6 +1948,12 @@ function PrivacyTabContent({ firmId, isAdmin }: { firmId: string; isAdmin: boole
               Request Data Deletion
             </Button>
           </div>
+          {downloadExport.isError && (
+            <p className="text-xs text-danger">Failed to export data. Please try again.</p>
+          )}
+          {createRequest.isError && (
+            <p className="text-xs text-danger">Failed to submit request. Please try again.</p>
+          )}
         </CardContent>
       </Card>
 

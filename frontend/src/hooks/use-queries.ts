@@ -1416,7 +1416,7 @@ export function usePrivacyQueue(firmId: string, status?: string) {
   return useQuery({
     queryKey: ["firms", firmId, "privacy", "queue", status] as const,
     queryFn: () => api.getPrivacyQueue(firmId, { status }),
-    enabled: !!firmId,
+    enabled: !!firmId,  // disabled when firmId is empty (non-admin)
   });
 }
 
@@ -1459,7 +1459,7 @@ export function useSearch(
 ) {
   const api = useApi();
   return useQuery({
-    queryKey: ["firms", firmId, "search", query, options?.entityTypes, options?.matterId] as const,
+    queryKey: ["firms", firmId, "search", query, options?.entityTypes, options?.matterId, options?.limit] as const,
     queryFn: () =>
       api.search(firmId, {
         q: query,

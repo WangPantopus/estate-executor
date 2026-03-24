@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
+
+SearchEntityType = Literal["matter", "task", "asset", "document", "communication"]
 
 
 class SearchResult(BaseModel):
     """A single search result."""
 
-    model_config = ConfigDict(strict=True)
+    model_config = ConfigDict(from_attributes=True)
 
-    entity_type: str = Field(..., description="Type: matter, task, asset, document, communication")
+    entity_type: SearchEntityType
     entity_id: str
     matter_id: str
     title: str
@@ -22,7 +26,7 @@ class SearchResult(BaseModel):
 class SearchResponse(BaseModel):
     """Full search response grouped by entity type."""
 
-    model_config = ConfigDict(strict=True)
+    model_config = ConfigDict(from_attributes=True)
 
     query: str
     total: int
