@@ -22,12 +22,11 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from tests.integration.conftest import SimpleNamespace
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,7 +67,7 @@ def _make_matter(**overrides):
 
 
 def _make_stakeholder(
-    id=None, role="matter_admin", name="Attorney Smith", email="attorney@firm.com", **kw
+    id=None, role="matter_admin", name="Attorney Smith", email="attorney@firm.com", **kw  # noqa: A002
 ):
     from app.models.enums import StakeholderRole
 
@@ -87,7 +86,7 @@ def _make_stakeholder(
     )
 
 
-def _make_task(id=None, phase="immediate", status="not_started", **kw):
+def _make_task(id=None, phase="immediate", status="not_started", **kw):  # noqa: A002
     from app.models.enums import TaskPhase, TaskPriority, TaskStatus
 
     return SimpleNamespace(
@@ -117,7 +116,7 @@ def _make_task(id=None, phase="immediate", status="not_started", **kw):
     )
 
 
-def _make_communication(id=None, type_="message", **kw):
+def _make_communication(id=None, type_="message", **kw):  # noqa: A002
     from app.models.enums import CommunicationType, CommunicationVisibility
 
     return SimpleNamespace(
@@ -143,7 +142,7 @@ def _make_communication(id=None, type_="message", **kw):
     )
 
 
-def _make_time_entry(id=None, **kw):
+def _make_time_entry(id=None, **kw):  # noqa: A002
     te = SimpleNamespace(
         id=id or uuid.uuid4(),
         matter_id=_MATTER_ID,
@@ -469,8 +468,6 @@ class TestStep8DocumentRequest:
     @patch("app.services.document_service.request_document")
     async def test_request_document(self, mock_request, client, firm_id, matter_id):
         from app.models.enums import (
-            CommunicationType,
-            CommunicationVisibility,
             DocumentRequestStatus,
         )
 

@@ -780,7 +780,6 @@ def send_document_upload_complete(
             from app.core.config import settings
             from app.core.database import async_session_factory
             from app.models.document_requests import DocumentRequest
-            from app.models.documents import Document
             from app.models.matters import Matter
 
             async with async_session_factory() as session:
@@ -807,7 +806,9 @@ def send_document_upload_complete(
                 return {
                     "to": doc_request.requester.email,
                     "recipient_name": doc_request.requester.full_name,
-                    "uploader_name": doc_request.target.full_name if doc_request.target else "Unknown",
+                    "uploader_name": (
+                        doc_request.target.full_name if doc_request.target else "Unknown"
+                    ),
                     "doc_type": doc_request.doc_type_needed,
                     "filename": document.filename if document else "Unknown",
                     "decedent_name": matter.decedent_name if matter else "Unknown",

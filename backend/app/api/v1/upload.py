@@ -7,7 +7,7 @@ receive via email when a professional requests a document.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.core.dependencies import get_db
 from app.schemas.documents import (
