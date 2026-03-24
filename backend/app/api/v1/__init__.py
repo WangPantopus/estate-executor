@@ -21,6 +21,7 @@ from app.api.v1.matters import router as matters_router
 from app.api.v1.milestones import router as milestones_router
 from app.api.v1.portal import router as portal_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.sso import router as sso_router
 from app.api.v1.stakeholders import router as stakeholders_router
 from app.api.v1.tasks import router as tasks_router
 from app.api.v1.time_tracking import router as time_tracking_router
@@ -126,6 +127,11 @@ api_router.include_router(
     integrations_webhook_router,
     prefix="/webhooks",
     tags=["webhooks"],
+)
+api_router.include_router(
+    sso_router,
+    prefix="/firms/{firm_id}/sso",
+    tags=["sso"],
 )
 api_router.include_router(
     portal_router,

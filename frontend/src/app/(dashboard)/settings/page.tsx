@@ -65,6 +65,9 @@ import {
   useInviteFirmMember,
   useUpdateFirmMember,
   useRemoveFirmMember,
+  useSSOConfig,
+  useEnableSSO,
+  useDisableSSO,
   useBillingOverview,
   useBillingInvoices,
   useCreateCheckout,
@@ -307,6 +310,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Enterprise SSO */}
+          {tier === "enterprise" && <SSOConfigCard firmId={FIRM_ID} isOwner={isOwner} />}
         </TabsContent>
 
         {/* ─── Team Tab ───────────────────────────────────────────────────── */}
@@ -1437,5 +1443,114 @@ function IntegrationsTabContent({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ─── SSO Config Card ─────────────────────────────────────────────────────────
+
+function SSOConfigCard({ firmId, isOwner }: { firmId: string; isOwner: boolean }) {
+  const { data: sso, isLoading } = useSSOConfig(firmId);
+  const enableSSO = useEnableSSO(firmId);
+  const disableSSO = useDisableSSO(firmId);
+
+  if (isLoading) return null;
+
+  const isConfigured = sso !== null && sso !== undefined;
+  const isEnabled = isConfigured && sso?.enabled;
+
+  return (
+    <Card className="mt-4">
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Enterprise SSO</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {isConfigured
+                ? `${(sso?.protocol ?? "").toUpperCase()} — ${sso?.auth0_connection_name ?? "pending"}`
+                : "SAML or OIDC single sign-on for your organization"}
+            </p>
+          </div>
+          <Badge variant={isEnabled ? "default" : "muted"} className="text-xs">
+            {isEnabled ? "Enabled" : isConfigured ? "Configured" : "Not Configured"}
+          </Badge>
+        </div>
+
+        {isConfigured && (
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Protocol</span>
+              <span className="font-medium text-foreground">{sso?.protocol?.toUpperCase()}</span>
+            </div>
+            {sso?.saml_entity_id && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Entity ID</span>
+                <span className="font-mono text-foreground truncate max-w-[200px]">{sso.saml_entity_id}</span>
+              </div>
+            )}
+            {sso?.oidc_discovery_url && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Discovery URL</span>
+                <span className="font-mono text-foreground truncate max-w-[200px]">{sso.oidc_discovery_url}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Enforce SSO-only</span>
+              <Badge variant={sso?.enforce_sso ? "default" : "muted"} className="text-[10px]">
+                {sso?.enforce_sso ? "Yes" : "No"}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Auto-provision users</span>
+              <Badge variant={sso?.auto_provision ? "default" : "muted"} className="text-[10px]">
+                {sso?.auto_provision ? "Yes" : "No"}
+              </Badge>
+            </div>
+            {sso?.allowed_domains && sso.allowed_domains.length > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Allowed domains</span>
+                <span className="font-mono text-foreground">{sso.allowed_domains.join(", ")}</span>
+              </div>
+            )}
+            {sso?.last_login_at && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Last SSO login</span>
+                <span className="text-foreground">{formatDate(sso.last_login_at)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isOwner && isConfigured && (
+          <div className="flex gap-2 pt-2">
+            {isEnabled ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => disableSSO.mutate()}
+                disabled={disableSSO.isPending}
+              >
+                {disableSSO.isPending && <Loader2 className="size-3.5 mr-1 animate-spin" />}
+                Disable SSO
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => enableSSO.mutate()}
+                disabled={enableSSO.isPending}
+              >
+                {enableSSO.isPending && <Loader2 className="size-3.5 mr-1 animate-spin" />}
+                Enable SSO
+              </Button>
+            )}
+          </div>
+        )}
+
+        {!isConfigured && isOwner && (
+          <p className="text-xs text-muted-foreground">
+            Contact support to configure SAML or OIDC single sign-on for your organization.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

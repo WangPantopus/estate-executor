@@ -169,6 +169,19 @@ async def get_current_user(
         )
         db.add(user)
         await db.flush()
+
+        # SSO auto-provisioning: if user logged in via enterprise connection,
+        # auto-add to the firm associated with that connection
+        auth0_connection = payload.roles.get("connection")
+        try:
+            from app.services.sso_service import auto_provision_sso_user
+
+            await auto_provision_sso_user(
+                db, user=user, auth0_connection_name=auth0_connection
+            )
+        except Exception:
+            pass  # Don't block login if auto-provisioning fails
+
         # Reload with relationships
         result = await db.execute(
             select(User).options(selectinload(User.firm_memberships)).where(User.id == user.id)

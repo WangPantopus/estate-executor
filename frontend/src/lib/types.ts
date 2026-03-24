@@ -1400,3 +1400,60 @@ export interface LogoUploadResponse {
   logo_url: string;
   field: string;
 }
+
+// ─── Enterprise SSO ─────────────────────────────────────────────────────────
+
+export interface SSOConfig {
+  id: string;
+  firm_id: string;
+  protocol: 'saml' | 'oidc';
+  saml_metadata_url?: string | null;
+  saml_entity_id?: string | null;
+  saml_sso_url?: string | null;
+  oidc_discovery_url?: string | null;
+  oidc_client_id?: string | null;
+  auth0_connection_id?: string | null;
+  auth0_connection_name?: string | null;
+  enabled: boolean;
+  enforce_sso: boolean;
+  auto_provision: boolean;
+  default_role: string;
+  allowed_domains: string[];
+  verified: boolean;
+  verified_at?: string | null;
+  last_login_at?: string | null;
+  configured_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SSOConfigCreate {
+  protocol: 'saml' | 'oidc';
+  saml_metadata_url?: string;
+  saml_metadata_xml?: string;
+  oidc_discovery_url?: string;
+  oidc_client_id?: string;
+  oidc_client_secret?: string;
+  enforce_sso?: boolean;
+  auto_provision?: boolean;
+  default_role?: string;
+  allowed_domains?: string[];
+}
+
+export interface SSOConfigUpdate {
+  enabled?: boolean;
+  enforce_sso?: boolean;
+  auto_provision?: boolean;
+  default_role?: string;
+  allowed_domains?: string[];
+  saml_metadata_url?: string;
+  oidc_discovery_url?: string;
+  oidc_client_id?: string;
+  oidc_client_secret?: string;
+}
+
+export interface SSOLoginUrlResponse {
+  login_url: string;
+  connection_name: string;
+  protocol: string;
+}

@@ -13,6 +13,13 @@ export {
   // Branding
   useFirmBranding,
   useUpdateBranding,
+  // SSO
+  useSSOConfig,
+  useCreateSSOConfig,
+  useUpdateSSOConfig,
+  useDeleteSSOConfig,
+  useEnableSSO,
+  useDisableSSO,
   // Matters
   useMatters,
   usePortfolio,

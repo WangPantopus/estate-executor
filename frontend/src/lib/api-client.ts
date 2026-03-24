@@ -6,6 +6,9 @@
  */
 
 import type {
+  SSOConfig,
+  SSOConfigCreate,
+  SSOConfigUpdate,
   WhiteLabelConfig,
   WhiteLabelUpdate,
   LogoUploadResponse,
@@ -346,6 +349,32 @@ export class ApiClient {
     data: WhiteLabelUpdate,
   ): Promise<WhiteLabelConfig> {
     return this.patch(`/firms/${firmId}/branding`, data);
+  }
+
+  // ─── SSO ──────────────────────────────────────────────────────────
+
+  async getSSOConfig(firmId: string): Promise<SSOConfig | null> {
+    return this.get(`/firms/${firmId}/sso`);
+  }
+
+  async createSSOConfig(firmId: string, data: SSOConfigCreate): Promise<SSOConfig> {
+    return this.post(`/firms/${firmId}/sso`, data);
+  }
+
+  async updateSSOConfig(firmId: string, data: SSOConfigUpdate): Promise<SSOConfig> {
+    return this.patch(`/firms/${firmId}/sso`, data);
+  }
+
+  async deleteSSOConfig(firmId: string): Promise<void> {
+    return this.del(`/firms/${firmId}/sso`);
+  }
+
+  async enableSSO(firmId: string): Promise<SSOConfig> {
+    return this.post(`/firms/${firmId}/sso/enable`);
+  }
+
+  async disableSSO(firmId: string): Promise<SSOConfig> {
+    return this.post(`/firms/${firmId}/sso/disable`);
   }
 
   async getLogoUploadUrl(

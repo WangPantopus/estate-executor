@@ -53,6 +53,7 @@ from app.models.firms import Firm
 from app.models.integration_connections import IntegrationConnection
 from app.models.matters import Matter
 from app.models.signature_requests import SignatureRequest
+from app.models.sso_configs import SSOConfig
 from app.models.stakeholders import Stakeholder
 from app.models.subscriptions import Subscription
 from app.models.task_comments import TaskComment
@@ -120,6 +121,7 @@ __all__ = [
     "AIFeedback",
     "Subscription",
     "SignatureRequest",
+    "SSOConfig",
     "IntegrationConnection",
     "SignatureRequestStatus",
     "SignatureRequestType",

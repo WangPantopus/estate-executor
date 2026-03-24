@@ -8,6 +8,8 @@ import {
 } from "@tanstack/react-query";
 import { useApi } from "./use-api";
 import type {
+  SSOConfigCreate,
+  SSOConfigUpdate,
   WhiteLabelUpdate,
   AssetCreate,
   AssetFilters,
@@ -58,6 +60,7 @@ export const queryKeys = {
   firm: (firmId: string) => ["firms", firmId] as const,
   firmMembers: (firmId: string) => ["firms", firmId, "members"] as const,
   firmBranding: (firmId: string) => ["firms", firmId, "branding"] as const,
+  ssoConfig: (firmId: string) => ["firms", firmId, "sso"] as const,
   matters: (firmId: string, filters?: MatterFilters) =>
     ["firms", firmId, "matters", filters] as const,
   matterDashboard: (firmId: string, matterId: string) =>
@@ -218,6 +221,72 @@ export function useUpdateBranding(firmId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.firmBranding(firmId) });
       qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+    },
+  });
+}
+
+// ─── SSO ────────────────────────────────────────────────────────────────────
+
+export function useSSOConfig(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.ssoConfig(firmId),
+    queryFn: () => api.getSSOConfig(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateSSOConfig(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SSOConfigCreate) => api.createSSOConfig(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useUpdateSSOConfig(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SSOConfigUpdate) => api.updateSSOConfig(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useDeleteSSOConfig(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deleteSSOConfig(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useEnableSSO(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.enableSSO(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
+    },
+  });
+}
+
+export function useDisableSSO(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disableSSO(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.ssoConfig(firmId) });
     },
   });
 }
