@@ -67,6 +67,7 @@ export function LogTimeDialog({
     setHours("0");
     setMinutes("0");
     setDescription("");
+    setEntryDate(new Date().toISOString().split("T")[0]);
     setBillable(true);
     onOpenChange(false);
   };

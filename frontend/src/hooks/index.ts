@@ -51,6 +51,11 @@ export {
   useCreateCommunication,
   useAcknowledgeCommunication,
   useCreateDisputeFlag,
+  // Distributions
+  useDistributions,
+  useDistributionSummary,
+  useRecordDistribution,
+  useAcknowledgeDistribution,
   // Events
   useEvents,
   // Documents

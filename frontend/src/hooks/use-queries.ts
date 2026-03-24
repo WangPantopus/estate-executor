@@ -752,6 +752,7 @@ export function useTimeEntries(
   return useQuery({
     queryKey: ["firms", firmId, "matters", matterId, "time", params],
     queryFn: () => api.getTimeEntries(firmId, matterId, params),
+    enabled: !!firmId && !!matterId,
   });
 }
 
@@ -760,6 +761,7 @@ export function useTimeSummary(firmId: string, matterId: string) {
   return useQuery({
     queryKey: ["firms", firmId, "matters", matterId, "time", "summary"],
     queryFn: () => api.getTimeSummary(firmId, matterId),
+    enabled: !!firmId && !!matterId,
   });
 }
 
