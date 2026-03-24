@@ -49,6 +49,11 @@ class BadRequestError(HTTPException):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
+class PaymentRequiredError(HTTPException):
+    def __init__(self, detail: str = "Payment required") -> None:
+        super().__init__(status_code=402, detail=detail)
+
+
 class RateLimitError(HTTPException):
     def __init__(self, detail: str = "Rate limit exceeded") -> None:
         super().__init__(

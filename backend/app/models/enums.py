@@ -190,3 +190,18 @@ class ActorType(enum.StrEnum):
     user = "user"
     system = "system"
     ai = "ai"
+
+
+class SubscriptionStatus(enum.StrEnum):
+    trialing = "trialing"
+    active = "active"
+    past_due = "past_due"
+    canceled = "canceled"
+    unpaid = "unpaid"
+    incomplete = "incomplete"
+    paused = "paused"
+
+
+class BillingInterval(enum.StrEnum):
+    month = "month"
+    year = "year"

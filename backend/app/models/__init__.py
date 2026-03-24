@@ -16,6 +16,7 @@ from app.models.enums import (
     ActorType,
     AssetStatus,
     AssetType,
+    BillingInterval,
     CommunicationType,
     CommunicationVisibility,
     DeadlineSource,
@@ -33,6 +34,7 @@ from app.models.enums import (
     MatterStatus,
     OwnershipType,
     StakeholderRole,
+    SubscriptionStatus,
     SubscriptionTier,
     TaskPhase,
     TaskPriority,
@@ -44,6 +46,7 @@ from app.models.firm_memberships import FirmMembership
 from app.models.firms import Firm
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
+from app.models.subscriptions import Subscription
 from app.models.task_comments import TaskComment
 from app.models.task_dependencies import TaskDependency
 from app.models.task_documents import task_documents
@@ -70,7 +73,9 @@ __all__ = [
     "MatterStatus",
     "OwnershipType",
     "StakeholderRole",
+    "SubscriptionStatus",
     "SubscriptionTier",
+    "BillingInterval",
     "TaskPhase",
     "TaskPriority",
     "TaskStatus",
@@ -105,4 +110,5 @@ __all__ = [
     "TimeEntry",
     "AIUsageLog",
     "AIFeedback",
+    "Subscription",
 ]

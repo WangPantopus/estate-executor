@@ -209,6 +209,10 @@ async def invite_member(
     db: AsyncSession = Depends(get_db),
 ) -> FirmMemberResponse:
     """Invite a new member to a firm. Requires owner or admin role."""
+    from app.services.billing_service import check_user_limit
+
+    await check_user_limit(db, firm_id)
+
     new_membership = await firm_service.invite_firm_member(
         db,
         firm_id=firm_id,

@@ -90,6 +90,10 @@ async def create_matter(
     db: AsyncSession = Depends(get_db),
 ) -> MatterResponse:
     """Create a new matter. Creator is automatically added as matter_admin stakeholder."""
+    from app.services.billing_service import check_matter_limit
+
+    await check_matter_limit(db, firm_id)
+
     matter = await matter_service.create_matter(
         db,
         firm_id=firm_id,

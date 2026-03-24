@@ -12,6 +12,10 @@ import type {
   AssetFilters,
   AssetUpdate,
   AssetValuation,
+  BillingOverview,
+  CreateCheckoutRequest,
+  CreatePortalSessionRequest,
+  InvoiceListResponse,
   CommunicationCreate,
   CommunicationFilters,
   DeadlineCreate,
@@ -93,6 +97,11 @@ export const queryKeys = {
     ["firms", firmId, "matters", matterId, "distributions"] as const,
   distributionSummary: (firmId: string, matterId: string) =>
     ["firms", firmId, "matters", matterId, "distributions", "summary"] as const,
+  billing: (firmId: string) => ["firms", firmId, "billing"] as const,
+  billingInvoices: (firmId: string) =>
+    ["firms", firmId, "billing", "invoices"] as const,
+  billingUsage: (firmId: string) =>
+    ["firms", firmId, "billing", "usage"] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -976,5 +985,41 @@ export function useAcknowledgeDistribution(firmId: string, matterId: string) {
       qc.invalidateQueries({ queryKey: queryKeys.distributions(firmId, matterId) });
       qc.invalidateQueries({ queryKey: queryKeys.distributionSummary(firmId, matterId) });
     },
+  });
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+export function useBillingOverview(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.billing(firmId),
+    queryFn: () => api.getBillingOverview(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useBillingInvoices(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.billingInvoices(firmId),
+    queryFn: () => api.getInvoices(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateCheckout(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data: CreateCheckoutRequest) =>
+      api.createCheckoutSession(firmId, data),
+  });
+}
+
+export function useCreatePortalSession(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (data?: CreatePortalSessionRequest) =>
+      api.createPortalSession(firmId, data),
   });
 }

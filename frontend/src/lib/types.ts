@@ -1128,3 +1128,99 @@ export interface EventFilters {
   entity_type?: string;
   action?: string;
 }
+
+// ─── Billing / Subscriptions ────────────────────────────────────────────────
+
+export type SubscriptionStatus =
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'unpaid'
+  | 'incomplete'
+  | 'paused';
+
+export type BillingInterval = 'month' | 'year';
+
+export interface TierLimits {
+  max_matters: number;
+  max_users: number;
+  monthly_price_cents: number;
+  annual_price_cents: number;
+  stripe_monthly_price_id?: string | null;
+  stripe_annual_price_id?: string | null;
+}
+
+export interface SubscriptionInfo {
+  id: string;
+  firm_id: string;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  billing_interval: BillingInterval;
+  stripe_subscription_id?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at?: string | null;
+  trial_end?: string | null;
+  grace_period_end?: string | null;
+  last_payment_error?: string | null;
+  failed_payment_count: number;
+  matter_count: number;
+  user_count: number;
+  last_invoice_amount?: number | null;
+  last_invoice_paid_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageInfo {
+  matter_count: number;
+  matter_limit: number;
+  user_count: number;
+  user_limit: number;
+}
+
+export interface BillingOverview {
+  subscription: SubscriptionInfo | null;
+  tier_limits: Record<string, TierLimits>;
+  usage: UsageInfo;
+}
+
+export interface CheckoutSessionResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface PortalSessionResponse {
+  portal_url: string;
+}
+
+export interface Invoice {
+  id: string;
+  amount_due: number;
+  amount_paid: number;
+  currency: string;
+  status?: string | null;
+  invoice_url?: string | null;
+  invoice_pdf?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  created?: string | null;
+}
+
+export interface InvoiceListResponse {
+  invoices: Invoice[];
+  has_more: boolean;
+}
+
+export interface CreateCheckoutRequest {
+  tier: string;
+  billing_interval?: string;
+  success_url?: string;
+  cancel_url?: string;
+}
+
+export interface CreatePortalSessionRequest {
+  return_url?: string;
+}

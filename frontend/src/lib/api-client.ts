@@ -6,6 +6,13 @@
  */
 
 import type {
+  BillingOverview,
+  CheckoutSessionResponse,
+  CreateCheckoutRequest,
+  CreatePortalSessionRequest,
+  InvoiceListResponse,
+  PortalSessionResponse,
+  UsageInfo,
   AcceptInviteResponse,
   AIAnomalyResponse,
   AIUsageStats,
@@ -1097,5 +1104,37 @@ export class ApiClient {
     return this.post(
       `/portal/matters/${matterId}/messages/${commId}/acknowledge`,
     );
+  }
+
+  // ─── Billing ──────────────────────────────────────────────────────────
+
+  private billingBase(firmId: string) {
+    return `/firms/${firmId}/billing`;
+  }
+
+  async getBillingOverview(firmId: string): Promise<BillingOverview> {
+    return this.get(this.billingBase(firmId));
+  }
+
+  async createCheckoutSession(
+    firmId: string,
+    data: CreateCheckoutRequest,
+  ): Promise<CheckoutSessionResponse> {
+    return this.post(`${this.billingBase(firmId)}/checkout`, data);
+  }
+
+  async createPortalSession(
+    firmId: string,
+    data?: CreatePortalSessionRequest,
+  ): Promise<PortalSessionResponse> {
+    return this.post(`${this.billingBase(firmId)}/portal`, data ?? {});
+  }
+
+  async getInvoices(firmId: string): Promise<InvoiceListResponse> {
+    return this.get(`${this.billingBase(firmId)}/invoices`);
+  }
+
+  async getBillingUsage(firmId: string): Promise<UsageInfo> {
+    return this.get(`${this.billingBase(firmId)}/usage`);
   }
 }

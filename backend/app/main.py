@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.exceptions import (
     ConflictError,
     NotFoundError,
+    PaymentRequiredError,
     PermissionDeniedError,
     RateLimitError,
     UnauthorizedError,
@@ -110,6 +111,10 @@ def create_app() -> FastAPI:
     @fastapi_app.exception_handler(ValidationError)
     async def _validation(request: Request, exc: ValidationError) -> JSONResponse:
         return _rfc7807_response(exc.status_code, "Validation Error", exc.detail, request.url.path)
+
+    @fastapi_app.exception_handler(PaymentRequiredError)
+    async def _payment_required(request: Request, exc: PaymentRequiredError) -> JSONResponse:
+        return _rfc7807_response(exc.status_code, "Payment Required", exc.detail, request.url.path)
 
     @fastapi_app.exception_handler(RateLimitError)
     async def _rate_limit(request: Request, exc: RateLimitError) -> JSONResponse:

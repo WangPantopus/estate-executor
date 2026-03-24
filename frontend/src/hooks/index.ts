@@ -80,6 +80,11 @@ export {
   // Disputes
   useUpdateDisputeStatus,
   useActiveDisputes,
+  // Billing
+  useBillingOverview,
+  useBillingInvoices,
+  useCreateCheckout,
+  useCreatePortalSession,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

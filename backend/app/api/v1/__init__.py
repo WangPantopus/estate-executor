@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app.api.v1.ai import router as ai_router
 from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.billing import router as billing_router
+from app.api.v1.billing import webhook_router
 from app.api.v1.communications import dispute_flag_router
 from app.api.v1.communications import router as communications_router
 from app.api.v1.deadlines import router as deadlines_router
@@ -102,6 +104,16 @@ api_router.include_router(
     ai_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/ai",
     tags=["ai"],
+)
+api_router.include_router(
+    billing_router,
+    prefix="/firms/{firm_id}/billing",
+    tags=["billing"],
+)
+api_router.include_router(
+    webhook_router,
+    prefix="/webhooks",
+    tags=["webhooks"],
 )
 api_router.include_router(
     portal_router,
