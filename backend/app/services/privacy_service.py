@@ -54,15 +54,18 @@ async def create_request(
             PrivacyRequest.user_id == user_id,
             PrivacyRequest.firm_id == firm_id,
             PrivacyRequest.request_type == request_type,
-            PrivacyRequest.status.in_([
-                PrivacyRequestStatus.pending,
-                PrivacyRequestStatus.approved,
-                PrivacyRequestStatus.processing,
-            ]),
+            PrivacyRequest.status.in_(
+                [
+                    PrivacyRequestStatus.pending,
+                    PrivacyRequestStatus.approved,
+                    PrivacyRequestStatus.processing,
+                ]
+            ),
         )
     )
     if existing.scalar_one_or_none():
         from app.core.exceptions import ConflictError
+
         raise ConflictError(
             detail=f"A {request_type.value} request is already pending or in progress."
         )
@@ -144,11 +147,7 @@ async def list_my_requests(
     filters = [PrivacyRequest.user_id == user_id]
     if firm_id is not None:
         filters.append(PrivacyRequest.firm_id == firm_id)
-    q = (
-        select(PrivacyRequest)
-        .where(*filters)
-        .order_by(PrivacyRequest.created_at.desc())
-    )
+    q = select(PrivacyRequest).where(*filters).order_by(PrivacyRequest.created_at.desc())
     result = await db.execute(q)
     return list(result.scalars().all())
 
@@ -267,9 +266,7 @@ async def build_data_export(
             "role": s.role.value if hasattr(s.role, "value") else str(s.role),
             "relationship": s.relationship_label,
             "invite_status": (
-                s.invite_status.value
-                if hasattr(s.invite_status, "value")
-                else str(s.invite_status)
+                s.invite_status.value if hasattr(s.invite_status, "value") else str(s.invite_status)
             ),
             "permissions": s.permissions,
             "notification_preferences": s.notification_preferences,
@@ -282,9 +279,7 @@ async def build_data_export(
     stakeholder_ids = [s.id for s in stakeholders]
     comms_data: list[dict[str, Any]] = []
     if stakeholder_ids:
-        comms_q = select(Communication).where(
-            Communication.sender_id.in_(stakeholder_ids)
-        )
+        comms_q = select(Communication).where(Communication.sender_id.in_(stakeholder_ids))
         comms = (await db.execute(comms_q)).scalars().all()
         comms_data = [
             {
@@ -344,17 +339,13 @@ async def process_deletion(
 
     Returns a summary of what was anonymized.
     """
-    result = await db.execute(
-        select(PrivacyRequest).where(PrivacyRequest.id == request_id)
-    )
+    result = await db.execute(select(PrivacyRequest).where(PrivacyRequest.id == request_id))
     request = result.scalar_one_or_none()
     if not request:
         raise NotFoundError(detail="Privacy request not found")
 
     if request.status != PrivacyRequestStatus.approved:
-        raise PermissionDeniedError(
-            detail="Request must be approved before processing"
-        )
+        raise PermissionDeniedError(detail="Request must be approved before processing")
 
     request.status = PrivacyRequestStatus.processing
     await db.flush()

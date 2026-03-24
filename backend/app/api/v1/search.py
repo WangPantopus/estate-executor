@@ -25,7 +25,10 @@ router = APIRouter()
 async def search(
     firm_id: UUID,
     q: str = Query(
-        ..., min_length=1, max_length=200, description="Search query",
+        ...,
+        min_length=1,
+        max_length=200,
+        description="Search query",
     ),
     entity_types: str | None = Query(
         None,

@@ -48,9 +48,7 @@ async def search(
         entity_types = None
 
     allowed_types = {"matter", "task", "asset", "document", "communication"}
-    search_types = (
-        set(entity_types) & allowed_types if entity_types else allowed_types
-    )
+    search_types = set(entity_types) & allowed_types if entity_types else allowed_types
 
     subqueries = []
 

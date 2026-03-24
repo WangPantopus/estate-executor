@@ -20,12 +20,17 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     # Create enum types
     privacy_request_type = postgresql.ENUM(
-        "data_export", "data_deletion",
+        "data_export",
+        "data_deletion",
         name="privacy_request_type",
         create_type=True,
     )
     privacy_request_status = postgresql.ENUM(
-        "pending", "approved", "processing", "completed", "rejected",
+        "pending",
+        "approved",
+        "processing",
+        "completed",
+        "rejected",
         name="privacy_request_status",
         create_type=True,
     )
@@ -34,20 +39,50 @@ def upgrade() -> None:
 
     op.create_table(
         "privacy_requests",
-        sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), nullable=False),
-        sa.Column("firm_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("firms.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            server_default=sa.text("gen_random_uuid()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "firm_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("firms.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("request_type", privacy_request_type, nullable=False),
         sa.Column("status", privacy_request_status, nullable=False, server_default="pending"),
         sa.Column("reason", sa.String, nullable=True),
-        sa.Column("reviewed_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "reviewed_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("reviewed_at", postgresql.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("review_note", sa.String, nullable=True),
         sa.Column("completed_at", postgresql.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("export_storage_key", sa.String, nullable=True),
         sa.Column("deletion_summary", postgresql.JSONB(), nullable=True),
-        sa.Column("created_at", postgresql.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", postgresql.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            postgresql.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            postgresql.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
 

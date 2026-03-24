@@ -31,7 +31,8 @@ def process_deletion_request(self, request_id: str) -> dict:
         async with async_session_factory() as db:
             try:
                 summary = await process_deletion(
-                    db, request_id=UUID(request_id),
+                    db,
+                    request_id=UUID(request_id),
                 )
                 await db.commit()
                 return summary
@@ -54,7 +55,7 @@ def process_deletion_request(self, request_id: str) -> dict:
         )
         raise self.retry(
             exc=exc,
-            countdown=60 * (2 ** self.request.retries),
+            countdown=60 * (2**self.request.retries),
         ) from exc
 
 
@@ -84,17 +85,20 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
         async with async_session_factory() as db:
             try:
                 export_data = await build_data_export(
-                    db, user_id=UUID(user_id),
+                    db,
+                    user_id=UUID(user_id),
                 )
 
                 # Mark as completed
                 result = await db.execute(
                     select(PrivacyRequest).where(
                         PrivacyRequest.id == UUID(request_id),
-                        PrivacyRequest.status.in_([
-                            PrivacyRequestStatus.approved,
-                            PrivacyRequestStatus.processing,
-                        ]),
+                        PrivacyRequest.status.in_(
+                            [
+                                PrivacyRequestStatus.approved,
+                                PrivacyRequestStatus.processing,
+                            ]
+                        ),
                     )
                 )
                 req = result.scalar_one_or_none()
@@ -133,5 +137,5 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
         )
         raise self.retry(
             exc=exc,
-            countdown=60 * (2 ** self.request.retries),
+            countdown=60 * (2**self.request.retries),
         ) from exc

@@ -31,6 +31,4 @@ class SearchResponse(BaseModel):
     query: str
     total: int
     results: list[SearchResult]
-    groups: dict[str, int] = Field(
-        ..., description="Count of results per entity_type"
-    )
+    groups: dict[str, int] = Field(..., description="Count of results per entity_type")

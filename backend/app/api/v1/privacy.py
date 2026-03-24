@@ -53,12 +53,8 @@ def _to_response(req) -> PrivacyRequestResponse:
         deletion_summary=req.deletion_summary,
         created_at=req.created_at,
         updated_at=req.updated_at,
-        user_email=(
-            req.user.email if hasattr(req, "user") and req.user else None
-        ),
-        user_name=(
-            req.user.full_name if hasattr(req, "user") and req.user else None
-        ),
+        user_email=(req.user.email if hasattr(req, "user") and req.user else None),
+        user_name=(req.user.full_name if hasattr(req, "user") and req.user else None),
     )
 
 
@@ -114,7 +110,9 @@ async def get_my_requests(
 ):
     """Get the current user's privacy requests for this firm."""
     requests = await privacy_service.list_my_requests(
-        db, user_id=current_user.user_id, firm_id=firm_id,
+        db,
+        user_id=current_user.user_id,
+        firm_id=firm_id,
     )
     return [_to_response(r) for r in requests]
 
@@ -127,16 +125,12 @@ async def download_data_export(
     _membership=Depends(require_firm_member),
 ):
     """Download a JSON export of all user data for this firm."""
-    export_data = await privacy_service.build_data_export(
-        db, user_id=current_user.user_id
-    )
+    export_data = await privacy_service.build_data_export(db, user_id=current_user.user_id)
     uid = current_user.user_id
     return JSONResponse(
         content=export_data,
         headers={
-            "Content-Disposition": (
-                f'attachment; filename="data-export-{uid}.json"'
-            ),
+            "Content-Disposition": (f'attachment; filename="data-export-{uid}.json"'),
         },
     )
 
@@ -158,11 +152,7 @@ async def list_privacy_requests(
 ):
     """List all privacy requests for the firm (admin only)."""
     membership = next(
-        (
-            m
-            for m in current_user.firm_memberships
-            if str(m.firm_id) == str(firm_id)
-        ),
+        (m for m in current_user.firm_memberships if str(m.firm_id) == str(firm_id)),
         None,
     )
     if not membership or membership.firm_role not in ("owner", "admin"):
@@ -201,11 +191,7 @@ async def review_privacy_request(
 ):
     """Approve or reject a privacy request (admin only)."""
     membership = next(
-        (
-            m
-            for m in current_user.firm_memberships
-            if str(m.firm_id) == str(firm_id)
-        ),
+        (m for m in current_user.firm_memberships if str(m.firm_id) == str(firm_id)),
         None,
     )
     if not membership or membership.firm_role not in ("owner", "admin"):
@@ -226,18 +212,14 @@ async def review_privacy_request(
     await db.commit()
 
     # If approved deletion, queue the async processing task
-    if (
-        body.action == "approve"
-        and req.request_type == PrivacyRequestType.data_deletion
-    ):
+    if body.action == "approve" and req.request_type == PrivacyRequestType.data_deletion:
         try:
             from app.workers.privacy_tasks import process_deletion_request
 
             process_deletion_request.delay(str(request_id))
         except Exception:
             logger.warning(
-                "Failed to dispatch deletion task for request %s — "
-                "manual processing required",
+                "Failed to dispatch deletion task for request %s — manual processing required",
                 request_id,
             )
 

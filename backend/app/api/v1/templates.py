@@ -19,10 +19,7 @@ async def get_template_coverage() -> dict:
     loaded = template_registry.loaded_states
     total = len(ALL_JURISDICTIONS)
 
-    coverage = {
-        state: template_registry.get_state_coverage(state)
-        for state in ALL_JURISDICTIONS
-    }
+    coverage = {state: template_registry.get_state_coverage(state) for state in ALL_JURISDICTIONS}
 
     return {
         "total_states": total,

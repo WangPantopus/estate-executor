@@ -51,15 +51,11 @@ class PrivacyRequest(BaseModel):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    reviewed_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     review_note: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # Processing metadata
-    completed_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     export_storage_key: Mapped[str | None] = mapped_column(
         String, nullable=True
     )  # S3 key for data export ZIP

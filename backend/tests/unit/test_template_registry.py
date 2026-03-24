@@ -229,9 +229,7 @@ class TestGetStateDeadlines:
             for dl in deadlines:
                 assert "key" in dl, f"State {state} deadline missing 'key'"
                 assert "title" in dl, f"State {state} deadline missing 'title'"
-                has_date_calc = (
-                    "offset_months" in dl or "offset_days" in dl
-                )
+                has_date_calc = "offset_months" in dl or "offset_days" in dl
                 assert has_date_calc, (
                     f"State {state} deadline '{dl.get('key')}' missing date calculation"
                 )
@@ -249,18 +247,30 @@ class TestGetStateDeadlines:
         """States with estate/inheritance tax should include a tax deadline."""
         # States known to have estate or inheritance taxes
         tax_states = {
-            "CT", "DC", "HI", "IL", "IA", "KY", "ME", "MD", "MA", "MN",
-            "NE", "NJ", "NY", "OR", "PA", "RI", "VT", "WA",
+            "CT",
+            "DC",
+            "HI",
+            "IL",
+            "IA",
+            "KY",
+            "ME",
+            "MD",
+            "MA",
+            "MN",
+            "NE",
+            "NJ",
+            "NY",
+            "OR",
+            "PA",
+            "RI",
+            "VT",
+            "WA",
         }
         for state in tax_states:
             deadlines = template_registry.get_state_deadlines(state, "testate_probate")
             deadline_keys = {dl["key"] for dl in deadlines}
-            has_tax_deadline = any(
-                "tax" in key or "inheritance" in key for key in deadline_keys
-            )
-            assert has_tax_deadline, (
-                f"Tax state {state} missing a tax/inheritance deadline"
-            )
+            has_tax_deadline = any("tax" in key or "inheritance" in key for key in deadline_keys)
+            assert has_tax_deadline, f"Tax state {state} missing a tax/inheritance deadline"
 
     def test_community_property_states_have_community_task(self):
         """Community property states should have a community property identification task."""
@@ -272,12 +282,9 @@ class TestGetStateDeadlines:
             )
             keys = {t["key"] for t in templates}
             has_cp_task = any(
-                "community" in key or "marital" in key or "spousal" in key
-                for key in keys
+                "community" in key or "marital" in key or "spousal" in key for key in keys
             )
-            assert has_cp_task, (
-                f"Community property state {state} missing community property task"
-            )
+            assert has_cp_task, f"Community property state {state} missing community property task"
 
 
 class TestStateCoverage:
