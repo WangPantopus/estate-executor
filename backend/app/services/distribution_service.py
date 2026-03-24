@@ -7,7 +7,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -243,7 +243,9 @@ async def acknowledge_receipt(
 
     # Only the beneficiary of this distribution can acknowledge
     if dist.beneficiary_stakeholder_id != stakeholder.id:
-        raise PermissionDeniedError(detail="Only the beneficiary of this distribution can acknowledge receipt")
+        raise PermissionDeniedError(
+            detail="Only the beneficiary of this distribution can acknowledge receipt"
+        )
 
     if not dist.receipt_acknowledged:
         dist.receipt_acknowledged = True
@@ -286,8 +288,12 @@ async def get_distribution_summary(
             Stakeholder.full_name,
             func.coalesce(func.sum(Distribution.amount), Decimal(0)).label("total"),
             func.count(Distribution.id).label("count"),
-            func.sum(case((Distribution.receipt_acknowledged.is_(True), 1), else_=0)).label("acked"),
-            func.sum(case((Distribution.receipt_acknowledged.is_(False), 1), else_=0)).label("pending"),
+            func.sum(
+                case((Distribution.receipt_acknowledged.is_(True), 1), else_=0)
+            ).label("acked"),
+            func.sum(
+                case((Distribution.receipt_acknowledged.is_(False), 1), else_=0)
+            ).label("pending"),
         )
         .join(Stakeholder, Distribution.beneficiary_stakeholder_id == Stakeholder.id)
         .where(Distribution.matter_id == matter_id)

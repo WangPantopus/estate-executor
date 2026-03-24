@@ -6,8 +6,6 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-import pytest
-
 from app.models.enums import DistributionType
 
 
@@ -192,7 +190,7 @@ class TestDistributionSchemaValidation:
         assert resp.receipt_acknowledged is True
 
     def test_create_summary_response(self):
-        from app.schemas.distributions import DistributionSummaryResponse, BeneficiarySummaryItem
+        from app.schemas.distributions import BeneficiarySummaryItem, DistributionSummaryResponse
         summary = DistributionSummaryResponse(
             total_distributed=Decimal("150000.00"),
             total_distributions=3,

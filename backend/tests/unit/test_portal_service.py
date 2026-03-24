@@ -8,8 +8,6 @@ from datetime import datetime
 import pytest
 
 from app.models.enums import (
-    CommunicationType,
-    CommunicationVisibility,
     MatterPhase,
     StakeholderRole,
 )

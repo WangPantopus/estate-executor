@@ -18,7 +18,6 @@ from app.models.enums import (
     StakeholderRole,
     TaskStatus,
 )
-from app.models.events import Event
 from app.models.firms import Firm
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
