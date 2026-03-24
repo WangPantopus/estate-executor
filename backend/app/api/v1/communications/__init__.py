@@ -166,10 +166,12 @@ async def list_active_disputes(
     filters = [
         Communication.matter_id == matter_id,
         Communication.type == CommunicationType.dispute_flag,
-        Communication.dispute_status.in_([
-            DisputeStatus.open,
-            DisputeStatus.under_review,
-        ]),
+        Communication.dispute_status.in_(
+            [
+                DisputeStatus.open,
+                DisputeStatus.under_review,
+            ]
+        ),
     ]
     if entity_type:
         filters.append(Communication.disputed_entity_type == entity_type)
@@ -189,10 +191,12 @@ async def list_active_disputes(
         etype = row[0] or "unknown"
         if etype not in disputes:
             disputes[etype] = []
-        disputes[etype].append({
-            "entity_id": str(row[1]) if row[1] else None,
-            "dispute_status": row[2].value if row[2] else "open",
-        })
+        disputes[etype].append(
+            {
+                "entity_id": str(row[1]) if row[1] else None,
+                "dispute_status": row[2].value if row[2] else "open",
+            }
+        )
 
     return {"disputes": disputes}
 

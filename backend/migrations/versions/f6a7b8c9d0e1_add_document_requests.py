@@ -17,7 +17,9 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 document_request_status_enum = postgresql.ENUM(
-    "pending", "uploaded", "expired",
+    "pending",
+    "uploaded",
+    "expired",
     name="document_request_status",
     create_type=False,
 )
@@ -37,7 +39,10 @@ def upgrade() -> None:
         sa.Column("doc_type_needed", sa.String(), nullable=False),
         sa.Column("message", sa.String(), nullable=True),
         sa.Column(
-            "upload_token", sa.String(), nullable=False, unique=True,
+            "upload_token",
+            sa.String(),
+            nullable=False,
+            unique=True,
         ),
         sa.Column(
             "status",
@@ -73,14 +78,14 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["requester_stakeholder_id"], ["stakeholders.id"], ondelete="CASCADE"
         ),
-        sa.ForeignKeyConstraint(
-            ["target_stakeholder_id"], ["stakeholders.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["target_stakeholder_id"], ["stakeholders.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["task_id"], ["tasks.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["document_id"], ["documents.id"], ondelete="SET NULL"),
     )
 
-    op.create_index("ix_document_requests_token", "document_requests", ["upload_token"], unique=True)
+    op.create_index(
+        "ix_document_requests_token", "document_requests", ["upload_token"], unique=True
+    )
     op.create_index("ix_document_requests_matter_id", "document_requests", ["matter_id"])
     op.create_index("ix_document_requests_status", "document_requests", ["status"])
 

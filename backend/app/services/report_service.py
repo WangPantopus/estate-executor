@@ -764,16 +764,18 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
     for entry in entries:
         total_mins = entry.hours * 60 + entry.minutes
         decimal_hours = round(total_mins / 60, 2)
-        ws.append([
-            entry.entry_date.isoformat() if entry.entry_date else "",
-            entry.stakeholder.full_name if entry.stakeholder else "",
-            entry.task.title if entry.task else "(No task)",
-            entry.hours,
-            entry.minutes,
-            decimal_hours,
-            entry.description,
-            "Yes" if entry.billable else "No",
-        ])
+        ws.append(
+            [
+                entry.entry_date.isoformat() if entry.entry_date else "",
+                entry.stakeholder.full_name if entry.stakeholder else "",
+                entry.task.title if entry.task else "(No task)",
+                entry.hours,
+                entry.minutes,
+                decimal_hours,
+                entry.description,
+                "Yes" if entry.billable else "No",
+            ]
+        )
 
     _auto_width(ws)
     _freeze_header(ws)
@@ -785,6 +787,7 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
     ws2.append(["Matter:", matter.title])
     ws2.append(["Decedent:", matter.decedent_name])
     from datetime import UTC as _UTC
+
     ws2.append(["Generated:", datetime.now(_UTC).strftime("%Y-%m-%d %H:%M UTC")])
     ws2.append([])
     ws2.append(["Summary by Professional"])
@@ -805,12 +808,14 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
             prof_totals[name]["non_billable"] += mins
 
     for name, totals in prof_totals.items():
-        ws2.append([
-            name,
-            round(totals["total"] / 60, 2),
-            round(totals["billable"] / 60, 2),
-            round(totals["non_billable"] / 60, 2),
-        ])
+        ws2.append(
+            [
+                name,
+                round(totals["total"] / 60, 2),
+                round(totals["billable"] / 60, 2),
+                round(totals["non_billable"] / 60, 2),
+            ]
+        )
 
     _auto_width(ws2)
 

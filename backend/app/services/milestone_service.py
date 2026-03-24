@@ -74,9 +74,7 @@ MILESTONE_DEFINITIONS: list[dict[str, Any]] = [
 ]
 
 # Map phase → milestone key for quick lookup
-_PHASE_TO_MILESTONE: dict[TaskPhase, str] = {
-    m["phase"]: m["key"] for m in MILESTONE_DEFINITIONS
-}
+_PHASE_TO_MILESTONE: dict[TaskPhase, str] = {m["phase"]: m["key"] for m in MILESTONE_DEFINITIONS}
 
 
 def get_milestone_definition(key: str) -> dict[str, Any] | None:
@@ -184,9 +182,7 @@ async def fire_milestone_notification(
         return None
 
     # Fetch matter to check settings
-    matter_result = await db.execute(
-        select(Matter).where(Matter.id == matter_id)
-    )
+    matter_result = await db.execute(select(Matter).where(Matter.id == matter_id))
     matter = matter_result.scalar_one_or_none()
     if matter is None:
         return None
@@ -197,10 +193,12 @@ async def fire_milestone_notification(
     sender_id = actor_id
     if sender_id is None:
         admin_result = await db.execute(
-            select(Stakeholder.id).where(
+            select(Stakeholder.id)
+            .where(
                 Stakeholder.matter_id == matter_id,
                 Stakeholder.role == StakeholderRole.matter_admin,
-            ).limit(1)
+            )
+            .limit(1)
         )
         admin_row = admin_result.scalar_one_or_none()
         if admin_row is None:
@@ -250,10 +248,12 @@ async def fire_milestone_notification(
         stakeholder_result = await db.execute(
             select(Stakeholder).where(
                 Stakeholder.matter_id == matter_id,
-                Stakeholder.role.in_([
-                    StakeholderRole.beneficiary,
-                    StakeholderRole.executor_trustee,
-                ]),
+                Stakeholder.role.in_(
+                    [
+                        StakeholderRole.beneficiary,
+                        StakeholderRole.executor_trustee,
+                    ]
+                ),
             )
         )
         recipients = list(stakeholder_result.scalars().all())
@@ -306,9 +306,7 @@ async def detect_milestones_after_completion(
     if milestone_key is None:
         return fired
 
-    achieved = await check_phase_milestone(
-        db, matter_id=matter_id, phase=completed_task_phase
-    )
+    achieved = await check_phase_milestone(db, matter_id=matter_id, phase=completed_task_phase)
 
     if achieved:
         comm = await fire_milestone_notification(
@@ -348,9 +346,7 @@ async def get_milestone_status(
     from app.models.matters import Matter
 
     # Get matter settings for notification preferences
-    matter_result = await db.execute(
-        select(Matter.settings).where(Matter.id == matter_id)
-    )
+    matter_result = await db.execute(select(Matter.settings).where(Matter.id == matter_id))
     settings_row = matter_result.scalar_one_or_none()
     milestone_settings = (settings_row or {}).get("milestone_notifications", {})
 
@@ -378,9 +374,7 @@ async def get_milestone_status(
         )
         .order_by(Communication.created_at)
     )
-    milestone_comms = {
-        row[0]: row[1] for row in (await db.execute(milestone_comms_q)).all()
-    }
+    milestone_comms = {row[0]: row[1] for row in (await db.execute(milestone_comms_q)).all()}
 
     result = []
     for defn in MILESTONE_DEFINITIONS:
@@ -391,17 +385,19 @@ async def get_milestone_status(
 
         is_complete = counts["total"] > 0 and counts["completed"] == counts["total"]
 
-        result.append({
-            "key": defn["key"],
-            "title": defn["title"],
-            "description": defn["description"],
-            "phase": phase.value if hasattr(phase, "value") else phase,
-            "total_tasks": counts["total"],
-            "completed_tasks": counts["completed"],
-            "is_complete": is_complete,
-            "achieved_at": achieved_at.isoformat() if achieved_at else None,
-            "auto_notify": milestone_settings.get(defn["key"], True),
-        })
+        result.append(
+            {
+                "key": defn["key"],
+                "title": defn["title"],
+                "description": defn["description"],
+                "phase": phase.value if hasattr(phase, "value") else phase,
+                "total_tasks": counts["total"],
+                "completed_tasks": counts["completed"],
+                "is_complete": is_complete,
+                "achieved_at": achieved_at.isoformat() if achieved_at else None,
+                "auto_notify": milestone_settings.get(defn["key"], True),
+            }
+        )
 
     return result
 
@@ -425,17 +421,17 @@ async def update_milestone_settings(
     """
     from app.models.matters import Matter
 
-    matter_result = await db.execute(
-        select(Matter).where(Matter.id == matter_id)
-    )
+    matter_result = await db.execute(select(Matter).where(Matter.id == matter_id))
     matter = matter_result.scalar_one_or_none()
     if matter is None:
         from app.core.exceptions import NotFoundError
+
         raise NotFoundError(detail="Matter not found")
 
     # Validate milestone key
     if get_milestone_definition(milestone_key) is None:
         from app.core.exceptions import BadRequestError
+
         raise BadRequestError(detail=f"Unknown milestone: {milestone_key}")
 
     # Update settings

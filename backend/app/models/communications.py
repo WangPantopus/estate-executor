@@ -52,9 +52,7 @@ class Communication(BaseModel):
 
     # Dispute-specific fields (populated only when type == dispute_flag)
     disputed_entity_type: Mapped[str | None] = mapped_column(String, nullable=True)
-    disputed_entity_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    disputed_entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     dispute_status: Mapped[DisputeStatus | None] = mapped_column(
         Enum(DisputeStatus, name="dispute_status", native_enum=True),
         nullable=True,

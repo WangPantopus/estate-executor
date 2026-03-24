@@ -55,9 +55,7 @@ async def get_milestones(
 
     Returns completion progress, achieved dates, and notification settings.
     """
-    milestones = await milestone_service.get_milestone_status(
-        db, matter_id=matter_id
-    )
+    milestones = await milestone_service.get_milestone_status(db, matter_id=matter_id)
     return MilestoneStatusResponse(milestones=milestones)
 
 

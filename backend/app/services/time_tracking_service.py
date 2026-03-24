@@ -267,9 +267,9 @@ async def get_time_summary(
         select(
             Stakeholder.id,
             Stakeholder.full_name,
-            func.coalesce(
-                func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0
-            ).label("total_minutes"),
+            func.coalesce(func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0).label(
+                "total_minutes"
+            ),
         )
         .join(TimeEntry, TimeEntry.stakeholder_id == Stakeholder.id)
         .where(TimeEntry.matter_id == matter_id)
@@ -291,9 +291,9 @@ async def get_time_summary(
         select(
             Task.id,
             Task.title,
-            func.coalesce(
-                func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0
-            ).label("total_minutes"),
+            func.coalesce(func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0).label(
+                "total_minutes"
+            ),
         )
         .join(TimeEntry, TimeEntry.task_id == Task.id)
         .where(TimeEntry.matter_id == matter_id)

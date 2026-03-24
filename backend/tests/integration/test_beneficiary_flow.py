@@ -67,7 +67,11 @@ def _make_matter(**overrides):
 
 
 def _make_stakeholder(
-    id=None, role="matter_admin", name="Attorney Smith", email="attorney@firm.com", **kw  # noqa: A002
+    id=None,
+    role="matter_admin",
+    name="Attorney Smith",
+    email="attorney@firm.com",
+    **kw,  # noqa: A002
 ):
     from app.models.enums import StakeholderRole
 
@@ -188,9 +192,7 @@ class TestStep1MatterCreation:
         # 201 or 422 (schema strict mode) — both confirm route is hit
         assert resp.status_code in (201, 422)
 
-    @pytest.mark.xfail(
-        reason="Matter GET route hits dashboard service which requires full DB mock"
-    )
+    @pytest.mark.xfail(reason="Matter GET route hits dashboard service which requires full DB mock")
     @patch("app.services.matter_service.get_matter")
     async def test_get_created_matter(self, mock_get, client, firm_id, matter_id):
         mock_get.return_value = _make_matter()
@@ -252,9 +254,7 @@ class TestStep3TaskCompletion:
         ]
         mock_list.return_value = (tasks, 3)
 
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/tasks")
         assert resp.status_code == 200
         data = resp.json()
         assert data["meta"]["total"] == 3
@@ -313,9 +313,7 @@ class TestStep4TimeTracking:
     async def test_list_time_entries(self, mock_list, client, firm_id, matter_id):
         mock_list.return_value = ([_make_time_entry()], 1)
 
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/time"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/time")
         assert resp.status_code == 200
         data = resp.json()
         assert data["meta"]["total"] == 1
@@ -332,9 +330,7 @@ class TestStep4TimeTracking:
             "by_task": [],
         }
 
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/time/summary"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/time/summary")
         assert resp.status_code == 200
         data = resp.json()
         assert data["total_decimal_hours"] == 5.5
@@ -376,9 +372,7 @@ class TestStep5MilestoneDetection:
             },
         ]
 
-        resp = await client.get(
-            f"/api/v1/firms/{firm_id}/matters/{matter_id}/milestones"
-        )
+        resp = await client.get(f"/api/v1/firms/{firm_id}/matters/{matter_id}/milestones")
         assert resp.status_code == 200
         data = resp.json()
         assert len(data["milestones"]) == 2

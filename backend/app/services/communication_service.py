@@ -430,10 +430,12 @@ async def get_entity_dispute_ids(
             Communication.type == CommunicationType.dispute_flag,
             Communication.disputed_entity_type == entity_type,
             Communication.disputed_entity_id.in_(entity_ids),
-            Communication.dispute_status.in_([
-                DisputeStatus.open,
-                DisputeStatus.under_review,
-            ]),
+            Communication.dispute_status.in_(
+                [
+                    DisputeStatus.open,
+                    DisputeStatus.under_review,
+                ]
+            ),
         )
         .distinct()
     )

@@ -458,9 +458,7 @@ async def request_document(
     )
     target_stakeholder = target_result.scalar_one_or_none()
 
-    matter_result = await db.execute(
-        select(Matter).where(Matter.id == matter_id)
-    )
+    matter_result = await db.execute(select(Matter).where(Matter.id == matter_id))
     matter = matter_result.scalar_one_or_none()
 
     if target_stakeholder and matter:
@@ -485,9 +483,7 @@ async def request_document(
 # ---------------------------------------------------------------------------
 
 
-async def get_request_by_token(
-    db: AsyncSession, *, token: str
-) -> DocumentRequest:
+async def get_request_by_token(db: AsyncSession, *, token: str) -> DocumentRequest:
     """Look up a document request by upload token. Validates expiry and status."""
     result = await db.execute(
         select(DocumentRequest)
@@ -518,9 +514,7 @@ async def get_request_by_token(
     return doc_request
 
 
-def get_token_upload_url(
-    *, matter: Any, filename: str, mime_type: str
-) -> tuple[str, str, int]:
+def get_token_upload_url(*, matter: Any, filename: str, mime_type: str) -> tuple[str, str, int]:
     """Generate presigned upload URL for a token-based upload."""
     from app.models.matters import Matter as MatterModel  # noqa: TC001
 
@@ -570,9 +564,7 @@ async def complete_token_upload(
     # Link to task if the request specified one
     if doc_request.task_id is not None:
         await db.execute(
-            task_documents.insert().values(
-                task_id=doc_request.task_id, document_id=doc.id
-            )
+            task_documents.insert().values(task_id=doc_request.task_id, document_id=doc.id)
         )
 
     # Update the document request record

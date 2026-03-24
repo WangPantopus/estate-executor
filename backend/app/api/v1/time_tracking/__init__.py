@@ -204,32 +204,36 @@ async def export_time_entries(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "Date",
-        "Professional",
-        "Task",
-        "Hours",
-        "Minutes",
-        "Decimal Hours",
-        "Description",
-        "Billable",
-        "Matter",
-    ])
+    writer.writerow(
+        [
+            "Date",
+            "Professional",
+            "Task",
+            "Hours",
+            "Minutes",
+            "Decimal Hours",
+            "Description",
+            "Billable",
+            "Matter",
+        ]
+    )
 
     for entry in entries:
         total_mins = entry.hours * 60 + entry.minutes
         decimal_hours = round(total_mins / 60, 2)
-        writer.writerow([
-            entry.entry_date.isoformat(),
-            entry.stakeholder.full_name if entry.stakeholder else "",
-            entry.task.title if entry.task else "",
-            entry.hours,
-            entry.minutes,
-            decimal_hours,
-            entry.description,
-            "Yes" if entry.billable else "No",
-            matter_title,
-        ])
+        writer.writerow(
+            [
+                entry.entry_date.isoformat(),
+                entry.stakeholder.full_name if entry.stakeholder else "",
+                entry.task.title if entry.task else "",
+                entry.hours,
+                entry.minutes,
+                decimal_hours,
+                entry.description,
+                "Yes" if entry.billable else "No",
+                matter_title,
+            ]
+        )
 
     csv_bytes = output.getvalue().encode("utf-8-sig")  # BOM for Excel compatibility
     filename = f"time-tracking-{matter_title.replace(' ', '_')}.csv"

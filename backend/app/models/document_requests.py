@@ -68,20 +68,12 @@ class DocumentRequest(BaseModel):
         ForeignKey("documents.id", ondelete="SET NULL"),
         nullable=True,
     )
-    expires_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
+    expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     # Relationships
     matter: Mapped[Matter] = relationship()
-    requester: Mapped[Stakeholder] = relationship(
-        foreign_keys=[requester_stakeholder_id]
-    )
-    target: Mapped[Stakeholder] = relationship(
-        foreign_keys=[target_stakeholder_id]
-    )
+    requester: Mapped[Stakeholder] = relationship(foreign_keys=[requester_stakeholder_id])
+    target: Mapped[Stakeholder] = relationship(foreign_keys=[target_stakeholder_id])
     task: Mapped[Task | None] = relationship()
     document: Mapped[Document | None] = relationship()

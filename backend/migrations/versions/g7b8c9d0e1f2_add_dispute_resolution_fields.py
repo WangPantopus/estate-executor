@@ -17,7 +17,9 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 dispute_status_enum = postgresql.ENUM(
-    "open", "under_review", "resolved",
+    "open",
+    "under_review",
+    "resolved",
     name="dispute_status",
     create_type=False,
 )
