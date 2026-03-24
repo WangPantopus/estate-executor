@@ -142,7 +142,8 @@ async def get_logo_upload_url(
     storage_key = f"branding/{firm_id}/{field}.{ext}"
 
     upload_url = storage_service.generate_presigned_put_url(
-        storage_key=storage_key, content_type=content_type,
+        storage_key=storage_key,
+        content_type=content_type,
     )
 
     # The public URL for the logo after upload
