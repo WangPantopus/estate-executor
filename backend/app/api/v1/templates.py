@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter
 
 from app.services.template_registry import ALL_JURISDICTIONS, template_registry
@@ -10,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/coverage")
-async def get_template_coverage() -> dict:
+async def get_template_coverage() -> dict[str, Any]:
     """Return which states have template coverage and summary stats.
 
     This is a lightweight, unauthenticated endpoint that returns

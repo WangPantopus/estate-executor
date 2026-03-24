@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from app.core.dependencies import get_db
+from app.core.exceptions import PermissionDeniedError
 from app.core.security import get_current_user, require_firm_member
 from app.models.enums import PrivacyRequestStatus, PrivacyRequestType
 from app.schemas.privacy import (
@@ -24,6 +25,8 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.firm_memberships import FirmMembership
+    from app.models.privacy_requests import PrivacyRequest
     from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
@@ -31,7 +34,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _to_response(req) -> PrivacyRequestResponse:
+def _to_response(req: PrivacyRequest) -> PrivacyRequestResponse:
     """Convert a PrivacyRequest model to a response schema."""
     rt = req.request_type
     request_type = rt.value if hasattr(rt, "value") else str(rt)
@@ -49,7 +52,6 @@ def _to_response(req) -> PrivacyRequestResponse:
         reviewed_at=req.reviewed_at,
         review_note=req.review_note,
         completed_at=req.completed_at,
-        export_storage_key=req.export_storage_key,
         deletion_summary=req.deletion_summary,
         created_at=req.created_at,
         updated_at=req.updated_at,
@@ -69,8 +71,8 @@ async def create_privacy_request(
     body: PrivacyRequestCreate,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
-    _membership=Depends(require_firm_member),
-):
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> PrivacyRequestResponse:
     """Create a data export or deletion request.
 
     Data export requests are auto-approved and processed immediately.
@@ -106,8 +108,8 @@ async def get_my_requests(
     firm_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
-    _membership=Depends(require_firm_member),
-):
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> list[PrivacyRequestResponse]:
     """Get the current user's privacy requests for this firm."""
     requests = await privacy_service.list_my_requests(
         db,
@@ -122,8 +124,8 @@ async def download_data_export(
     firm_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
-    _membership=Depends(require_firm_member),
-):
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> JSONResponse:
     """Download a JSON export of all user data for this firm."""
     export_data = await privacy_service.build_data_export(db, user_id=current_user.user_id)
     uid = current_user.user_id
@@ -148,16 +150,14 @@ async def list_privacy_requests(
     per_page: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
-    _membership=Depends(require_firm_member),
-):
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> PrivacyRequestListResponse:
     """List all privacy requests for the firm (admin only)."""
     membership = next(
         (m for m in current_user.firm_memberships if str(m.firm_id) == str(firm_id)),
         None,
     )
     if not membership or membership.firm_role not in ("owner", "admin"):
-        from app.core.exceptions import PermissionDeniedError
-
         raise PermissionDeniedError(detail="Admin access required")
 
     status_enum = PrivacyRequestStatus(status) if status else None
@@ -187,16 +187,14 @@ async def review_privacy_request(
     body: PrivacyRequestReview,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
-    _membership=Depends(require_firm_member),
-):
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> PrivacyRequestResponse:
     """Approve or reject a privacy request (admin only)."""
     membership = next(
         (m for m in current_user.firm_memberships if str(m.firm_id) == str(firm_id)),
         None,
     )
     if not membership or membership.firm_role not in ("owner", "admin"):
-        from app.core.exceptions import PermissionDeniedError
-
         raise PermissionDeniedError(detail="Admin access required")
 
     req = await privacy_service.review_request(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 from uuid import UUID
 
 from app.workers.celery_app import celery_app
@@ -11,14 +12,14 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.privacy_tasks.process_deletion_request",
     bind=True,
     max_retries=3,
     soft_time_limit=120,
     time_limit=180,
 )
-def process_deletion_request(self, request_id: str) -> dict:
+def process_deletion_request(self: Any, request_id: str) -> dict[str, Any]:
     """Process an approved data deletion request asynchronously.
 
     Anonymizes PII in stakeholder and user records while preserving
@@ -27,7 +28,7 @@ def process_deletion_request(self, request_id: str) -> dict:
     from app.core.database import async_session_factory
     from app.services.privacy_service import process_deletion
 
-    async def _run():
+    async def _run() -> dict[str, Any]:
         async with async_session_factory() as db:
             try:
                 summary = await process_deletion(
@@ -41,7 +42,7 @@ def process_deletion_request(self, request_id: str) -> dict:
                 raise
 
     try:
-        summary = asyncio.run(_run())
+        summary: dict[str, Any] = asyncio.run(_run())
         logger.info(
             "privacy_deletion_task_completed",
             extra={"request_id": request_id, "summary": summary},
@@ -59,14 +60,14 @@ def process_deletion_request(self, request_id: str) -> dict:
         ) from exc
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.workers.privacy_tasks.process_export_request",
     bind=True,
     max_retries=3,
     soft_time_limit=300,
     time_limit=600,
 )
-def process_export_request(self, request_id: str, user_id: str) -> dict:
+def process_export_request(self: Any, request_id: str, user_id: str) -> dict[str, Any]:
     """Process a data export request asynchronously.
 
     Builds a JSON export and stores it (in production, uploaded to S3).
@@ -81,7 +82,7 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
     from app.models.privacy_requests import PrivacyRequest
     from app.services.privacy_service import build_data_export
 
-    async def _run():
+    async def _run() -> dict[str, Any]:
         async with async_session_factory() as db:
             try:
                 export_data = await build_data_export(
@@ -120,7 +121,7 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
                 raise
 
     try:
-        result = asyncio.run(_run())
+        result: dict[str, Any] = asyncio.run(_run())
         logger.info(
             "privacy_export_task_completed",
             extra={

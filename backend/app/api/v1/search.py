@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.models.firm_memberships import FirmMembership
     from app.schemas.auth import CurrentUser
 
 router = APIRouter()
@@ -38,8 +39,8 @@ async def search(
     limit: int = Query(20, ge=1, le=100, description="Max results per entity type"),
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
-    _membership=Depends(require_firm_member),
-):
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> SearchResponse:
     """Search across matters, tasks, assets, documents, and communications.
 
     Returns results ranked by relevance with highlighted snippets.
