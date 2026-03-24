@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import enum
 
-import pytest
-from pydantic import BaseModel, ConfigDict, Field
-
+from pydantic import BaseModel, ConfigDict
 
 # ---------------------------------------------------------------------------
 # Inline schema/enum mirrors (avoids full app init chain that requires

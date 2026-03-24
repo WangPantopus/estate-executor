@@ -7,14 +7,13 @@ import uuid as uuid_mod
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.models.communications import Communication
 from app.models.enums import ActorType, PrivacyRequestStatus, PrivacyRequestType
-from app.models.events import Event
 from app.models.firm_memberships import FirmMembership
 from app.models.privacy_requests import PrivacyRequest
 from app.models.stakeholders import Stakeholder
@@ -24,8 +23,6 @@ if TYPE_CHECKING:
     import uuid
 
     from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -141,11 +138,15 @@ async def list_my_requests(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
+    firm_id: uuid.UUID | None = None,
 ) -> list[PrivacyRequest]:
-    """List privacy requests for the current user."""
+    """List privacy requests for the current user, optionally scoped to a firm."""
+    filters = [PrivacyRequest.user_id == user_id]
+    if firm_id is not None:
+        filters.append(PrivacyRequest.firm_id == firm_id)
     q = (
         select(PrivacyRequest)
-        .where(PrivacyRequest.user_id == user_id)
+        .where(*filters)
         .order_by(PrivacyRequest.created_at.desc())
     )
     result = await db.execute(q)
@@ -265,7 +266,11 @@ async def build_data_export(
             "full_name": s.full_name,
             "role": s.role.value if hasattr(s.role, "value") else str(s.role),
             "relationship": s.relationship_label,
-            "invite_status": s.invite_status.value if hasattr(s.invite_status, "value") else str(s.invite_status),
+            "invite_status": (
+                s.invite_status.value
+                if hasattr(s.invite_status, "value")
+                else str(s.invite_status)
+            ),
             "permissions": s.permissions,
             "notification_preferences": s.notification_preferences,
             "created_at": s.created_at.isoformat(),
@@ -380,6 +385,7 @@ async def process_deletion(
         user_obj.email = f"deleted-{user_obj.id}@anonymized.invalid"
         user_obj.phone = ANONYMIZED_PHONE
         user_obj.avatar_url = None
+        user_obj.auth_provider_id = f"deleted-{user_obj.id}"
         summary["user_anonymized"] = True
 
     # Mark request as completed

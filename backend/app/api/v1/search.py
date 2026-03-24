@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Query
 
 from app.core.dependencies import get_db
 from app.core.security import get_current_user, require_firm_member
-from app.schemas.auth import CurrentUser
 from app.schemas.search import SearchResponse, SearchResult
 from app.services import search_service
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 
@@ -18,14 +24,16 @@ router = APIRouter()
 @router.get("", response_model=SearchResponse)
 async def search(
     firm_id: UUID,
-    q: str = Query(..., min_length=1, max_length=200, description="Search query"),
+    q: str = Query(
+        ..., min_length=1, max_length=200, description="Search query",
+    ),
     entity_types: str | None = Query(
         None,
-        description="Comma-separated entity types to search: matter,task,asset,document,communication",
+        description="Comma-separated entity types to search",
     ),
     matter_id: UUID | None = Query(None, description="Filter to a specific matter"),
     limit: int = Query(20, ge=1, le=100, description="Max results per entity type"),
-    db=Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
     _membership=Depends(require_firm_member),
 ):

@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.search_service import search
 
-
 # ---------------------------------------------------------------------------
 # Inline schema mirrors (avoids importing app.schemas which triggers full
 # app init chain including database engine creation)

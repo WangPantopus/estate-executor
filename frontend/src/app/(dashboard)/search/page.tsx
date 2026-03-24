@@ -73,7 +73,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState(initialQuery);
   const [activeFilter, setActiveFilter] = useState<SearchEntityType | null>(null);
   const { data: user } = useCurrentUser();
-  const firmId = user?.firm_id ?? "";
+  const firmId = user?.firm_memberships?.[0]?.firm_id ?? "";
 
   const { data, isLoading, isFetching, isError } = useSearch(firmId, query, {
     entityTypes: activeFilter ?? undefined,

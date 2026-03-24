@@ -5,8 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import func, literal_column, text, union_all
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy import text
 
 if TYPE_CHECKING:
     import uuid
@@ -48,14 +47,10 @@ async def search(
     if entity_types is not None and len(entity_types) == 0:
         entity_types = None
 
-    # websearch_to_tsquery handles natural language: "hello world" → 'hello' & 'world'
-    tsquery = func.websearch_to_tsquery("english", query)
-
     allowed_types = {"matter", "task", "asset", "document", "communication"}
-    if entity_types:
-        search_types = set(entity_types) & allowed_types
-    else:
-        search_types = allowed_types
+    search_types = (
+        set(entity_types) & allowed_types if entity_types else allowed_types
+    )
 
     subqueries = []
 
@@ -68,7 +63,8 @@ async def search(
                 m.id::text AS matter_id,
                 m.title AS title,
                 m.decedent_name AS subtitle,
-                ts_headline('english', coalesce(m.title, '') || ' ' || coalesce(m.decedent_name, ''),
+                ts_headline('english',
+                    coalesce(m.title, '') || ' ' || coalesce(m.decedent_name, ''),
                     websearch_to_tsquery('english', :query),
                     'StartSel=<mark>, StopSel=</mark>, MaxWords=35, MinWords=15'
                 ) AS snippet,
@@ -115,7 +111,9 @@ async def search(
                 a.matter_id::text AS matter_id,
                 a.title AS title,
                 a.institution AS subtitle,
-                ts_headline('english', coalesce(a.title, '') || ' ' || coalesce(a.description, '') || ' ' || coalesce(a.institution, ''),
+                ts_headline('english',
+                    coalesce(a.title, '') || ' ' || coalesce(a.description, '')
+                    || ' ' || coalesce(a.institution, ''),
                     websearch_to_tsquery('english', :query),
                     'StartSel=<mark>, StopSel=</mark>, MaxWords=35, MinWords=15'
                 ) AS snippet,

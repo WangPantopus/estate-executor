@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,7 +14,7 @@ class PrivacyRequestCreate(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
-    request_type: str = Field(..., description="data_export or data_deletion")
+    request_type: Literal["data_export", "data_deletion"]
     reason: str | None = Field(None, max_length=1000)
 
 
@@ -23,14 +23,14 @@ class PrivacyRequestReview(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
-    action: str = Field(..., description="approve or reject")
+    action: Literal["approve", "reject"]
     note: str | None = Field(None, max_length=1000)
 
 
 class PrivacyRequestResponse(BaseModel):
     """Privacy request response."""
 
-    model_config = ConfigDict(strict=True, from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     firm_id: UUID
@@ -42,12 +42,11 @@ class PrivacyRequestResponse(BaseModel):
     reviewed_at: datetime | None = None
     review_note: str | None = None
     completed_at: datetime | None = None
-    export_storage_key: str | None = None
     deletion_summary: dict[str, Any] | None = None
     created_at: datetime
     updated_at: datetime
 
-    # User info (populated from relationship)
+    # User info (populated manually in _to_response)
     user_email: str | None = None
     user_name: str | None = None
 

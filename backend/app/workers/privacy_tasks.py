@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from uuid import UUID
 
 from app.workers.celery_app import celery_app
 
@@ -22,15 +24,15 @@ def process_deletion_request(self, request_id: str) -> dict:
     Anonymizes PII in stakeholder and user records while preserving
     structural data for audit integrity.
     """
-    import asyncio
-
     from app.core.database import async_session_factory
     from app.services.privacy_service import process_deletion
 
     async def _run():
         async with async_session_factory() as db:
             try:
-                summary = await process_deletion(db, request_id=request_id)
+                summary = await process_deletion(
+                    db, request_id=UUID(request_id),
+                )
                 await db.commit()
                 return summary
             except Exception:
@@ -38,10 +40,7 @@ def process_deletion_request(self, request_id: str) -> dict:
                 raise
 
     try:
-        loop = asyncio.new_event_loop()
-        summary = loop.run_until_complete(_run())
-        loop.close()
-
+        summary = asyncio.run(_run())
         logger.info(
             "privacy_deletion_task_completed",
             extra={"request_id": request_id, "summary": summary},
@@ -53,7 +52,10 @@ def process_deletion_request(self, request_id: str) -> dict:
             "privacy_deletion_task_failed",
             extra={"request_id": request_id, "error": str(exc)},
         )
-        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+        raise self.retry(
+            exc=exc,
+            countdown=60 * (2 ** self.request.retries),
+        ) from exc
 
 
 @celery_app.task(
@@ -69,32 +71,36 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
     Builds a JSON export and stores it (in production, uploaded to S3).
     Returns the export summary.
     """
-    import asyncio
-    import json
+    from datetime import UTC, datetime
+
+    from sqlalchemy import select
 
     from app.core.database import async_session_factory
+    from app.models.enums import PrivacyRequestStatus
+    from app.models.privacy_requests import PrivacyRequest
     from app.services.privacy_service import build_data_export
 
     async def _run():
         async with async_session_factory() as db:
             try:
-                export_data = await build_data_export(db, user_id=user_id)
-
-                # In production, upload to S3 and store the key
-                # For now, mark the request as completed
-                from sqlalchemy import select
-
-                from app.models.enums import PrivacyRequestStatus
-                from app.models.privacy_requests import PrivacyRequest
-
-                result = await db.execute(
-                    select(PrivacyRequest).where(PrivacyRequest.id == request_id)
+                export_data = await build_data_export(
+                    db, user_id=UUID(user_id),
                 )
-                request = result.scalar_one()
-                request.status = PrivacyRequestStatus.completed
-                from datetime import UTC, datetime
 
-                request.completed_at = datetime.now(UTC)
+                # Mark as completed
+                result = await db.execute(
+                    select(PrivacyRequest).where(
+                        PrivacyRequest.id == UUID(request_id),
+                        PrivacyRequest.status.in_([
+                            PrivacyRequestStatus.approved,
+                            PrivacyRequestStatus.processing,
+                        ]),
+                    )
+                )
+                req = result.scalar_one_or_none()
+                if req:
+                    req.status = PrivacyRequestStatus.completed
+                    req.completed_at = datetime.now(UTC)
 
                 await db.commit()
                 return {
@@ -110,13 +116,13 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
                 raise
 
     try:
-        loop = asyncio.new_event_loop()
-        result = loop.run_until_complete(_run())
-        loop.close()
-
+        result = asyncio.run(_run())
         logger.info(
             "privacy_export_task_completed",
-            extra={"request_id": request_id, "user_id": user_id},
+            extra={
+                "request_id": request_id,
+                "user_id": user_id,
+            },
         )
         return result
 
@@ -125,4 +131,7 @@ def process_export_request(self, request_id: str, user_id: str) -> dict:
             "privacy_export_task_failed",
             extra={"request_id": request_id, "error": str(exc)},
         )
-        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+        raise self.retry(
+            exc=exc,
+            countdown=60 * (2 ** self.request.retries),
+        ) from exc

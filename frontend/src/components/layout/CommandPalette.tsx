@@ -69,7 +69,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: user } = useCurrentUser();
-  const firmId = user?.firm_id ?? "";
+  const firmId = user?.firm_memberships?.[0]?.firm_id ?? "";
 
   // Live search — only fires when query is 2+ chars
   const { data: searchData, isFetching } = useSearch(firmId, query, {
