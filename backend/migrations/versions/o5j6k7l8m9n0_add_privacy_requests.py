@@ -18,12 +18,13 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    # Create enum types
+    # Create enum types explicitly, then use create_type=False in columns
+    # to prevent op.create_table from trying to create them again.
     privacy_request_type = postgresql.ENUM(
         "data_export",
         "data_deletion",
         name="privacy_request_type",
-        create_type=True,
+        create_type=False,
     )
     privacy_request_status = postgresql.ENUM(
         "pending",
@@ -32,7 +33,7 @@ def upgrade() -> None:
         "completed",
         "rejected",
         name="privacy_request_status",
-        create_type=True,
+        create_type=False,
     )
     privacy_request_type.create(op.get_bind(), checkfirst=True)
     privacy_request_status.create(op.get_bind(), checkfirst=True)
