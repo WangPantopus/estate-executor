@@ -22,6 +22,11 @@ from app.core.middleware import (
     RequestLoggingMiddleware,
     TenantIsolationMiddleware,
 )
+from app.core.security_middleware import (
+    CSRFMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+)
 
 # Background task handle for the realtime subscriber
 _subscriber_task: asyncio.Task[Any] | None = None
@@ -32,6 +37,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     global _subscriber_task
     # Startup
     settings.configure_logging()
+
+    # Validate production secrets — refuse to start if critical secrets are missing
+    import logging as _logging
+
+    _startup_logger = _logging.getLogger("app.startup")
+    secret_warnings = settings.validate_production_secrets()
+    if secret_warnings:
+        _startup_logger.warning(
+            "SECURITY: %d configuration issue(s) detected during startup",
+            len(secret_warnings),
+        )
+    if secret_warnings and settings.is_production:
+        raise RuntimeError(
+            f"Production startup blocked — {len(secret_warnings)} security issue(s) detected. "
+            "Check logs for details."
+        )
 
     # Start the Redis pub/sub → Socket.IO bridge
     from app.realtime.subscriber import start_subscriber
@@ -89,6 +110,15 @@ def create_app() -> FastAPI:
 
     # Tenant isolation
     fastapi_app.add_middleware(TenantIsolationMiddleware)
+
+    # Security headers (CSP, HSTS, X-Frame-Options, etc.)
+    fastapi_app.add_middleware(SecurityHeadersMiddleware)
+
+    # CSRF protection (double-submit cookie)
+    fastapi_app.add_middleware(CSRFMiddleware)
+
+    # Rate limiting (Redis sliding window)
+    fastapi_app.add_middleware(RateLimitMiddleware)
 
     # --- Exception handlers for known HTTP exceptions ---
 

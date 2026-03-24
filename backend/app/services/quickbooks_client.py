@@ -161,10 +161,34 @@ class QuickBooksAPI:
     async def create_journal_entry(self, entry: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/journalentry", json=entry)
 
-    async def query_journal_entries(self, where: str = "", limit: int = 100) -> dict[str, Any]:
+    _VALID_JE_FILTERS = frozenset({"TxnDate", "Id", "DocNumber"})
+
+    async def query_journal_entries(
+        self,
+        *,
+        filter_field: str | None = None,
+        filter_operator: str = "=",
+        filter_value: str = "",
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        """Query journal entries with safe parameterised filtering.
+
+        Only whitelisted field names and operators are accepted to prevent
+        QBO query injection.
+        """
         query = "SELECT * FROM JournalEntry"
-        if where:
-            query += f" WHERE {where}"
+        if filter_field:
+            if filter_field not in self._VALID_JE_FILTERS:
+                raise ValueError(
+                    f"Invalid filter field: {filter_field}. "
+                    f"Allowed: {sorted(self._VALID_JE_FILTERS)}"
+                )
+            if filter_operator not in ("=", "<", ">", "<=", ">=", "LIKE"):
+                raise ValueError(f"Invalid filter operator: {filter_operator}")
+            # QBO query language uses single-quoted string values
+            safe_value = filter_value.replace("'", "\\'")
+            query += f" WHERE {filter_field} {filter_operator} '{safe_value}'"
+        limit = max(1, min(limit, 1000))
         query += f" MAXRESULTS {limit}"
         return await self._get("/query", params={"query": query})
 
@@ -205,6 +229,7 @@ class QuickBooksAPI:
             if account_type not in self._VALID_ACCOUNT_TYPES:
                 raise ValueError(f"Invalid QBO account type: {account_type}")
             query += f" WHERE AccountType = '{account_type}'"
+        limit = max(1, min(limit, 1000))
         query += f" MAXRESULTS {limit}"
         return await self._get("/query", params={"query": query})
 

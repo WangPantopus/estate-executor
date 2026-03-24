@@ -92,7 +92,32 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
 
+    # Rate limiting (overridable per environment)
+    rate_limit_enabled: bool = True
+    rate_limit_strict: int = 10
+    rate_limit_write: int = 30
+    rate_limit_standard: int = 60
+    rate_limit_relaxed: int = 120
+
+    # CSRF
+    csrf_enabled: bool = True
+
     model_config = {"env_file": ".env", "extra": "ignore"}
+
+    def model_post_init(self, __context: object) -> None:
+        """Auto-disable rate limiting and CSRF in test environment unless explicitly set."""
+        if self.app_env == "test":
+            # Only override if the env var was NOT explicitly set (i.e. still at default)
+            import os
+
+            if "RATE_LIMIT_ENABLED" not in os.environ:
+                object.__setattr__(self, "rate_limit_enabled", False)
+            if "CSRF_ENABLED" not in os.environ:
+                object.__setattr__(self, "csrf_enabled", False)
+
+    @property
+    def is_test(self) -> bool:
+        return self.app_env == "test"
 
     @property
     def is_development(self) -> bool:
@@ -101,6 +126,33 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.app_env == "production" or self.environment == "production"
+
+    def validate_production_secrets(self) -> list[str]:
+        """Check that default/placeholder secrets are not used in production.
+
+        Returns a list of warnings for any insecure defaults detected.
+        """
+        warnings: list[str] = []
+        if not self.is_production:
+            return warnings
+
+        if self.app_secret_key == "change-me-to-a-random-secret":
+            warnings.append("APP_SECRET_KEY is using the default placeholder value")
+        if not self.encryption_master_key:
+            warnings.append("ENCRYPTION_MASTER_KEY is not set")
+        if not self.auth0_domain:
+            warnings.append("AUTH0_DOMAIN is not configured")
+        if not self.auth0_client_secret:
+            warnings.append("AUTH0_CLIENT_SECRET is not configured")
+        if self.e2e_mock_auth:
+            warnings.append("E2E_MOCK_AUTH must be disabled in production")
+        if any(
+            origin in ("*", "http://localhost:3000")
+            for origin in self.backend_cors_origins + self.cors_origins
+        ):
+            warnings.append("CORS origins contain localhost or wildcard — restrict for production")
+
+        return warnings
 
     @property
     def auth0_issuer(self) -> str:
