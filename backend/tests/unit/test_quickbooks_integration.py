@@ -79,15 +79,14 @@ class TestSyncRequestSchema:
 
         from app.schemas.integrations import SyncRequest
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             SyncRequest(resource="invalid_resource")
 
 
 class TestBankAssetTypes:
     def test_bank_types_defined(self):
-        from app.services.quickbooks_sync_service import _BANK_ASSET_TYPES
-
         from app.models.enums import AssetType
+        from app.services.quickbooks_sync_service import _BANK_ASSET_TYPES
 
         assert AssetType.bank_account in _BANK_ASSET_TYPES
         assert AssetType.brokerage_account in _BANK_ASSET_TYPES
