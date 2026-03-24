@@ -288,12 +288,12 @@ async def get_distribution_summary(
             Stakeholder.full_name,
             func.coalesce(func.sum(Distribution.amount), Decimal(0)).label("total"),
             func.count(Distribution.id).label("count"),
-            func.sum(
-                case((Distribution.receipt_acknowledged.is_(True), 1), else_=0)
-            ).label("acked"),
-            func.sum(
-                case((Distribution.receipt_acknowledged.is_(False), 1), else_=0)
-            ).label("pending"),
+            func.sum(case((Distribution.receipt_acknowledged.is_(True), 1), else_=0)).label(
+                "acked"
+            ),
+            func.sum(case((Distribution.receipt_acknowledged.is_(False), 1), else_=0)).label(
+                "pending"
+            ),
         )
         .join(Stakeholder, Distribution.beneficiary_stakeholder_id == Stakeholder.id)
         .where(Distribution.matter_id == matter_id)

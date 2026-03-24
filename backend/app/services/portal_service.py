@@ -125,9 +125,7 @@ async def get_portal_overview(
 
     # Load matter + firm
     result = await db.execute(
-        select(Matter, Firm)
-        .join(Firm, Matter.firm_id == Firm.id)
-        .where(Matter.id == matter_id)
+        select(Matter, Firm).join(Firm, Matter.firm_id == Firm.id).where(Matter.id == matter_id)
     )
     row = result.one_or_none()
     if row is None:
@@ -238,21 +236,25 @@ def _build_milestones(matter: Matter, milestone_comms: list[Communication]) -> l
     for i, phase in enumerate(_PHASE_ORDER):
         completed = i < current_phase_idx
         is_current = i == current_phase_idx
-        milestones.append({
-            "title": _PHASE_LABELS.get(phase, str(phase)),
-            "date": "",
-            "completed": completed,
-            "is_next": is_current and not completed,
-        })
+        milestones.append(
+            {
+                "title": _PHASE_LABELS.get(phase, str(phase)),
+                "date": "",
+                "completed": completed,
+                "is_next": is_current and not completed,
+            }
+        )
 
     # Add actual milestone communications
     for comm in milestone_comms:
-        milestones.append({
-            "title": comm.subject or "Milestone reached",
-            "date": comm.created_at.strftime("%B %d, %Y"),
-            "completed": True,
-            "is_next": False,
-        })
+        milestones.append(
+            {
+                "title": comm.subject or "Milestone reached",
+                "date": comm.created_at.strftime("%B %d, %Y"),
+                "completed": True,
+                "is_next": False,
+            }
+        )
 
     return milestones
 
@@ -269,9 +271,7 @@ async def get_portal_documents(
     current_user: CurrentUser,
 ) -> dict:
     """Return documents shared with the beneficiary."""
-    await _get_beneficiary_stakeholder(
-        db, matter_id=matter_id, user_id=current_user.user_id
-    )
+    await _get_beneficiary_stakeholder(db, matter_id=matter_id, user_id=current_user.user_id)
 
     # Documents shared via communications visible to beneficiaries,
     # or documents with doc_type in shareable categories
@@ -294,10 +294,7 @@ async def get_portal_documents(
     docs = result.scalars().all()
 
     # Filter to only confirmed shareable types
-    shared_docs = [
-        d for d in docs
-        if d.doc_type in shareable_types
-    ]
+    shared_docs = [d for d in docs if d.doc_type in shareable_types]
 
     return {
         "documents": [
@@ -429,9 +426,7 @@ async def acknowledge_distribution_notice(
     current_user: CurrentUser,
 ) -> dict:
     """Acknowledge a distribution notice."""
-    await _get_beneficiary_stakeholder(
-        db, matter_id=matter_id, user_id=current_user.user_id
-    )
+    await _get_beneficiary_stakeholder(db, matter_id=matter_id, user_id=current_user.user_id)
 
     result = await db.execute(
         select(Communication)

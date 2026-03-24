@@ -245,6 +245,7 @@ def _can_import_security() -> bool:
     """Check if app.core.security can be imported (requires cryptography)."""
     try:
         from app.core.security import ROLE_PERMISSIONS  # noqa: F401
+
         return True
     except BaseException:
         return False
@@ -259,11 +260,13 @@ class TestPortalAPIRoutes:
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_portal_router_exists(self):
         from app.api.v1.portal import router
+
         assert router is not None
 
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_portal_routes_registered(self):
         from app.api.v1.portal import router
+
         routes = [r.path for r in router.routes]
         assert "/matters" in routes
         assert "/matters/{matter_id}/overview" in routes
@@ -274,6 +277,7 @@ class TestPortalAPIRoutes:
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_portal_included_in_api_router(self):
         from app.api.v1 import api_router
+
         route_paths = [r.path for r in api_router.routes]
         portal_routes = [p for p in route_paths if "/portal" in p]
         assert len(portal_routes) > 0
@@ -285,6 +289,7 @@ class TestBeneficiaryRoleRestrictions:
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_beneficiary_permissions_defined(self):
         from app.core.security import ROLE_PERMISSIONS
+
         perms = ROLE_PERMISSIONS[StakeholderRole.beneficiary]
         assert "matter:read:summary" in perms
         assert "task:read:milestones" in perms
@@ -294,19 +299,23 @@ class TestBeneficiaryRoleRestrictions:
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_beneficiary_cannot_write_tasks(self):
         from app.core.security import _has_permission
+
         assert _has_permission(StakeholderRole.beneficiary, "task:write") is False
 
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_beneficiary_cannot_upload_documents(self):
         from app.core.security import _has_permission
+
         assert _has_permission(StakeholderRole.beneficiary, "document:upload") is False
 
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_beneficiary_cannot_manage_stakeholders(self):
         from app.core.security import _has_permission
+
         assert _has_permission(StakeholderRole.beneficiary, "stakeholder:manage") is False
 
     @pytest.mark.skipif(not _SECURITY_AVAILABLE, reason="cryptography not available")
     def test_beneficiary_cannot_trigger_ai(self):
         from app.core.security import _has_permission
+
         assert _has_permission(StakeholderRole.beneficiary, "ai:trigger") is False

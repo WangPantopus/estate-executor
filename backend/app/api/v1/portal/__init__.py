@@ -36,12 +36,8 @@ async def list_beneficiary_matters(
     db: AsyncSession = Depends(get_db),
 ) -> PortalBeneficiaryMattersResponse:
     """List all matters where the current user is a beneficiary."""
-    matters = await portal_service.list_beneficiary_matters(
-        db, current_user=current_user
-    )
-    return PortalBeneficiaryMattersResponse(
-        matters=[PortalMatterBrief(**m) for m in matters]
-    )
+    matters = await portal_service.list_beneficiary_matters(db, current_user=current_user)
+    return PortalBeneficiaryMattersResponse(matters=[PortalMatterBrief(**m) for m in matters])
 
 
 # ---------------------------------------------------------------------------

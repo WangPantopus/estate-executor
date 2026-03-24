@@ -58,6 +58,4 @@ class Distribution(BaseModel):
 
     matter: Mapped[Matter] = relationship(back_populates="distributions")
     asset: Mapped[Asset | None] = relationship()
-    beneficiary: Mapped[Stakeholder] = relationship(
-        foreign_keys=[beneficiary_stakeholder_id]
-    )
+    beneficiary: Mapped[Stakeholder] = relationship(foreign_keys=[beneficiary_stakeholder_id])

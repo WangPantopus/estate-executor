@@ -4,6 +4,7 @@ Revision ID: e5f6a7b8c9d0
 Revises: d4e5f6a7b8c9
 Create Date: 2026-03-24
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -18,7 +19,9 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     # Create distribution_type enum
     distribution_type_enum = sa.Enum(
-        "cash", "asset_transfer", "in_kind",
+        "cash",
+        "asset_transfer",
+        "in_kind",
         name="distribution_type",
     )
     distribution_type_enum.create(op.get_bind(), checkfirst=True)
@@ -33,18 +36,32 @@ def upgrade() -> None:
         sa.Column("description", sa.String(), nullable=False),
         sa.Column(
             "distribution_type",
-            sa.Enum("cash", "asset_transfer", "in_kind", name="distribution_type", native_enum=True),
+            sa.Enum(
+                "cash", "asset_transfer", "in_kind", name="distribution_type", native_enum=True
+            ),
             nullable=False,
         ),
         sa.Column("distribution_date", sa.Date(), nullable=False),
         sa.Column("receipt_acknowledged", sa.Boolean(), server_default="false", nullable=False),
         sa.Column("receipt_acknowledged_at", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("notes", sa.String(), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["matter_id"], ["matters.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["asset_id"], ["assets.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["beneficiary_stakeholder_id"], ["stakeholders.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["beneficiary_stakeholder_id"], ["stakeholders.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_distributions_matter_id", "distributions", ["matter_id"])

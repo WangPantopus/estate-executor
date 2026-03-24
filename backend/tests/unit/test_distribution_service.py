@@ -31,58 +31,72 @@ class TestDistributionModel:
 
     def test_has_matter_id(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "matter_id")
 
     def test_has_asset_id(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "asset_id")
 
     def test_has_beneficiary_stakeholder_id(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "beneficiary_stakeholder_id")
 
     def test_has_amount(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "amount")
 
     def test_has_description(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "description")
 
     def test_has_distribution_type(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "distribution_type")
 
     def test_has_distribution_date(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "distribution_date")
 
     def test_has_receipt_acknowledged(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "receipt_acknowledged")
 
     def test_has_receipt_acknowledged_at(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "receipt_acknowledged_at")
 
     def test_has_notes(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "notes")
 
     def test_has_beneficiary_relationship(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "beneficiary")
 
     def test_has_asset_relationship(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "asset")
 
     def test_has_matter_relationship(self):
         from app.models.distributions import Distribution
+
         assert hasattr(Distribution, "matter")
 
     def test_table_name(self):
         from app.models.distributions import Distribution
+
         assert Distribution.__tablename__ == "distributions"
 
 
@@ -91,6 +105,7 @@ class TestDistributionSchemas:
 
     def test_distribution_create_fields(self):
         from app.schemas.distributions import DistributionCreate
+
         fields = DistributionCreate.model_fields
         assert "beneficiary_stakeholder_id" in fields
         assert "amount" in fields
@@ -102,6 +117,7 @@ class TestDistributionSchemas:
 
     def test_distribution_response_fields(self):
         from app.schemas.distributions import DistributionResponse
+
         fields = DistributionResponse.model_fields
         assert "id" in fields
         assert "matter_id" in fields
@@ -112,6 +128,7 @@ class TestDistributionSchemas:
 
     def test_distribution_summary_response_fields(self):
         from app.schemas.distributions import DistributionSummaryResponse
+
         fields = DistributionSummaryResponse.model_fields
         assert "total_distributed" in fields
         assert "total_distributions" in fields
@@ -122,6 +139,7 @@ class TestDistributionSchemas:
 
     def test_beneficiary_summary_item_fields(self):
         from app.schemas.distributions import BeneficiarySummaryItem
+
         fields = BeneficiarySummaryItem.model_fields
         assert "stakeholder_id" in fields
         assert "beneficiary_name" in fields
@@ -136,6 +154,7 @@ class TestDistributionSchemaValidation:
 
     def test_create_distribution_create(self):
         from app.schemas.distributions import DistributionCreate
+
         dist = DistributionCreate(
             beneficiary_stakeholder_id=uuid.uuid4(),
             amount=Decimal("50000.00"),
@@ -148,6 +167,7 @@ class TestDistributionSchemaValidation:
 
     def test_create_distribution_without_amount(self):
         from app.schemas.distributions import DistributionCreate
+
         dist = DistributionCreate(
             beneficiary_stakeholder_id=uuid.uuid4(),
             description="In-kind transfer of personal property",
@@ -158,6 +178,7 @@ class TestDistributionSchemaValidation:
 
     def test_create_distribution_with_asset(self):
         from app.schemas.distributions import DistributionCreate
+
         dist = DistributionCreate(
             beneficiary_stakeholder_id=uuid.uuid4(),
             asset_id=uuid.uuid4(),
@@ -170,6 +191,7 @@ class TestDistributionSchemaValidation:
 
     def test_create_distribution_response(self):
         from app.schemas.distributions import DistributionResponse
+
         resp = DistributionResponse(
             id=uuid.uuid4(),
             matter_id=uuid.uuid4(),
@@ -191,6 +213,7 @@ class TestDistributionSchemaValidation:
 
     def test_create_summary_response(self):
         from app.schemas.distributions import BeneficiarySummaryItem, DistributionSummaryResponse
+
         summary = DistributionSummaryResponse(
             total_distributed=Decimal("150000.00"),
             total_distributions=3,
@@ -225,10 +248,12 @@ class TestDistributionModelRegistered:
 
     def test_distribution_in_models(self):
         from app.models import Distribution
+
         assert Distribution is not None
 
     def test_distribution_type_in_enums(self):
         from app.models import DistributionType
+
         assert DistributionType is not None
 
 
@@ -237,4 +262,5 @@ class TestMatterHasDistributions:
 
     def test_matter_has_distributions_attribute(self):
         from app.models.matters import Matter
+
         assert hasattr(Matter, "distributions")

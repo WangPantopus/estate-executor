@@ -163,9 +163,7 @@ async def get_distribution_summary(
     db: AsyncSession = Depends(get_db),
 ) -> DistributionSummaryResponse:
     """Get distribution summary by beneficiary and type."""
-    data = await distribution_service.get_distribution_summary(
-        db, matter_id=matter_id
-    )
+    data = await distribution_service.get_distribution_summary(db, matter_id=matter_id)
     return DistributionSummaryResponse(
         total_distributed=data["total_distributed"],
         total_distributions=data["total_distributions"],
