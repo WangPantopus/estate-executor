@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -157,7 +158,7 @@ async def acknowledge_notice(
 async def get_portal_branding(
     firm_slug: str,
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     """Get branding config for portal display. No auth required.
 
     Only exposes visual branding fields, not internal settings.

@@ -175,8 +175,6 @@ async def _require_enterprise(db: AsyncSession, firm_id: uuid.UUID) -> None:
     firm = result.scalar_one_or_none()
     if firm is None:
         raise NotFoundError(detail="Firm not found")
-    tier = firm.subscription_tier
-    if hasattr(tier, "value"):
-        tier = tier.value
-    if tier != SubscriptionTier.enterprise.value:
+    tier_value = firm.subscription_tier.value if hasattr(firm.subscription_tier, "value") else firm.subscription_tier
+    if tier_value != SubscriptionTier.enterprise.value:
         raise PermissionDeniedError(detail="API keys require an Enterprise subscription")

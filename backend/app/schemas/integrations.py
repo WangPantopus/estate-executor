@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -23,7 +23,7 @@ class IntegrationConnectionResponse(BaseModel):
     last_sync_at: datetime | None = None
     last_sync_status: str
     last_sync_error: str | None = None
-    settings: dict = {}
+    settings: dict[str, Any] = {}
     connected_by: UUID | None = None
     created_at: datetime
     updated_at: datetime

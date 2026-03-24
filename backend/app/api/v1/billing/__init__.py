@@ -182,7 +182,7 @@ async def stripe_webhook(
         )
 
     try:
-        event = stripe.Webhook.construct_event(
+        event = stripe.Webhook.construct_event(  # type: ignore[no-untyped-call]
             payload=body,
             sig_header=stripe_signature,
             secret=settings.stripe_webhook_secret,

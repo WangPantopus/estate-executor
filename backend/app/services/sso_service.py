@@ -357,10 +357,8 @@ async def _require_enterprise(db: AsyncSession, firm_id: uuid.UUID) -> None:
     if firm is None:
         raise NotFoundError(detail="Firm not found")
 
-    tier = firm.subscription_tier
-    if hasattr(tier, "value"):
-        tier = tier.value
-    if tier != SubscriptionTier.enterprise.value:
+    tier_value = firm.subscription_tier.value if hasattr(firm.subscription_tier, "value") else firm.subscription_tier
+    if tier_value != SubscriptionTier.enterprise.value:
         raise PermissionDeniedError(detail="Enterprise SSO requires an Enterprise subscription")
 
 
@@ -477,7 +475,7 @@ async def _create_auth0_connection(config: SSOConfig, firm_id: uuid.UUID) -> dic
                 json=body,
             )
             resp.raise_for_status()
-            return resp.json()
+            return dict(resp.json())
 
     except httpx.HTTPError:
         logger.error("auth0_create_connection_failed", exc_info=True)
@@ -514,7 +512,8 @@ async def _get_auth0_management_token() -> str | None:
                 },
             )
             resp.raise_for_status()
-            return resp.json().get("access_token")
+            data: dict[str, Any] = resp.json()
+            return data.get("access_token")
     except httpx.HTTPError:
         logger.error("auth0_management_token_failed", exc_info=True)
         return None

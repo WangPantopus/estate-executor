@@ -121,7 +121,7 @@ async def complete_oauth(
 
     # Validate by fetching company info
     try:
-        api = QuickBooksAPI(conn.access_token, realm_id)
+        api = QuickBooksAPI(str(conn.access_token), realm_id)
         info = await api.get_company_info()
         company = info.get("CompanyInfo", {})
         conn.external_account_name = company.get("CompanyName", "")
@@ -187,7 +187,7 @@ async def _ensure_valid_token(db: AsyncSession, conn: IntegrationConnection) -> 
         await db.flush()
 
     realm_id = conn.external_account_id or ""
-    return QuickBooksAPI(conn.access_token, realm_id)
+    return QuickBooksAPI(str(conn.access_token), realm_id)
 
 
 # ─── Push: Distributions → Journal Entries ───────────────────────────────────
@@ -204,7 +204,7 @@ async def push_distributions(
     conn = await get_connection_or_404(db, firm_id=firm_id)
     api = await _ensure_valid_token(db, conn)
 
-    result = {
+    result: dict[str, Any] = {
         "resource": "distributions",
         "direction": "push",
         "created": 0,
@@ -321,7 +321,7 @@ async def push_transactions(
     conn = await get_connection_or_404(db, firm_id=firm_id)
     api = await _ensure_valid_token(db, conn)
 
-    result = {
+    result: dict[str, Any] = {
         "resource": "transactions",
         "direction": "push",
         "created": 0,

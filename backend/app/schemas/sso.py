@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -96,4 +96,4 @@ class SSOTestResponse(BaseModel):
 
     success: bool
     message: str
-    details: dict | None = None
+    details: dict[str, Any] | None = None

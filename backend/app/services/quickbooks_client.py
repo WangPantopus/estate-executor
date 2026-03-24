@@ -67,7 +67,7 @@ async def exchange_code_for_tokens(code: str, realm_id: str) -> dict[str, Any]:
             resp.raise_for_status()
             data = resp.json()
             data["realm_id"] = realm_id
-            return data
+            return dict(data)
         except httpx.HTTPError as e:
             logger.error("qbo_token_exchange_failed", exc_info=True)
             raise ValidationError(detail="Failed to connect to QuickBooks.") from e
@@ -94,7 +94,7 @@ async def refresh_access_token(
                 },
             )
             resp.raise_for_status()
-            return resp.json()
+            return dict(resp.json())
         except httpx.HTTPError as e:
             logger.error("qbo_token_refresh_failed", exc_info=True)
             raise ValidationError(detail="Failed to refresh QuickBooks connection.") from e
@@ -139,16 +139,16 @@ class QuickBooksAPI:
             resp.raise_for_status()
             if resp.status_code == 204:
                 return {}
-            return resp.json()
+            return dict(resp.json())
 
     async def _get(
         self,
         path: str,
-        params: dict | None = None,
+        params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         return await self._request("GET", path, params=params)
 
-    async def _post(self, path: str, json: dict | None = None) -> dict[str, Any]:
+    async def _post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("POST", path, json=json)
 
     # ── Company Info ──────────────────────────────────────────────────────

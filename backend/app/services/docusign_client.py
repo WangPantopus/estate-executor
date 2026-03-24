@@ -54,7 +54,7 @@ async def exchange_code_for_tokens(code: str) -> dict[str, Any]:
                 },
             )
             resp.raise_for_status()
-            return resp.json()
+            return dict(resp.json())
         except httpx.HTTPError as e:
             logger.error("docusign_token_exchange_failed", exc_info=True)
             raise ValidationError(detail="Failed to connect to DocuSign.") from e
@@ -77,7 +77,7 @@ async def refresh_access_token(refresh_token: str) -> dict[str, Any]:
                 },
             )
             resp.raise_for_status()
-            return resp.json()
+            return dict(resp.json())
         except httpx.HTTPError as e:
             logger.error("docusign_token_refresh_failed", exc_info=True)
             raise ValidationError(detail="Failed to refresh DocuSign connection.") from e
@@ -95,7 +95,7 @@ async def get_user_info(access_token: str) -> dict[str, Any]:
             headers={"Authorization": f"Bearer {access_token}"},
         )
         resp.raise_for_status()
-        return resp.json()
+        return dict(resp.json())
 
 
 # ─── DocuSign eSignature API ─────────────────────────────────────────────────
@@ -122,15 +122,15 @@ class DocuSignAPI:
             resp.raise_for_status()
             if resp.status_code == 204:
                 return {}
-            return resp.json()
+            return dict(resp.json())
 
-    async def _get(self, path: str, params: dict | None = None) -> dict[str, Any]:
+    async def _get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("GET", path, params=params)
 
-    async def _post(self, path: str, json: dict | None = None) -> dict[str, Any]:
+    async def _post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("POST", path, json=json)
 
-    async def _put(self, path: str, json: dict | None = None) -> dict[str, Any]:
+    async def _put(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("PUT", path, json=json)
 
     # ── Envelopes ─────────────────────────────────────────────────────────

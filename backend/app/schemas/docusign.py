@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -60,7 +60,7 @@ class SignatureRequestResponse(BaseModel):
     envelope_id: str | None = None
     subject: str
     message: str | None = None
-    signers: list[dict] = []
+    signers: list[dict[str, Any]] = []
     sent_by: UUID
     sent_at: datetime | None = None
     completed_at: datetime | None = None

@@ -126,7 +126,7 @@ async def complete_oauth(
 
     # Fetch account info to get the account ID (needed for all API calls)
     try:
-        user_info = await get_user_info(conn.access_token)
+        user_info = await get_user_info(str(conn.access_token))
         accounts = user_info.get("accounts", [])
         if accounts:
             default = next((a for a in accounts if a.get("is_default")), accounts[0])

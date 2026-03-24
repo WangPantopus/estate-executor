@@ -59,7 +59,7 @@ async def exchange_code_for_tokens(code: str) -> dict[str, Any]:
                 },
             )
             resp.raise_for_status()
-            return resp.json()
+            return dict(resp.json())
         except httpx.HTTPStatusError as e:
             logger.error("clio_token_exchange_failed", extra={"status": e.response.status_code})
             raise ValidationError(detail="Failed to connect to Clio. Please try again.") from e
@@ -82,7 +82,7 @@ async def refresh_access_token(refresh_token: str) -> dict[str, Any]:
                 },
             )
             resp.raise_for_status()
-            return resp.json()
+            return dict(resp.json())
         except httpx.HTTPError as e:
             logger.error("clio_token_refresh_failed", exc_info=True)
             raise ValidationError(detail="Failed to refresh Clio connection.") from e
@@ -127,15 +127,15 @@ class ClioAPI:
             resp.raise_for_status()
             if resp.status_code == 204:
                 return {}
-            return resp.json()
+            return dict(resp.json())
 
-    async def _get(self, path: str, params: dict | None = None) -> dict[str, Any]:
+    async def _get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("GET", path, params=params)
 
-    async def _post(self, path: str, json: dict | None = None) -> dict[str, Any]:
+    async def _post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("POST", path, json=json)
 
-    async def _patch(self, path: str, json: dict | None = None) -> dict[str, Any]:
+    async def _patch(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("PATCH", path, json=json)
 
     # ── Account ───────────────────────────────────────────────────────────

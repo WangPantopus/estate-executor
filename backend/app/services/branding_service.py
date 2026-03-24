@@ -82,10 +82,8 @@ async def update_branding(
         raise NotFoundError(detail="Firm not found")
 
     # White-label requires growth or enterprise tier
-    tier = firm.subscription_tier
-    if hasattr(tier, "value"):
-        tier = tier.value
-    if tier not in (
+    tier_value = firm.subscription_tier.value if hasattr(firm.subscription_tier, "value") else firm.subscription_tier
+    if tier_value not in (
         SubscriptionTier.growth.value,
         SubscriptionTier.enterprise.value,
     ):
@@ -142,7 +140,7 @@ async def get_logo_upload_url(
     ext = "png" if "png" in content_type else "jpg"
     storage_key = f"branding/{firm_id}/{field}.{ext}"
 
-    upload_url = storage_service.generate_upload_url(storage_key, content_type=content_type)
+    upload_url = storage_service.generate_presigned_put_url(storage_key=storage_key, content_type=content_type)
 
     # The public URL for the logo after upload
     logo_url = f"{settings.backend_url}/api/v1/branding/{firm_id}/{field}.{ext}"
@@ -182,8 +180,8 @@ def get_pdf_branding(white_label: dict[str, Any] | None, firm_name: str) -> dict
     if white_label:
         branding.update({k: v for k, v in white_label.items() if v is not None})
 
-    primary = branding.get("primary_color", "#1a2332")
-    secondary = branding.get("secondary_color", "#c9a84c")
+    primary = str(branding.get("primary_color", "#1a2332"))
+    secondary = str(branding.get("secondary_color", "#c9a84c"))
 
     return {
         "firm_name": branding.get("firm_display_name") or firm_name,

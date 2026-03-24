@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -156,7 +157,7 @@ async def get_sso_login_url(
 async def check_sso_enforcement(
     email: str,
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     """Check if an email domain requires SSO login. No auth required.
 
     Called by the login page to redirect users to SSO if their domain

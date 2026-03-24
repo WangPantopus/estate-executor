@@ -368,8 +368,7 @@ async def send_for_signature(
     from app.core.security import require_stakeholder
 
     stakeholder = await require_stakeholder(
-        firm_id=firm_id,
-        matter_id=matter_id,
+        matter_id,
         current_user=current_user,
         db=db,
     )

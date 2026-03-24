@@ -138,7 +138,7 @@ async def complete_oauth(
 
     # Validate connection by fetching account info before marking connected
     try:
-        api = ClioAPI(conn.access_token)
+        api = ClioAPI(str(conn.access_token))
         account_info = await api.get_account()
         user_data = account_info.get("data", {})
         account = user_data.get("account", {})
@@ -255,7 +255,7 @@ async def sync_matters(
     conn.last_sync_status = SyncStatus.syncing
     await db.flush()
 
-    result = {
+    result: dict[str, Any] = {
         "resource": "matters",
         "direction": direction,
         "created": 0,
@@ -377,7 +377,7 @@ async def sync_time_entries(
     token = await _ensure_valid_token(db, conn)
     api = ClioAPI(token)
 
-    result = {
+    result: dict[str, Any] = {
         "resource": "time_entries",
         "direction": "push",
         "created": 0,
@@ -457,7 +457,7 @@ async def sync_contacts(
     token = await _ensure_valid_token(db, conn)
     api = ClioAPI(token)
 
-    result = {
+    result: dict[str, Any] = {
         "resource": "contacts",
         "direction": direction,
         "created": 0,

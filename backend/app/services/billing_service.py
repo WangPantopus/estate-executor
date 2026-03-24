@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -297,7 +298,7 @@ async def create_checkout_session(
             price = stripe.Price.create(
                 unit_amount=price_cents,
                 currency="usd",
-                recurring={"interval": billing_interval},
+                recurring={"interval": billing_interval},  # type: ignore[typeddict-item]
                 product_data={
                     "name": f"Estate Executor OS — {tier.title()}",
                 },
@@ -543,11 +544,11 @@ async def _handle_subscription_updated(db: AsyncSession, sub_obj: Any) -> None:
 
     await event_logger.log(
         db,
-        matter_id=sub.firm_id,
+        matter_id=uuid.UUID(sub.firm_id) if isinstance(sub.firm_id, str) else sub.firm_id,
         actor_id=None,
         actor_type=ActorType.system,
         entity_type="subscription",
-        entity_id=sub.firm_id,
+        entity_id=uuid.UUID(sub.firm_id) if isinstance(sub.firm_id, str) else sub.firm_id,
         action="subscription_updated",
         metadata={
             "status": sub.status.value,
@@ -579,11 +580,11 @@ async def _handle_subscription_deleted(db: AsyncSession, sub_obj: Any) -> None:
 
     await event_logger.log(
         db,
-        matter_id=sub.firm_id,
+        matter_id=uuid.UUID(sub.firm_id) if isinstance(sub.firm_id, str) else sub.firm_id,
         actor_id=None,
         actor_type=ActorType.system,
         entity_type="subscription",
-        entity_id=sub.firm_id,
+        entity_id=uuid.UUID(sub.firm_id) if isinstance(sub.firm_id, str) else sub.firm_id,
         action="subscription_canceled",
     )
 
