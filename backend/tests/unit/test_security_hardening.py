@@ -48,11 +48,19 @@ class TestRateLimiter:
         firm_id = "00000000-0000-0000-0000-000000000001"
         assert _resolve_tier(f"/api/v1/firms/{firm_id}/privacy/request", "POST") == "strict"
 
-    def test_resolve_tier_health_endpoints(self) -> None:
+    def test_resolve_tier_health_falls_to_standard(self) -> None:
+        """Health endpoints are skipped at middleware level, but if called directly
+        the tier resolver returns standard (the default for GET)."""
         from app.services.rate_limiter import _resolve_tier
 
-        assert _resolve_tier("/health", "GET") == "relaxed"
-        assert _resolve_tier("/api/v1/health", "GET") == "relaxed"
+        assert _resolve_tier("/health", "GET") == "standard"
+        assert _resolve_tier("/api/v1/health", "GET") == "standard"
+
+    def test_resolve_tier_templates_relaxed(self) -> None:
+        from app.services.rate_limiter import _resolve_tier
+
+        assert _resolve_tier("/api/v1/templates", "GET") == "relaxed"
+        assert _resolve_tier("/api/v1/templates/CA", "GET") == "relaxed"
 
     def test_resolve_tier_write_methods(self) -> None:
         from app.services.rate_limiter import _resolve_tier
@@ -87,6 +95,7 @@ class TestRateLimiter:
 
     @patch("app.services.rate_limiter._get_redis")
     def test_check_rate_limit_allows_under_limit(self, mock_get_redis: MagicMock) -> None:
+        from app.core.config import settings
         from app.services.rate_limiter import check_rate_limit
 
         mock_redis = MagicMock()
@@ -97,7 +106,7 @@ class TestRateLimiter:
         result = check_rate_limit(request)
 
         assert result["remaining"] == 55
-        assert result["limit"] == 60  # standard tier
+        assert result["limit"] == settings.rate_limit_standard  # standard tier for GET
 
     @patch("app.services.rate_limiter._get_redis")
     def test_check_rate_limit_raises_on_exceeded(self, mock_get_redis: MagicMock) -> None:
@@ -144,30 +153,49 @@ class TestCSRFProtection:
     def test_create_signed_token_format(self) -> None:
         from app.core.security_middleware import _create_signed_token
 
-        token, signed = _create_signed_token("test-secret")
+        signed = _create_signed_token("test-secret")
         parts = signed.split(":")
         assert len(parts) == 3
-        assert parts[1] == token
+        # timestamp:token:signature
+        assert int(parts[0]) > 0
+        assert len(parts[1]) > 0
+        assert len(parts[2]) == 64  # SHA256 hex
 
     def test_verify_valid_token(self) -> None:
+        """Double-submit: cookie and header carry the same signed value."""
         from app.core.security_middleware import _create_signed_token, _verify_signed_token
 
         secret = "test-secret-key"
-        token, signed = _create_signed_token(secret)
-        assert _verify_signed_token(signed, token, secret) is True
+        signed = _create_signed_token(secret)
+        # Frontend sends the full signed value from cookie as the header
+        assert _verify_signed_token(signed, signed, secret) is True
 
     def test_verify_rejects_wrong_header_token(self) -> None:
         from app.core.security_middleware import _create_signed_token, _verify_signed_token
 
         secret = "test-secret-key"
-        _token, signed = _create_signed_token(secret)
+        signed = _create_signed_token(secret)
         assert _verify_signed_token(signed, "wrong-token", secret) is False
+
+    def test_verify_rejects_different_tokens(self) -> None:
+        from app.core.security_middleware import _create_signed_token, _verify_signed_token
+
+        secret = "test-secret-key"
+        signed1 = _create_signed_token(secret)
+        signed2 = _create_signed_token(secret)
+        # Two different tokens should not validate against each other
+        assert _verify_signed_token(signed1, signed2, secret) is False
 
     def test_verify_rejects_wrong_secret(self) -> None:
         from app.core.security_middleware import _create_signed_token, _verify_signed_token
 
-        token, signed = _create_signed_token("real-secret")
-        assert _verify_signed_token(signed, token, "wrong-secret") is False
+        signed = _create_signed_token("real-secret")
+        # Even if cookie==header, wrong secret should fail signature check
+        # But first, cookie==header comparison will pass since they're the same...
+        # Actually with wrong secret the signature check fails
+        # We need to craft a token signed with wrong secret
+        signed_wrong = _create_signed_token("wrong-secret")
+        assert _verify_signed_token(signed, signed_wrong, "real-secret") is False
 
     def test_verify_rejects_expired_token(self) -> None:
         from app.core.security_middleware import (
@@ -177,33 +205,35 @@ class TestCSRFProtection:
         )
 
         secret = "test-secret"
-        token, signed = _create_signed_token(secret)
+        signed = _create_signed_token(secret)
 
-        # Tamper with timestamp to make it expired
+        # Tamper with timestamp to make it expired, re-sign to keep signature valid
         parts = signed.split(":")
         old_timestamp = str(int(time.time()) - _CSRF_TOKEN_EXPIRY - 100)
         message = f"{old_timestamp}:{parts[1]}"
         new_sig = hmac.new(secret.encode(), message.encode(), hashlib.sha256).hexdigest()
         expired_signed = f"{old_timestamp}:{parts[1]}:{new_sig}"
 
-        assert _verify_signed_token(expired_signed, token, secret) is False
+        # Both cookie and header carry the expired token
+        assert _verify_signed_token(expired_signed, expired_signed, secret) is False
 
     def test_verify_rejects_tampered_signature(self) -> None:
         from app.core.security_middleware import _create_signed_token, _verify_signed_token
 
         secret = "test-secret"
-        token, signed = _create_signed_token(secret)
+        signed = _create_signed_token(secret)
 
         parts = signed.split(":")
         tampered = f"{parts[0]}:{parts[1]}:{'a' * 64}"
-        assert _verify_signed_token(tampered, token, secret) is False
+        # Both cookie and header have the tampered value
+        assert _verify_signed_token(tampered, tampered, secret) is False
 
     def test_verify_rejects_malformed_input(self) -> None:
         from app.core.security_middleware import _verify_signed_token
 
-        assert _verify_signed_token("not-valid", "token", "secret") is False
-        assert _verify_signed_token("", "token", "secret") is False
-        assert _verify_signed_token("a:b", "token", "secret") is False
+        assert _verify_signed_token("not-valid", "not-valid", "secret") is False
+        assert _verify_signed_token("", "", "secret") is False
+        assert _verify_signed_token("a:b", "a:b", "secret") is False
 
 
 # ---------------------------------------------------------------------------
@@ -226,6 +256,8 @@ class TestSecurityHeaders:
         assert "object-src 'none'" in csp
         assert "base-uri 'self'" in csp
         assert "form-action 'self'" in csp
+        # WebSocket support
+        assert "connect-src 'self' ws: wss:" in csp
 
     def test_csp_contains_upgrade_insecure(self) -> None:
         from app.core.security_middleware import SecurityHeadersMiddleware

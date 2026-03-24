@@ -41,31 +41,30 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path in self._SKIP_PATHS:
             return await call_next(request)
 
+        if not settings.rate_limit_enabled:
+            return await call_next(request)
+
+        from app.core.exceptions import RateLimitError
         from app.services.rate_limiter import check_rate_limit
 
         try:
             info = check_rate_limit(request)
-        except Exception as exc:
-            # RateLimitError
-            from app.core.exceptions import RateLimitError
-
-            if isinstance(exc, RateLimitError):
-                return JSONResponse(
-                    status_code=429,
-                    content={
-                        "type": "about:blank",
-                        "title": "Too Many Requests",
-                        "status": 429,
-                        "detail": exc.detail,
-                        "instance": request.url.path,
-                    },
-                    headers={
-                        "Retry-After": "60",
-                        "X-RateLimit-Limit": str(info["limit"]) if "info" in dir() else "0",
-                        "X-RateLimit-Remaining": "0",
-                    },
-                )
-            raise
+        except RateLimitError as exc:
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "type": "about:blank",
+                    "title": "Too Many Requests",
+                    "status": 429,
+                    "detail": exc.detail,
+                    "instance": request.url.path,
+                },
+                headers={
+                    "Retry-After": "60",
+                    "X-RateLimit-Limit": "0",
+                    "X-RateLimit-Remaining": "0",
+                },
+            )
 
         response: Response = await call_next(request)
         response.headers["X-RateLimit-Limit"] = str(info["limit"])
@@ -92,7 +91,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         "style-src": "'self' 'unsafe-inline'",  # Many UI frameworks need inline styles
         "img-src": "'self' data: https:",
         "font-src": "'self' data:",
-        "connect-src": "'self'",
+        "connect-src": "'self' ws: wss:",
         "frame-ancestors": "'none'",
         "base-uri": "'self'",
         "form-action": "'self'",
@@ -173,10 +172,12 @@ def _generate_csrf_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def _create_signed_token(secret_key: str) -> tuple[str, str]:
-    """Create a CSRF token and its HMAC signature.
+def _create_signed_token(secret_key: str) -> str:
+    """Create a CSRF token with HMAC signature.
 
-    Returns (token, signed_value) where signed_value = timestamp:token:signature
+    Returns signed_value = timestamp:token:signature.
+    The full signed value is stored in the cookie AND sent by the frontend
+    as the X-CSRF-Token header (standard double-submit cookie pattern).
     """
     token = _generate_csrf_token()
     timestamp = str(int(time.time()))
@@ -184,13 +185,16 @@ def _create_signed_token(secret_key: str) -> tuple[str, str]:
     signature = hmac.new(
         secret_key.encode(), message.encode(), hashlib.sha256
     ).hexdigest()
-    signed_value = f"{timestamp}:{token}:{signature}"
-    return token, signed_value
+    return f"{timestamp}:{token}:{signature}"
 
 
 def _verify_signed_token(signed_value: str, header_token: str, secret_key: str) -> bool:
-    """Verify the CSRF token from cookie against the header token."""
+    """Verify the CSRF token: cookie and header must match, signature must be valid."""
     try:
+        # Cookie and header must be identical (double-submit)
+        if not hmac.compare_digest(signed_value, header_token):
+            return False
+
         parts = signed_value.split(":")
         if len(parts) != 3:
             return False
@@ -201,16 +205,12 @@ def _verify_signed_token(signed_value: str, header_token: str, secret_key: str) 
         if time.time() - timestamp > _CSRF_TOKEN_EXPIRY:
             return False
 
-        # Verify signature
+        # Verify HMAC signature to ensure token was issued by this server
         message = f"{timestamp_str}:{cookie_token}"
         expected_sig = hmac.new(
             secret_key.encode(), message.encode(), hashlib.sha256
         ).hexdigest()
-        if not hmac.compare_digest(signature, expected_sig):
-            return False
-
-        # Compare cookie token to header token
-        return hmac.compare_digest(cookie_token, header_token)
+        return hmac.compare_digest(signature, expected_sig)
     except (ValueError, TypeError):
         return False
 
@@ -228,6 +228,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
+        if not settings.csrf_enabled:
+            return await call_next(request)
+
         # Skip for exempt paths
         for prefix in _CSRF_EXEMPT_PREFIXES:
             if request.url.path.startswith(prefix):
@@ -245,11 +248,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
             # Set CSRF cookie if not present
             if _CSRF_COOKIE_NAME not in request.cookies:
-                token, signed_value = _create_signed_token(secret_key)
+                signed_value = _create_signed_token(secret_key)
                 response.set_cookie(
                     key=_CSRF_COOKIE_NAME,
                     value=signed_value,
-                    httponly=False,  # JS must read this cookie
+                    httponly=False,  # JS must read this to send as X-CSRF-Token header
                     samesite="strict",
                     secure=settings.is_production,
                     max_age=_CSRF_TOKEN_EXPIRY,

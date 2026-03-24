@@ -59,13 +59,14 @@ return limit - count - 1
 # Tier definitions: (requests_per_minute)
 # ---------------------------------------------------------------------------
 
-# Default tier limits per minute
-TIER_LIMITS: dict[str, int] = {
-    "strict": 10,       # Auth, password reset, privacy deletion
-    "write": 30,        # POST/PUT/PATCH/DELETE on most resources
-    "standard": 60,     # General authenticated reads
-    "relaxed": 120,     # Health checks, static, high-frequency reads
-}
+def _get_tier_limits() -> dict[str, int]:
+    """Return tier limits from settings, allowing runtime override via env vars."""
+    return {
+        "strict": settings.rate_limit_strict,
+        "write": settings.rate_limit_write,
+        "standard": settings.rate_limit_standard,
+        "relaxed": settings.rate_limit_relaxed,
+    }
 
 # Route-suffix → tier mapping. We match on the *suffix* after the firm/matter
 # prefix to avoid false-positive matches on "/api/v1/firms/".
@@ -76,9 +77,7 @@ _ROUTE_TIER_PATTERNS: list[tuple[_re.Pattern[str], str]] = [
     (_re.compile(r"^/api/v1/auth(/|$)"), "strict"),
     (_re.compile(rf"^/api/v1/firms/{_UUID}/privacy(/|$)"), "strict"),
     (_re.compile(rf"^/api/v1/firms/{_UUID}/sso(/|$)"), "strict"),
-    # Relaxed tier — health, templates
-    (_re.compile(r"^/health$"), "relaxed"),
-    (_re.compile(r"^/api/v1/health$"), "relaxed"),
+    # Relaxed tier — templates (health is skipped entirely in middleware)
     (_re.compile(r"^/api/v1/templates(/|$)"), "relaxed"),
 ]
 
@@ -117,7 +116,8 @@ def check_rate_limit(request: Request) -> dict[str, int]:
     """
     identifier = _get_identifier(request)
     tier = _resolve_tier(request.url.path, request.method)
-    limit = TIER_LIMITS[tier]
+    tier_limits = _get_tier_limits()
+    limit = tier_limits[tier]
 
     redis_key = f"{_KEY_PREFIX}{tier}:{identifier}"
 
