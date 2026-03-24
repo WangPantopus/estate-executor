@@ -27,8 +27,6 @@ from app.models.subscriptions import Subscription
 from app.schemas.billing import TierLimits
 
 if TYPE_CHECKING:
-    import uuid
-
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.schemas.auth import CurrentUser

@@ -82,7 +82,8 @@ async def update_branding(
         raise NotFoundError(detail="Firm not found")
 
     # White-label requires growth or enterprise tier
-    tier_value = firm.subscription_tier.value if hasattr(firm.subscription_tier, "value") else firm.subscription_tier
+    tier = firm.subscription_tier
+    tier_value = tier.value if hasattr(tier, "value") else tier
     if tier_value not in (
         SubscriptionTier.growth.value,
         SubscriptionTier.enterprise.value,
@@ -140,7 +141,9 @@ async def get_logo_upload_url(
     ext = "png" if "png" in content_type else "jpg"
     storage_key = f"branding/{firm_id}/{field}.{ext}"
 
-    upload_url = storage_service.generate_presigned_put_url(storage_key=storage_key, content_type=content_type)
+    upload_url = storage_service.generate_presigned_put_url(
+        storage_key=storage_key, content_type=content_type,
+    )
 
     # The public URL for the logo after upload
     logo_url = f"{settings.backend_url}/api/v1/branding/{firm_id}/{field}.{ext}"
