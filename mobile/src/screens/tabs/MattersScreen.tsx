@@ -12,8 +12,9 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useOfflineQuery } from "@/hooks/useOfflineQuery";
+import { mattersCacheKey } from "@/lib/offline-cache";
 import { Card, Badge, LoadingScreen, EmptyState } from "@/components/ui";
 import { PHASE_LABELS } from "@/lib/constants";
 import { colors, spacing, fontSize, fontWeight, borderRadius } from "@/lib/theme";
@@ -138,9 +139,10 @@ export function MattersScreen({ onSelectMatter }: MattersScreenProps) {
     isLoading,
     refetch,
     isRefetching,
-  } = useQuery({
+  } = useOfflineQuery({
     queryKey: ["matters", FIRM_ID],
     queryFn: () => api.getMatters(FIRM_ID),
+    cacheKey: mattersCacheKey(FIRM_ID),
   });
 
   if (isLoading) return <LoadingScreen />;

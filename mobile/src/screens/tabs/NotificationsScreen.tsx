@@ -1,55 +1,20 @@
 /**
- * Notifications screen — deadline alerts, task updates, communications.
+ * Notifications screen — shows push notification history with deep link support.
  */
 
-import React, { useMemo } from "react";
+import React from "react";
 import {
   FlatList,
   Pressable,
-  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Card, EmptyState, LoadingScreen, Badge } from "@/components/ui";
+import { EmptyState, Badge, Button } from "@/components/ui";
+import { useNotifications } from "@/hooks/useNotifications";
 import { colors, spacing, fontSize, fontWeight, borderRadius } from "@/lib/theme";
 import type { AppNotification } from "@/lib/types";
-
-// Placeholder notifications — in production these come from a backend endpoint
-// or push notification history.
-const MOCK_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: "1",
-    title: "Deadline approaching",
-    body: "IRS Form 706 due in 5 days",
-    type: "deadline",
-    matter_id: "matter-1",
-    matter_title: "Estate of John Doe",
-    created_at: new Date().toISOString(),
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Task completed",
-    body: "Inventory of personal property marked complete",
-    type: "task",
-    matter_id: "matter-1",
-    matter_title: "Estate of John Doe",
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    read: false,
-  },
-  {
-    id: "3",
-    title: "New message",
-    body: "Beneficiary Jane Doe sent a question about distribution timeline",
-    type: "communication",
-    matter_id: "matter-1",
-    matter_title: "Estate of John Doe",
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    read: true,
-  },
-];
 
 const TYPE_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
   deadline: { icon: "calendar-outline", color: colors.warning },
@@ -61,18 +26,29 @@ const TYPE_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; color:
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function NotificationItem({ notification }: { notification: AppNotification }) {
-  const config = TYPE_CONFIG[notification.type] ?? TYPE_CONFIG["task"];
+function NotificationItem({
+  notification,
+  onPress,
+}: {
+  notification: AppNotification;
+  onPress: () => void;
+}) {
+  const config = TYPE_CONFIG[notification.type] ?? TYPE_CONFIG["task"]!;
 
   return (
-    <Pressable style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+    >
       <View
         style={[
           styles.notifItem,
@@ -94,7 +70,9 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
           <Text style={styles.notifBody} numberOfLines={2}>
             {notification.body}
           </Text>
-          <Text style={styles.notifMatter}>{notification.matter_title}</Text>
+          {notification.matter_title ? (
+            <Text style={styles.notifMatter}>{notification.matter_title}</Text>
+          ) : null}
         </View>
         {!notification.read && <View style={styles.unreadDot} />}
       </View>
@@ -102,19 +80,37 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
   );
 }
 
-export function NotificationsScreen() {
-  const notifications = MOCK_NOTIFICATIONS;
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications],
-  );
+interface NotificationsScreenProps {
+  onNavigateToMatter?: (matterId: string) => void;
+}
+
+export function NotificationsScreen({ onNavigateToMatter }: NotificationsScreenProps) {
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+  } = useNotifications();
+
+  const handlePress = (notification: AppNotification) => {
+    markAsRead(notification.id);
+    if (notification.matter_id && onNavigateToMatter) {
+      onNavigateToMatter(notification.matter_id);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <NotificationItem notification={item} />}
+        renderItem={({ item }) => (
+          <NotificationItem
+            notification={item}
+            onPress={() => handlePress(item)}
+          />
+        )}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <EmptyState
@@ -124,9 +120,31 @@ export function NotificationsScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Notifications</Text>
-            {unreadCount > 0 && (
-              <Badge label={`${unreadCount} new`} color="blue" />
+            <View>
+              <Text style={styles.headerTitle}>Notifications</Text>
+              {unreadCount > 0 && (
+                <View style={styles.headerActions}>
+                  <Badge label={`${unreadCount} new`} color="blue" />
+                </View>
+              )}
+            </View>
+            {notifications.length > 0 && (
+              <View style={styles.headerButtons}>
+                {unreadCount > 0 && (
+                  <Button
+                    title="Mark all read"
+                    variant="ghost"
+                    size="sm"
+                    onPress={markAllAsRead}
+                  />
+                )}
+                <Button
+                  title="Clear"
+                  variant="ghost"
+                  size="sm"
+                  onPress={clearAll}
+                />
+              </View>
             )}
           </View>
         }
@@ -147,7 +165,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: spacing.lg,
   },
   headerTitle: {
@@ -155,6 +173,15 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.semibold,
     color: colors.foreground,
     letterSpacing: -0.5,
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  headerButtons: {
+    flexDirection: "row",
+    gap: spacing.xs,
   },
 
   // Notification item

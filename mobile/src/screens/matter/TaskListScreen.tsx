@@ -13,8 +13,9 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useOfflineQuery } from "@/hooks/useOfflineQuery";
+import { tasksCacheKey } from "@/lib/offline-cache";
 import { Badge, EmptyState, LoadingScreen } from "@/components/ui";
 import { TASK_PHASE_LABELS, TASK_PHASE_ORDER, TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from "@/lib/constants";
 import { colors, spacing, fontSize, fontWeight, borderRadius } from "@/lib/theme";
@@ -115,9 +116,10 @@ export function TaskListScreen({ matterId, onSelectTask }: TaskListScreenProps) 
   const { api } = useAuth();
   const [filter, setFilter] = useState<TaskStatus | "all">("all");
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, refetch, isRefetching } = useOfflineQuery({
     queryKey: ["tasks", FIRM_ID, matterId],
     queryFn: () => api.getTasks(FIRM_ID, matterId, { per_page: 200 }),
+    cacheKey: tasksCacheKey(FIRM_ID, matterId),
   });
 
   const tasks = data?.data ?? [];

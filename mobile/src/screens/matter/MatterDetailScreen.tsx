@@ -13,8 +13,9 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useOfflineQuery } from "@/hooks/useOfflineQuery";
+import { matterDetailCacheKey } from "@/lib/offline-cache";
 import { Card, Badge, LoadingScreen } from "@/components/ui";
 import { PHASE_LABELS } from "@/lib/constants";
 import { colors, spacing, fontSize, fontWeight, borderRadius } from "@/lib/theme";
@@ -115,9 +116,10 @@ interface MatterDetailScreenProps {
 export function MatterDetailScreen({ matterId, onNavigateToTasks }: MatterDetailScreenProps) {
   const { api } = useAuth();
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, refetch, isRefetching } = useOfflineQuery({
     queryKey: ["matterDashboard", FIRM_ID, matterId],
     queryFn: () => api.getMatterDashboard(FIRM_ID, matterId),
+    cacheKey: matterDetailCacheKey(FIRM_ID, matterId),
   });
 
   if (isLoading) return <LoadingScreen />;

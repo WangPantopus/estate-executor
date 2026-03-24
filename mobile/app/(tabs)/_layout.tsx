@@ -1,14 +1,17 @@
 /**
  * Tab navigator — Matters, Notifications, Profile.
- * Luxury palette: dark nav bar, gold active indicators.
+ * Shows unread badge count on notifications tab.
  */
 
 import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useNotifications } from "@/hooks/useNotifications";
 import { colors } from "@/lib/theme";
 
 export default function TabLayout() {
+  const { unreadCount } = useNotifications();
+
   return (
     <Tabs
       screenOptions={{
@@ -57,6 +60,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications-outline" size={size} color={color} />
           ),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.danger,
+            fontSize: 10,
+            minWidth: 18,
+            height: 18,
+            lineHeight: 18,
+          },
         }}
       />
       <Tabs.Screen
