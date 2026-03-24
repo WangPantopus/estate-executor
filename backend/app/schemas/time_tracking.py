@@ -49,6 +49,20 @@ class TimeEntryUpdate(BaseModel):
     entry_date: date | None = None
     billable: bool | None = None
 
+    @field_validator("hours")
+    @classmethod
+    def hours_non_negative(cls, v: int | None) -> int | None:
+        if v is not None and v < 0:
+            raise ValueError("Hours must be non-negative")
+        return v
+
+    @field_validator("minutes")
+    @classmethod
+    def minutes_valid(cls, v: int | None) -> int | None:
+        if v is not None and (v < 0 or v > 59):
+            raise ValueError("Minutes must be 0–59")
+        return v
+
 
 class TimeEntryResponse(BaseModel):
     """Time entry response."""

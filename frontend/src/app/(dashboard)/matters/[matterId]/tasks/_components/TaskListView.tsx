@@ -335,7 +335,7 @@ function GroupSection({
   onTaskClick,
   onComplete,
   onWaive,
-  onAssign,
+  onAssign: _onAssign,
   onEdit,
   onDelete,
 }: {

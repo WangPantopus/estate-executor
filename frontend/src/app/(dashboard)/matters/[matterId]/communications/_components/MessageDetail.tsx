@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { STAKEHOLDER_ROLE_LABELS } from "@/lib/constants";
 import { useAcknowledgeCommunication, useUpdateDisputeStatus } from "@/hooks";
-import type { CommunicationResponse, CommunicationType, DisputeStatus, Stakeholder } from "@/lib/types";
+import type { CommunicationResponse, CommunicationType, Stakeholder } from "@/lib/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

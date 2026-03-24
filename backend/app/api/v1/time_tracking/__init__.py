@@ -262,18 +262,15 @@ async def update_time_entry(
 ) -> TimeEntryResponse:
     """Update a time entry. Only the author can edit their own entries."""
     _require_time_entry(stakeholder)
+    # Only pass fields the client actually sent (exclude_unset)
+    update_fields = body.model_dump(exclude_unset=True)
     entry = await time_tracking_service.update_time_entry(
         db,
         entry_id=entry_id,
         matter_id=matter_id,
         stakeholder=stakeholder,
         current_user=current_user,
-        task_id=body.task_id,
-        hours=body.hours,
-        minutes=body.minutes,
-        description=body.description,
-        entry_date=body.entry_date,
-        billable=body.billable,
+        **update_fields,
     )
     return _entry_to_response(entry)
 

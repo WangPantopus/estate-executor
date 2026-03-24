@@ -784,7 +784,8 @@ async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID)
     # Summary by professional
     ws2.append(["Matter:", matter.title])
     ws2.append(["Decedent:", matter.decedent_name])
-    ws2.append(["Generated:", datetime.now().strftime("%Y-%m-%d %H:%M")])
+    from datetime import UTC as _UTC
+    ws2.append(["Generated:", datetime.now(_UTC).strftime("%Y-%m-%d %H:%M UTC")])
     ws2.append([])
     ws2.append(["Summary by Professional"])
     ws2.append(["Professional", "Total Hours", "Billable Hours", "Non-Billable Hours"])

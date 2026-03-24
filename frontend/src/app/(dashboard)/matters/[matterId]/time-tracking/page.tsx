@@ -19,9 +19,9 @@ import {
   useTasks,
 } from "@/hooks";
 import type { TimeEntry } from "@/lib/types";
+import { LogTimeDialog } from "./_components/LogTimeDialog";
 
 const FIRM_ID = "current";
-import { LogTimeDialog } from "./_components/LogTimeDialog";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -62,12 +62,6 @@ export default function TimeTrackingPage() {
 
   const handleExportCsv = async () => {
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((c) => c.startsWith("appSession"))
-        ? undefined
-        : undefined;
-
       const res = await fetch(
         `${API_BASE_URL}/firms/${firmId}/matters/${matterId}/time/export?format=csv`,
         { credentials: "include" }
@@ -295,6 +289,7 @@ export default function TimeTrackingPage() {
 
       {/* Log Time Dialog */}
       <LogTimeDialog
+        key={preselectedTaskId ?? "none"}
         open={showLogDialog}
         onOpenChange={setShowLogDialog}
         firmId={firmId}
