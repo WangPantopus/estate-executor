@@ -60,7 +60,7 @@ def cache_get(namespace: str, *parts: str) -> Any | None:
     """Fetch a cached JSON value. Returns None on miss or Redis failure."""
     try:
         r = _get_redis()
-        raw = r.get(_key(namespace, *parts))  # type: ignore[union-attr]
+        raw = r.get(_key(namespace, *parts))
         if raw is None:
             return None
         return json.loads(raw)  # type: ignore[arg-type]

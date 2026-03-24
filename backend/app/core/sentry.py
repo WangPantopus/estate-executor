@@ -95,8 +95,8 @@ def _before_send(
         event.setdefault("tags", {})["request_id"] = rid
 
     # Remove sensitive headers
-    request_data = event.get("request", {})
-    headers = request_data.get("headers", {})
+    request_data: dict[str, Any] = event.get("request", {})  # type: ignore[assignment]
+    headers: dict[str, Any] = request_data.get("headers", {})
     for sensitive in ("authorization", "cookie", "x-api-key"):
         headers.pop(sensitive, None)
 
