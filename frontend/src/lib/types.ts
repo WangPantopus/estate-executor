@@ -1363,3 +1363,40 @@ export interface SignatureRequestListResponse {
 export interface VoidEnvelopeRequest {
   reason?: string;
 }
+
+// ─── White-Label / Branding ─────────────────────────────────────────────────
+
+export interface WhiteLabelConfig {
+  logo_url?: string | null;
+  logo_dark_url?: string | null;
+  favicon_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
+  firm_display_name?: string | null;
+  portal_welcome_text?: string | null;
+  email_footer_text?: string | null;
+  custom_domain?: string | null;
+  custom_domain_verified?: boolean;
+  powered_by_visible?: boolean;
+}
+
+export interface WhiteLabelUpdate {
+  logo_url?: string | null;
+  logo_dark_url?: string | null;
+  favicon_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
+  firm_display_name?: string | null;
+  portal_welcome_text?: string | null;
+  email_footer_text?: string | null;
+  custom_domain?: string | null;
+  powered_by_visible?: boolean;
+}
+
+export interface LogoUploadResponse {
+  upload_url: string;
+  logo_url: string;
+  field: string;
+}

@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { useApi } from "./use-api";
 import type {
+  WhiteLabelUpdate,
   AssetCreate,
   AssetFilters,
   AssetUpdate,
@@ -56,6 +57,7 @@ export const queryKeys = {
   firms: ["firms"] as const,
   firm: (firmId: string) => ["firms", firmId] as const,
   firmMembers: (firmId: string) => ["firms", firmId, "members"] as const,
+  firmBranding: (firmId: string) => ["firms", firmId, "branding"] as const,
   matters: (firmId: string, filters?: MatterFilters) =>
     ["firms", firmId, "matters", filters] as const,
   matterDashboard: (firmId: string, matterId: string) =>
@@ -193,6 +195,29 @@ export function useRemoveFirmMember(firmId: string) {
     mutationFn: (membershipId: string) => api.removeFirmMember(firmId, membershipId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.firmMembers(firmId) });
+    },
+  });
+}
+
+// ─── Branding ───────────────────────────────────────────────────────────────
+
+export function useFirmBranding(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.firmBranding(firmId),
+    queryFn: () => api.getBranding(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useUpdateBranding(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WhiteLabelUpdate) => api.updateBranding(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.firmBranding(firmId) });
+      qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
     },
   });
 }

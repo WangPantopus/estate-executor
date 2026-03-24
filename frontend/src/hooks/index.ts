@@ -10,6 +10,9 @@ export {
   useInviteFirmMember,
   useUpdateFirmMember,
   useRemoveFirmMember,
+  // Branding
+  useFirmBranding,
+  useUpdateBranding,
   // Matters
   useMatters,
   usePortfolio,

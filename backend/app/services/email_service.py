@@ -35,13 +35,30 @@ _jinja_env = Environment(
 
 
 def render_template(template_name: str, **context: Any) -> str:
-    """Render an HTML email template with the given context."""
+    """Render an HTML email template with the given context.
+
+    If 'firm_branding' is in context, injects logo, colors, and
+    footer text for white-label customization.
+    """
     template = _jinja_env.get_template(template_name)
     # Inject defaults that templates can use, but allow caller overrides
-    defaults = {
+    defaults: dict[str, Any] = {
         "frontend_url": settings.frontend_url,
         "current_year": datetime.now(UTC).year,
+        # Branding defaults (overridden by firm_branding if present)
+        "firm_name": "Estate Executor",
+        "logo_url": None,
+        "primary_color": "#1a2332",
+        "accent_color": "#3b82f6",
+        "footer_text": None,
+        "powered_by_visible": True,
     }
+
+    # Merge firm branding if provided
+    firm_branding = context.pop("firm_branding", None)
+    if firm_branding and isinstance(firm_branding, dict):
+        defaults.update(firm_branding)
+
     defaults.update(context)
     return template.render(**defaults)
 

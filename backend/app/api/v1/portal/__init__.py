@@ -146,3 +146,46 @@ async def acknowledge_notice(
         current_user=current_user,
     )
     return PortalMessageItem(**data)
+
+
+# ---------------------------------------------------------------------------
+# GET /portal/branding/{firm_slug} — Public branding for portal rendering
+# ---------------------------------------------------------------------------
+
+
+@router.get("/branding/{firm_slug}")
+async def get_portal_branding(
+    firm_slug: str,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get branding config for portal display. No auth required.
+
+    Only exposes visual branding fields, not internal settings.
+    """
+    from sqlalchemy import select
+
+    from app.models.firms import Firm
+    from app.services.branding_service import get_branding
+
+    result = await db.execute(select(Firm).where(Firm.slug == firm_slug))
+    firm = result.scalar_one_or_none()
+    if firm is None:
+        return {
+            "firm_name": "Estate Executor",
+            "logo_url": None,
+            "primary_color": "#1a2332",
+            "accent_color": "#3b82f6",
+            "powered_by_visible": True,
+        }
+
+    branding = await get_branding(db, firm_id=firm.id)
+    return {
+        "firm_name": branding.get("firm_display_name") or firm.name,
+        "logo_url": branding.get("logo_url"),
+        "logo_dark_url": branding.get("logo_dark_url"),
+        "favicon_url": branding.get("favicon_url"),
+        "primary_color": branding.get("primary_color"),
+        "accent_color": branding.get("accent_color"),
+        "portal_welcome_text": branding.get("portal_welcome_text"),
+        "powered_by_visible": branding.get("powered_by_visible", True),
+    }

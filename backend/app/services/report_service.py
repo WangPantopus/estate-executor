@@ -79,18 +79,33 @@ def _create_pdf_doc(title: str, buffer: io.BytesIO) -> Any:
     )
 
 
-def _header_footer(canvas: Any, doc: Any, *, firm_name: str, report_title: str) -> None:
-    """Draw header and footer on each page."""
+def _header_footer(
+    canvas: Any,
+    doc: Any,
+    *,
+    firm_name: str,
+    report_title: str,
+    brand_primary: tuple[int, int, int] | None = None,
+    brand_secondary: tuple[int, int, int] | None = None,
+) -> None:
+    """Draw header and footer on each page.
+
+    Accepts optional brand_primary and brand_secondary color overrides
+    for white-label firms. Falls back to NAVY/GOLD defaults.
+    """
     from reportlab.lib.pagesizes import letter
+
+    primary = brand_primary or NAVY
+    secondary = brand_secondary or GOLD
 
     width, height = letter
 
-    # Header background
-    canvas.setFillColorRGB(*[c / 255 for c in NAVY])
+    # Header background — uses firm primary color
+    canvas.setFillColorRGB(*[c / 255 for c in primary])
     canvas.rect(0, height - 70, width, 70, fill=1, stroke=0)
 
-    # Gold accent line
-    canvas.setFillColorRGB(*[c / 255 for c in GOLD])
+    # Accent line — uses firm secondary/gold color
+    canvas.setFillColorRGB(*[c / 255 for c in secondary])
     canvas.rect(0, height - 73, width, 3, fill=1, stroke=0)
 
     # Header text

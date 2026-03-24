@@ -15,8 +15,16 @@ from app.models.enums import FirmRole
 from app.models.firm_memberships import FirmMembership
 from app.schemas.auth import CurrentUser
 from app.schemas.common import PaginationMeta, PaginationParams
-from app.schemas.firms import FirmCreate, FirmListResponse, FirmResponse, FirmUpdate
-from app.services import firm_service
+from app.schemas.firms import (
+    FirmCreate,
+    FirmListResponse,
+    FirmResponse,
+    FirmUpdate,
+    LogoUploadResponse,
+    WhiteLabelConfig,
+    WhiteLabelUpdate,
+)
+from app.services import branding_service, firm_service
 
 router = APIRouter()
 
@@ -272,3 +280,70 @@ async def remove_member(
         current_user=current_user,
         current_membership=membership,
     )
+
+
+# ---------------------------------------------------------------------------
+# GET /firms/{firm_id}/branding — Get resolved branding config
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{firm_id}/branding", response_model=WhiteLabelConfig)
+async def get_branding(
+    firm_id: UUID,
+    _membership: FirmMembership = Depends(require_firm_member),
+    db: AsyncSession = Depends(get_db),
+) -> WhiteLabelConfig:
+    """Get resolved white-label branding for a firm."""
+    result = await branding_service.get_branding(db, firm_id=firm_id)
+    return WhiteLabelConfig(**result)
+
+
+# ---------------------------------------------------------------------------
+# PATCH /firms/{firm_id}/branding — Update branding config
+# ---------------------------------------------------------------------------
+
+
+@router.patch("/{firm_id}/branding", response_model=WhiteLabelConfig)
+async def update_branding(
+    firm_id: UUID,
+    body: WhiteLabelUpdate,
+    membership: FirmMembership = Depends(require_firm_member),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> WhiteLabelConfig:
+    """Update white-label branding. Requires Growth or Enterprise plan."""
+    if membership.firm_role not in (FirmRole.owner, FirmRole.admin):
+        from app.core.exceptions import PermissionDeniedError
+
+        raise PermissionDeniedError(detail="Only owners and admins can update branding")
+    result = await branding_service.update_branding(
+        db,
+        firm_id=firm_id,
+        updates=body.model_dump(exclude_unset=True),
+        current_user=current_user,
+    )
+    return WhiteLabelConfig(**result)
+
+
+# ---------------------------------------------------------------------------
+# POST /firms/{firm_id}/branding/logo-upload — Get presigned URL for logo
+# ---------------------------------------------------------------------------
+
+
+@router.post("/{firm_id}/branding/logo-upload", response_model=LogoUploadResponse)
+async def get_logo_upload_url(
+    firm_id: UUID,
+    field: str = "logo_url",
+    content_type: str = "image/png",
+    membership: FirmMembership = Depends(require_firm_member),
+    db: AsyncSession = Depends(get_db),
+) -> LogoUploadResponse:
+    """Get a presigned upload URL for a logo or favicon."""
+    if membership.firm_role not in (FirmRole.owner, FirmRole.admin):
+        from app.core.exceptions import PermissionDeniedError
+
+        raise PermissionDeniedError(detail="Only owners and admins can upload logos")
+    result = await branding_service.get_logo_upload_url(
+        db, firm_id=firm_id, field=field, content_type=content_type
+    )
+    return LogoUploadResponse(**result)

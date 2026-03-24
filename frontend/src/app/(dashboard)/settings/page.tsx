@@ -249,18 +249,60 @@ export default function SettingsPage() {
 
               <Separator />
 
-              {/* Logo placeholder */}
+              {/* Branding — available on Growth/Enterprise */}
               <div>
-                <Label>Logo</Label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Logo upload available on Enterprise plan.
-                </p>
-                {tier === "enterprise" ? (
-                  <Button variant="outline" size="sm" className="mt-2" disabled>
-                    Upload Logo
-                  </Button>
+                <Label>Branding</Label>
+                {tier === "growth" || tier === "enterprise" ? (
+                  <div className="mt-2 space-y-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Logo and colors are configured in the Branding section below.
+                      </p>
+                    </div>
+                    {firm?.white_label?.logo_url && (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={firm.white_label.logo_url}
+                          alt="Firm logo"
+                          className="h-10 w-auto max-w-[160px] object-contain rounded border border-border p-1"
+                        />
+                        <p className="text-xs text-muted-foreground">Current logo</p>
+                      </div>
+                    )}
+                    {firm?.white_label?.primary_color && (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="size-6 rounded border border-border"
+                          style={{ backgroundColor: firm.white_label.primary_color }}
+                        />
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {firm.white_label.primary_color}
+                        </p>
+                      </div>
+                    )}
+                    {firm?.white_label?.custom_domain && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Custom domain:{" "}
+                          <span className="font-mono text-foreground">
+                            {firm.white_label.custom_domain}
+                          </span>
+                          {firm.white_label.custom_domain_verified ? (
+                            <Badge variant="default" className="ml-2 text-[10px]">Verified</Badge>
+                          ) : (
+                            <Badge variant="muted" className="ml-2 text-[10px]">Pending</Badge>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <Badge variant="muted" className="mt-2">Enterprise only</Badge>
+                  <div className="mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      White-label branding available on Growth and Enterprise plans.
+                    </p>
+                    <Badge variant="muted" className="mt-2">Growth+ only</Badge>
+                  </div>
                 )}
               </div>
             </CardContent>

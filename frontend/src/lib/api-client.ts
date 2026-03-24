@@ -6,6 +6,9 @@
  */
 
 import type {
+  WhiteLabelConfig,
+  WhiteLabelUpdate,
+  LogoUploadResponse,
   BillingOverview,
   CheckoutSessionResponse,
   ClioSettingsUpdate,
@@ -330,6 +333,29 @@ export class ApiClient {
     membershipId: string,
   ): Promise<void> {
     return this.del(`/firms/${firmId}/members/${membershipId}`);
+  }
+
+  // ─── Branding ────────────────────────────────────────────────────────
+
+  async getBranding(firmId: string): Promise<WhiteLabelConfig> {
+    return this.get(`/firms/${firmId}/branding`);
+  }
+
+  async updateBranding(
+    firmId: string,
+    data: WhiteLabelUpdate,
+  ): Promise<WhiteLabelConfig> {
+    return this.patch(`/firms/${firmId}/branding`, data);
+  }
+
+  async getLogoUploadUrl(
+    firmId: string,
+    field: string = 'logo_url',
+    contentType: string = 'image/png',
+  ): Promise<LogoUploadResponse> {
+    return this.post(
+      `/firms/${firmId}/branding/logo-upload?field=${field}&content_type=${contentType}`,
+    );
   }
 
   // ─── Matters ──────────────────────────────────────────────────────────
