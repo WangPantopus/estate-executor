@@ -227,17 +227,22 @@ async def clio_webhook(
     """Handle inbound Clio webhook events."""
     body = await request.body()
 
-    # Verify webhook signature if secret is configured
-    if settings.clio_webhook_secret:
-        signature = request.headers.get("X-Clio-Signature", "")
-        expected = hmac.new(
-            settings.clio_webhook_secret.encode(),
-            body,
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(signature, expected):
-            logger.warning("clio_webhook_invalid_signature")
-            return JSONResponse(status_code=401, content={"error": "Invalid signature"})
+    # Verify webhook signature — reject if secret not configured
+    if not settings.clio_webhook_secret:
+        logger.error("clio_webhook_secret_not_configured")
+        return JSONResponse(
+            status_code=500, content={"error": "Webhook secret not configured"}
+        )
+
+    signature = request.headers.get("X-Clio-Signature", "")
+    expected = hmac.new(
+        settings.clio_webhook_secret.encode(),
+        body,
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        logger.warning("clio_webhook_invalid_signature")
+        return JSONResponse(status_code=401, content={"error": "Invalid signature"})
 
     try:
         import json

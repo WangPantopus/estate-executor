@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -52,9 +53,9 @@ class SyncRequest(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
-    resource: str  # "matters" | "time_entries" | "contacts"
-    direction: str = "bidirectional"  # "push" | "pull" | "bidirectional"
-    matter_id: UUID | None = None  # scope to specific matter
+    resource: Literal["matters", "time_entries", "contacts"]
+    direction: Literal["push", "pull", "bidirectional"] = "bidirectional"
+    matter_id: UUID | None = None
 
 
 class SyncResultResponse(BaseModel):

@@ -121,8 +121,13 @@ async def complete_oauth(
         raise NotFoundError(detail="No pending Clio connection found")
 
     stored_state = conn.settings.get("oauth_state")
-    if stored_state != state:
+    if not stored_state or stored_state != state:
         raise ValidationError(detail="Invalid OAuth state parameter")
+
+    # Immediately invalidate state to prevent reuse
+    new_settings = {k: v for k, v in conn.settings.items() if k != "oauth_state"}
+    conn.settings = new_settings
+    await db.flush()
 
     # Exchange code for tokens
     token_data = await exchange_code_for_tokens(code)
@@ -130,13 +135,8 @@ async def complete_oauth(
     conn.access_token = token_data.get("access_token")
     conn.refresh_token = token_data.get("refresh_token")
     conn.token_expires_at = token_expires_at(token_data.get("expires_in"))
-    conn.status = IntegrationStatus.connected
 
-    # Remove oauth_state from settings
-    new_settings = {k: v for k, v in conn.settings.items() if k != "oauth_state"}
-    conn.settings = new_settings
-
-    # Fetch account info
+    # Validate connection by fetching account info before marking connected
     try:
         api = ClioAPI(conn.access_token)
         account_info = await api.get_account()
@@ -144,8 +144,11 @@ async def complete_oauth(
         account = user_data.get("account", {})
         conn.external_account_id = str(account.get("id", ""))
         conn.external_account_name = account.get("name", user_data.get("name", ""))
+        conn.status = IntegrationStatus.connected
     except httpx.HTTPError:
-        logger.warning("clio_account_fetch_failed", exc_info=True)
+        logger.error("clio_account_fetch_failed", exc_info=True)
+        conn.status = IntegrationStatus.error
+        conn.last_sync_error = "Connected but failed to verify Clio account"
 
     await db.flush()
 
@@ -268,22 +271,28 @@ async def sync_matters(
         if direction in ("pull", "bidirectional"):
             updated_since = conn.sync_cursor
             clio_resp = await api.list_matters(updated_since=updated_since)
-            for clio_matter in clio_resp.get("data", []):
+            clio_matters = clio_resp.get("data", [])
+            for clio_matter in clio_matters:
                 try:
-                    clio_id = str(clio_matter["id"])
+                    clio_id = str(clio_matter.get("id", ""))
+                    if not clio_id:
+                        continue
                     our_id = matter_map.get(f"clio:{clio_id}")
 
                     if our_id:
-                        # Update existing matter
                         matter_result = await db.execute(select(Matter).where(Matter.id == our_id))
                         matter = matter_result.scalar_one_or_none()
                         if matter:
                             matter.title = clio_matter.get("description", matter.title)
                             result["updated"] += 1
                     else:
-                        result["skipped"] += 1  # New Clio matters not auto-created
-                except Exception as e:
+                        result["skipped"] += 1
+                except (KeyError, ValueError, httpx.HTTPError) as e:
                     result["errors"].append(f"Pull matter {clio_matter.get('id')}: {e}")
+
+            # Update sync cursor for incremental sync next time
+            if clio_matters:
+                conn.sync_cursor = datetime.now(UTC).isoformat()
 
         # Push to Clio
         if direction in ("push", "bidirectional"):
@@ -460,31 +469,24 @@ async def sync_contacts(
     contact_map = entity_map.get("contacts", {})
 
     try:
-        # Pull contacts from Clio
+        # Pull contacts from Clio — cache for reference, don't auto-create
         if direction in ("pull", "bidirectional"):
             clio_resp = await api.list_contacts()
             for contact in clio_resp.get("data", []):
-                clio_id = str(contact["id"])
-                if f"clio:{clio_id}" in contact_map:
+                clio_id = str(contact.get("id", ""))
+                if not clio_id or f"clio:{clio_id}" in contact_map:
                     result["skipped"] += 1
                     continue
 
-                # Extract email from email_addresses array
-                emails = contact.get("email_addresses", [])
-                email = emails[0].get("address", "") if emails else ""
-                name = contact.get("name", "")
-
+                emails = contact.get("email_addresses") or []
+                email = emails[0].get("address", "") if isinstance(emails, list) and emails else ""
                 if not email:
                     result["skipped"] += 1
                     continue
 
-                # Store mapping but don't auto-create stakeholders
-                # (stakeholders are matter-specific; contacts are global)
-                contact_map[f"clio:{clio_id}"] = {
-                    "name": name,
-                    "email": email,
-                    "type": contact.get("type", ""),
-                }
+                # Store as string ID (consistent with other maps)
+                # The email is used as the lookup key for matching
+                contact_map[f"clio:{clio_id}"] = email
                 result["updated"] += 1
 
         # Push stakeholders to Clio
@@ -496,6 +498,7 @@ async def sync_contacts(
                 stakeholders_q = (
                     select(Stakeholder)
                     .where(Stakeholder.matter_id.in_(matter_ids))
+                    .order_by(Stakeholder.email, Stakeholder.created_at)
                     .distinct(Stakeholder.email)
                 )
                 stakeholders = list((await db.execute(stakeholders_q)).scalars().all())

@@ -1035,11 +1035,12 @@ function IntegrationsTabContent({
                     variant="outline"
                     onClick={() => handleSync("matters")}
                     disabled={syncingResource !== null}
+                    aria-label="Sync matters with Clio"
                   >
                     {syncingResource === "matters" ? (
                       <Loader2 className="size-3.5 mr-1 animate-spin" />
                     ) : (
-                      <RefreshCw className="size-3.5 mr-1" />
+                      <RefreshCw className="size-3.5 mr-1" aria-hidden="true" />
                     )}
                     Sync
                   </Button>
@@ -1063,11 +1064,12 @@ function IntegrationsTabContent({
                     variant="outline"
                     onClick={() => handleSync("time_entries")}
                     disabled={syncingResource !== null}
+                    aria-label="Sync time entries to Clio"
                   >
                     {syncingResource === "time_entries" ? (
                       <Loader2 className="size-3.5 mr-1 animate-spin" />
                     ) : (
-                      <RefreshCw className="size-3.5 mr-1" />
+                      <RefreshCw className="size-3.5 mr-1" aria-hidden="true" />
                     )}
                     Sync
                   </Button>
@@ -1091,11 +1093,12 @@ function IntegrationsTabContent({
                     variant="outline"
                     onClick={() => handleSync("contacts")}
                     disabled={syncingResource !== null}
+                    aria-label="Sync contacts with Clio"
                   >
                     {syncingResource === "contacts" ? (
                       <Loader2 className="size-3.5 mr-1 animate-spin" />
                     ) : (
-                      <RefreshCw className="size-3.5 mr-1" />
+                      <RefreshCw className="size-3.5 mr-1" aria-hidden="true" />
                     )}
                     Sync
                   </Button>
