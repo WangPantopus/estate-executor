@@ -25,8 +25,8 @@ from app.api.v1.reports import router as reports_router
 from app.api.v1.sso import router as sso_router
 from app.api.v1.stakeholders import router as stakeholders_router
 from app.api.v1.tasks import router as tasks_router
-from app.api.v1.time_tracking import router as time_tracking_router
 from app.api.v1.templates import router as templates_router
+from app.api.v1.time_tracking import router as time_tracking_router
 from app.api.v1.upload import router as upload_router
 
 api_router = APIRouter()

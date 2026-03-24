@@ -35,6 +35,24 @@ tasks:
         - "surviving_spouse"
     subtasks: []
 
+  - key: "ca_community_property"
+    title: "Identify Community Property (California)"
+    description: "California is a community property state — determine community vs. separate property"
+    instructions: "California is a community property state. Property acquired during marriage is presumed community property. The surviving spouse automatically owns their half. California also recognizes quasi-community property (property acquired in non-community-property states during marriage). Proper characterization affects taxation, distribution, and spousal rights."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
   - key: "ca_small_estate_affidavit"
     title: "Consider Small Estate Affidavit (Under $184,500)"
     description: "Determine if estate qualifies for simplified transfer via small estate affidavit"

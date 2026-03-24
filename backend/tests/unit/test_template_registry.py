@@ -1,6 +1,6 @@
 """Unit tests for the template registry."""
 
-from app.services.template_registry import template_registry
+from app.services.template_registry import ALL_JURISDICTIONS, template_registry
 
 
 class TestTemplateRegistryLoading:
@@ -25,15 +25,7 @@ class TestTemplateRegistryLoading:
 
     def test_states_loaded(self):
         """State templates are loaded for all 51 jurisdictions (50 states + DC)."""
-        expected_states = [
-            "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
-            "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
-            "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
-            "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
-            "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI",
-            "WY",
-        ]
-        for state in expected_states:
+        for state in ALL_JURISDICTIONS:
             assert state in template_registry.loaded_states, f"Missing state {state}"
         assert len(template_registry.loaded_states) == 51
 
@@ -90,6 +82,28 @@ class TestTemplateRegistryLoading:
             assert len(template_registry._state_deadlines[state]) > 0, (
                 f"State {state} has empty deadlines list"
             )
+
+    def test_all_state_template_keys_globally_unique(self):
+        """Template keys should be globally unique across ALL states."""
+        all_keys: dict[str, str] = {}
+        for state, templates in template_registry._state_templates.items():
+            for tmpl in templates:
+                key = tmpl["key"]
+                assert key not in all_keys, (
+                    f"Duplicate key '{key}' in {state} (also in {all_keys[key]})"
+                )
+                all_keys[key] = state
+
+    def test_all_state_deadline_keys_globally_unique(self):
+        """Deadline keys should be globally unique across ALL states."""
+        all_keys: dict[str, str] = {}
+        for state, deadlines in template_registry._state_deadlines.items():
+            for dl in deadlines:
+                key = dl["key"]
+                assert key not in all_keys, (
+                    f"Duplicate deadline key '{key}' in {state} (also in {all_keys[key]})"
+                )
+                all_keys[key] = state
 
 
 class TestGetTemplates:
@@ -250,13 +264,53 @@ class TestGetStateDeadlines:
 
     def test_community_property_states_have_community_task(self):
         """Community property states should have a community property identification task."""
-        community_property_states = {"AZ", "ID", "LA", "NM", "NV", "WA", "WI"}
+        # All 9 community property states
+        community_property_states = {"AZ", "CA", "ID", "LA", "NM", "NV", "TX", "WA", "WI"}
         for state in community_property_states:
             templates = template_registry.get_templates(
                 "testate_probate", state, flags=["surviving_spouse"]
             )
             keys = {t["key"] for t in templates}
-            has_cp_task = any("community" in key or "marital" in key for key in keys)
+            has_cp_task = any(
+                "community" in key or "marital" in key or "spousal" in key
+                for key in keys
+            )
             assert has_cp_task, (
                 f"Community property state {state} missing community property task"
             )
+
+
+class TestStateCoverage:
+    """Tests for the coverage API data."""
+
+    def test_get_state_coverage_returns_correct_structure(self):
+        """get_state_coverage should return expected dict shape."""
+        coverage = template_registry.get_state_coverage("CA")
+        assert "supported" in coverage
+        assert "task_count" in coverage
+        assert "deadline_count" in coverage
+        assert "has_tasks" in coverage
+        assert "has_deadlines" in coverage
+        assert coverage["supported"] is True
+        assert coverage["task_count"] > 0
+        assert coverage["deadline_count"] > 0
+
+    def test_unsupported_state_coverage(self):
+        """An unknown state should return unsupported with zero counts."""
+        coverage = template_registry.get_state_coverage("ZZ")
+        assert coverage["supported"] is False
+        assert coverage["task_count"] == 0
+        assert coverage["deadline_count"] == 0
+
+    def test_all_jurisdictions_have_coverage(self):
+        """Every jurisdiction in ALL_JURISDICTIONS should be supported."""
+        for state in ALL_JURISDICTIONS:
+            coverage = template_registry.get_state_coverage(state)
+            assert coverage["supported"] is True, f"State {state} not supported"
+            assert coverage["has_tasks"] is True, f"State {state} has no tasks"
+            assert coverage["has_deadlines"] is True, f"State {state} has no deadlines"
+
+    def test_all_jurisdictions_count(self):
+        """ALL_JURISDICTIONS should have exactly 51 entries."""
+        assert len(ALL_JURISDICTIONS) == 51
+        assert len(set(ALL_JURISDICTIONS)) == 51  # no duplicates
