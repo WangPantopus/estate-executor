@@ -195,22 +195,24 @@ export default function AssetsPage({
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {paginatedAssets.map((asset) => (
-            <AssetCard
-              key={asset.id}
-              asset={asset}
-              onClick={() => setDetailAssetId(asset.id)}
-            />
-          ))}
-        </div>
-        {hasMoreAssets && (
-          <div className="flex justify-center pt-4">
-            <Button variant="outline" size="sm" onClick={loadMoreAssets}>
-              Load more ({remainingAssetCount} remaining)
-            </Button>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {paginatedAssets.map((asset) => (
+              <AssetCard
+                key={asset.id}
+                asset={asset}
+                onClick={() => setDetailAssetId(asset.id)}
+              />
+            ))}
           </div>
-        )}
+          {hasMoreAssets && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" size="sm" onClick={loadMoreAssets}>
+                Load more ({remainingAssetCount} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Asset detail side panel */}

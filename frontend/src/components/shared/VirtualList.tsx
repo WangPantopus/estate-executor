@@ -112,22 +112,27 @@ export function VirtualList<T>({
  * without requiring server-side cursor pagination.
  */
 export function useClientPagination<T>(items: T[], pageSize: number = 50) {
-  const [visibleCount, setVisibleCount] = useState(pageSize);
+  // Track the previous items reference and pageSize to detect resets during render.
+  // This avoids calling setState inside a useEffect (which causes a cascading render).
+  const [state, setState] = useState({ visibleCount: pageSize, prevItems: items, prevPageSize: pageSize });
 
+  // Reset visible count during render when the items reference or pageSize changes.
+  // This is the React-recommended pattern for derived state (analogous to getDerivedStateFromProps).
+  if (state.prevItems !== items || state.prevPageSize !== pageSize) {
+    setState({ visibleCount: pageSize, prevItems: items, prevPageSize: pageSize });
+  }
+
+  const visibleCount = state.visibleCount;
   const visibleItems = items.slice(0, visibleCount);
   const hasMore = visibleCount < items.length;
   const remainingCount = items.length - visibleCount;
 
   const loadMore = useCallback(() => {
-    setVisibleCount((prev) => Math.min(prev + pageSize, items.length));
+    setState((prev) => ({
+      ...prev,
+      visibleCount: Math.min(prev.visibleCount + pageSize, items.length),
+    }));
   }, [items.length, pageSize]);
-
-  // Reset when the items array reference changes (e.g., new filter applied).
-  // Depending on items.length alone would miss cases where the count stays
-  // the same but the contents change (different filter producing same N results).
-  useEffect(() => {
-    setVisibleCount(pageSize);
-  }, [items, pageSize]);
 
   return { visibleItems, hasMore, remainingCount, loadMore };
 }
