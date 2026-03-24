@@ -55,9 +55,7 @@ async def require_api_key(
     key = await authenticate_api_key(db, raw_key=raw_key)
 
     # Per-key rate limiting
-    rate_info = check_api_key_rate_limit(
-        key_id=key.id, limit_per_minute=key.rate_limit_per_minute
-    )
+    rate_info = check_api_key_rate_limit(key_id=key.id, limit_per_minute=key.rate_limit_per_minute)
 
     # Store rate info for response headers (middleware picks this up)
     request.state.rate_limit_info = rate_info

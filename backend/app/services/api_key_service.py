@@ -49,13 +49,9 @@ def _extract_prefix(raw_key: str) -> str:
 # ─── CRUD ────────────────────────────────────────────────────────────────────
 
 
-async def list_api_keys(
-    db: AsyncSession, *, firm_id: uuid.UUID
-) -> list[APIKey]:
+async def list_api_keys(db: AsyncSession, *, firm_id: uuid.UUID) -> list[APIKey]:
     result = await db.execute(
-        select(APIKey)
-        .where(APIKey.firm_id == firm_id)
-        .order_by(APIKey.created_at.desc())
+        select(APIKey).where(APIKey.firm_id == firm_id).order_by(APIKey.created_at.desc())
     )
     return list(result.scalars().all())
 
@@ -99,21 +95,15 @@ async def create_api_key(
     return key_obj, raw_key
 
 
-async def get_api_key(
-    db: AsyncSession, *, key_id: uuid.UUID, firm_id: uuid.UUID
-) -> APIKey:
-    result = await db.execute(
-        select(APIKey).where(APIKey.id == key_id, APIKey.firm_id == firm_id)
-    )
+async def get_api_key(db: AsyncSession, *, key_id: uuid.UUID, firm_id: uuid.UUID) -> APIKey:
+    result = await db.execute(select(APIKey).where(APIKey.id == key_id, APIKey.firm_id == firm_id))
     key = result.scalar_one_or_none()
     if key is None:
         raise NotFoundError(detail="API key not found")
     return key
 
 
-async def revoke_api_key(
-    db: AsyncSession, *, key_id: uuid.UUID, firm_id: uuid.UUID
-) -> APIKey:
+async def revoke_api_key(db: AsyncSession, *, key_id: uuid.UUID, firm_id: uuid.UUID) -> APIKey:
     key = await get_api_key(db, key_id=key_id, firm_id=firm_id)
     key.is_active = False
     await db.flush()
@@ -121,9 +111,7 @@ async def revoke_api_key(
     return key
 
 
-async def delete_api_key(
-    db: AsyncSession, *, key_id: uuid.UUID, firm_id: uuid.UUID
-) -> None:
+async def delete_api_key(db: AsyncSession, *, key_id: uuid.UUID, firm_id: uuid.UUID) -> None:
     key = await get_api_key(db, key_id=key_id, firm_id=firm_id)
     await db.delete(key)
     await db.flush()
@@ -146,17 +134,13 @@ async def regenerate_api_key(
 # ─── Authentication ──────────────────────────────────────────────────────────
 
 
-async def authenticate_api_key(
-    db: AsyncSession, *, raw_key: str
-) -> APIKey:
+async def authenticate_api_key(db: AsyncSession, *, raw_key: str) -> APIKey:
     """Validate a raw API key and return the associated APIKey model.
 
     Raises UnauthorizedError if invalid, expired, or revoked.
     """
     key_hash = _hash_key(raw_key)
-    result = await db.execute(
-        select(APIKey).where(APIKey.key_hash == key_hash)
-    )
+    result = await db.execute(select(APIKey).where(APIKey.key_hash == key_hash))
     key = result.scalar_one_or_none()
 
     if key is None:
@@ -184,9 +168,7 @@ async def authenticate_api_key(
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
-async def _require_enterprise(
-    db: AsyncSession, firm_id: uuid.UUID
-) -> None:
+async def _require_enterprise(db: AsyncSession, firm_id: uuid.UUID) -> None:
     from app.models.firms import Firm
 
     result = await db.execute(select(Firm).where(Firm.id == firm_id))
@@ -197,6 +179,4 @@ async def _require_enterprise(
     if hasattr(tier, "value"):
         tier = tier.value
     if tier != SubscriptionTier.enterprise.value:
-        raise PermissionDeniedError(
-            detail="API keys require an Enterprise subscription"
-        )
+        raise PermissionDeniedError(detail="API keys require an Enterprise subscription")

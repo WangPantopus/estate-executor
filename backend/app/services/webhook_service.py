@@ -86,9 +86,7 @@ def _validate_webhook_url(url: str) -> None:
 
     # Must be HTTPS
     if parsed.scheme not in ("https",):
-        raise ValidationError(
-            detail="Webhook URL must use HTTPS"
-        )
+        raise ValidationError(detail="Webhook URL must use HTTPS")
 
     hostname = (parsed.hostname or "").lower()
     if not hostname:
@@ -96,16 +94,12 @@ def _validate_webhook_url(url: str) -> None:
 
     # Block internal/reserved hostnames
     if hostname in _BLOCKED_HOSTS:
-        raise ValidationError(
-            detail="Webhook URL cannot point to internal services"
-        )
+        raise ValidationError(detail="Webhook URL cannot point to internal services")
 
     # Block private/reserved IP ranges
     for prefix in _BLOCKED_IP_PREFIXES:
         if hostname.startswith(prefix):
-            raise ValidationError(
-                detail="Webhook URL cannot point to private IP addresses"
-            )
+            raise ValidationError(detail="Webhook URL cannot point to private IP addresses")
 
 
 def _generate_secret() -> str:
@@ -114,21 +108,15 @@ def _generate_secret() -> str:
 
 def _sign_payload(secret: str, payload: str) -> str:
     """HMAC-SHA256 signature of the payload."""
-    return hmac.new(
-        secret.encode(), payload.encode(), hashlib.sha256
-    ).hexdigest()
+    return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
 
 # ─── CRUD ────────────────────────────────────────────────────────────────────
 
 
-async def list_webhooks(
-    db: AsyncSession, *, firm_id: uuid.UUID
-) -> list[Webhook]:
+async def list_webhooks(db: AsyncSession, *, firm_id: uuid.UUID) -> list[Webhook]:
     result = await db.execute(
-        select(Webhook)
-        .where(Webhook.firm_id == firm_id)
-        .order_by(Webhook.created_at.desc())
+        select(Webhook).where(Webhook.firm_id == firm_id).order_by(Webhook.created_at.desc())
     )
     return list(result.scalars().all())
 
@@ -148,19 +136,13 @@ async def create_webhook(
     # Validate events
     invalid = [e for e in events if e not in SUPPORTED_EVENTS]
     if invalid:
-        raise ValidationError(
-            detail=f"Unsupported events: {', '.join(invalid)}"
-        )
+        raise ValidationError(detail=f"Unsupported events: {', '.join(invalid)}")
 
     # Check per-firm limit
-    count_result = await db.execute(
-        select(func.count()).where(Webhook.firm_id == firm_id)
-    )
+    count_result = await db.execute(select(func.count()).where(Webhook.firm_id == firm_id))
     count = count_result.scalar() or 0
     if count >= MAX_WEBHOOKS_PER_FIRM:
-        raise ValidationError(
-            detail=f"Maximum {MAX_WEBHOOKS_PER_FIRM} webhooks per firm"
-        )
+        raise ValidationError(detail=f"Maximum {MAX_WEBHOOKS_PER_FIRM} webhooks per firm")
 
     webhook = Webhook(
         firm_id=firm_id,
@@ -175,13 +157,9 @@ async def create_webhook(
     return webhook
 
 
-async def get_webhook(
-    db: AsyncSession, *, webhook_id: uuid.UUID, firm_id: uuid.UUID
-) -> Webhook:
+async def get_webhook(db: AsyncSession, *, webhook_id: uuid.UUID, firm_id: uuid.UUID) -> Webhook:
     result = await db.execute(
-        select(Webhook).where(
-            Webhook.id == webhook_id, Webhook.firm_id == firm_id
-        )
+        select(Webhook).where(Webhook.id == webhook_id, Webhook.firm_id == firm_id)
     )
     webhook = result.scalar_one_or_none()
     if webhook is None:
@@ -202,13 +180,9 @@ async def update_webhook(
         _validate_webhook_url(updates["url"])
 
     if "events" in updates:
-        invalid = [
-            e for e in updates["events"] if e not in SUPPORTED_EVENTS
-        ]
+        invalid = [e for e in updates["events"] if e not in SUPPORTED_EVENTS]
         if invalid:
-            raise ValidationError(
-                detail=f"Unsupported events: {', '.join(invalid)}"
-            )
+            raise ValidationError(detail=f"Unsupported events: {', '.join(invalid)}")
 
     for key, value in updates.items():
         if value is not None and hasattr(webhook, key) and key != "secret":
@@ -218,17 +192,13 @@ async def update_webhook(
     return webhook
 
 
-async def delete_webhook(
-    db: AsyncSession, *, webhook_id: uuid.UUID, firm_id: uuid.UUID
-) -> None:
+async def delete_webhook(db: AsyncSession, *, webhook_id: uuid.UUID, firm_id: uuid.UUID) -> None:
     webhook = await get_webhook(db, webhook_id=webhook_id, firm_id=firm_id)
     await db.delete(webhook)
     await db.flush()
 
 
-async def rotate_secret(
-    db: AsyncSession, *, webhook_id: uuid.UUID, firm_id: uuid.UUID
-) -> Webhook:
+async def rotate_secret(db: AsyncSession, *, webhook_id: uuid.UUID, firm_id: uuid.UUID) -> Webhook:
     webhook = await get_webhook(db, webhook_id=webhook_id, firm_id=firm_id)
     webhook.secret = _generate_secret()
     await db.flush()
@@ -267,12 +237,8 @@ async def deliver_webhook(
 
     start = time.monotonic()
     try:
-        async with httpx.AsyncClient(
-            timeout=DELIVERY_TIMEOUT_SECONDS
-        ) as client:
-            resp = await client.post(
-                webhook.url, content=payload_str, headers=headers
-            )
+        async with httpx.AsyncClient(timeout=DELIVERY_TIMEOUT_SECONDS) as client:
+            resp = await client.post(webhook.url, content=payload_str, headers=headers)
             elapsed_ms = int((time.monotonic() - start) * 1000)
 
             delivery.status_code = resp.status_code
@@ -336,9 +302,7 @@ async def dispatch_event(
     deliveries: list[WebhookDelivery] = []
     for wh in webhooks:
         if event_type in (wh.events or []):
-            delivery = await deliver_webhook(
-                db, webhook=wh, event_type=event_type, payload=payload
-            )
+            delivery = await deliver_webhook(db, webhook=wh, event_type=event_type, payload=payload)
             deliveries.append(delivery)
 
     return deliveries

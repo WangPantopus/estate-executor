@@ -94,9 +94,7 @@ def upgrade() -> None:
         ),
         sa.Column("canceled_at", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("trial_end", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column(
-            "grace_period_end", sa.TIMESTAMP(timezone=True), nullable=True
-        ),
+        sa.Column("grace_period_end", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("last_payment_error", sa.Text(), nullable=True),
         sa.Column(
             "failed_payment_count",
@@ -104,12 +102,8 @@ def upgrade() -> None:
             server_default="0",
             nullable=False,
         ),
-        sa.Column(
-            "matter_count", sa.Integer(), server_default="0", nullable=False
-        ),
-        sa.Column(
-            "user_count", sa.Integer(), server_default="0", nullable=False
-        ),
+        sa.Column("matter_count", sa.Integer(), server_default="0", nullable=False),
+        sa.Column("user_count", sa.Integer(), server_default="0", nullable=False),
         sa.Column("last_invoice_amount", sa.Integer(), nullable=True),
         sa.Column(
             "last_invoice_paid_at",

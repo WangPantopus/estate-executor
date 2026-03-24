@@ -34,9 +34,7 @@ class APIKey(BaseModel):
     key_prefix: Mapped[str] = mapped_column(
         String(12), nullable=False
     )  # "ee_live_xxxx" visible prefix for identification
-    key_hash: Mapped[str] = mapped_column(
-        String(128), nullable=False, unique=True
-    )
+    key_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
 
     # Permissions / scopes
     scopes: Mapped[list[str]] = mapped_column(
@@ -44,27 +42,15 @@ class APIKey(BaseModel):
     )  # e.g. ["read", "write", "webhooks"]
 
     # Rate limiting
-    rate_limit_per_minute: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="60"
-    )
+    rate_limit_per_minute: Mapped[int] = mapped_column(Integer, nullable=False, server_default="60")
 
     # Status
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default="true"
-    )
-    last_used_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    last_used_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     # Tracking
-    created_by: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False
-    )
-    total_requests: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="0"
-    )
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    total_requests: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 
     firm: Mapped[Firm] = relationship()
