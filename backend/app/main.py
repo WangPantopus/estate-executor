@@ -38,6 +38,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Startup
     settings.configure_logging()
 
+    # Initialize Sentry error tracking (no-op if DSN is empty)
+    from app.core.sentry import init_sentry
+
+    init_sentry()
+
     # Validate production secrets — refuse to start if critical secrets are missing
     import logging as _logging
 

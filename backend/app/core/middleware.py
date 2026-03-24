@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
-import time
 import traceback
-import uuid
 from typing import TYPE_CHECKING
 
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
+from app.core.logging import (
+    RequestTimer,
+    firm_id_var,
+    new_request_id,
+    request_id_var,
+    user_id_var,
+)
 
 if TYPE_CHECKING:
     from fastapi import Request, Response
@@ -45,33 +49,52 @@ class TenantIsolationMiddleware(BaseHTTPMiddleware):
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Log every request with timing, request ID, user_id, and firm_id."""
+    """Log every request with timing, correlation ID, user_id, and firm_id.
+
+    Sets contextvars so that ALL downstream log statements within this
+    request automatically include request_id, user_id, and firm_id.
+    """
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
-        request_id = str(uuid.uuid4())
-        request.state.request_id = request_id
-        start_time = time.perf_counter()
+        # Generate and propagate correlation ID
+        rid = new_request_id()
+        request.state.request_id = rid
+        request_id_var.set(rid)
 
-        response: Response = await call_next(request)
+        with RequestTimer() as timer:
+            response: Response = await call_next(request)
 
-        duration_ms = (time.perf_counter() - start_time) * 1000
+        # Propagate user/firm context for downstream logging
+        uid = getattr(request.state, "user_id", None)
+        fid = getattr(request.state, "firm_id", None)
+        if uid:
+            user_id_var.set(str(uid))
+        if fid:
+            firm_id_var.set(str(fid))
 
-        user_id = getattr(request.state, "user_id", None)
-        firm_id = getattr(request.state, "firm_id", None)
+        duration = round(timer.duration_ms, 2)
 
-        log_data = {
-            "request_id": request_id,
-            "method": request.method,
-            "path": request.url.path,
-            "status_code": response.status_code,
-            "duration_ms": round(duration_ms, 2),
-            "user_id": str(user_id) if user_id else None,
-            "firm_id": str(firm_id) if firm_id else None,
-        }
+        logger.info(
+            "request_completed",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": duration,
+            },
+        )
 
-        logger.info(json.dumps(log_data))
+        # Record metrics for performance monitoring
+        from app.core.metrics import metrics_collector
 
-        response.headers["X-Request-ID"] = request_id
+        metrics_collector.record_request(
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration_ms=duration,
+        )
+
+        response.headers["X-Request-ID"] = rid
         return response
 
 
@@ -82,19 +105,25 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)  # type: ignore[no-any-return]
         except Exception as exc:
-            request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+            rid = getattr(request.state, "request_id", new_request_id())
 
             logger.error(
-                json.dumps(
-                    {
-                        "request_id": request_id,
-                        "method": request.method,
-                        "path": request.url.path,
-                        "error": str(exc),
-                        "traceback": traceback.format_exc(),
-                    }
-                )
+                "unhandled_exception",
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "error": str(exc),
+                },
+                exc_info=True,
             )
+
+            # Report to Sentry if available
+            try:
+                import sentry_sdk
+
+                sentry_sdk.capture_exception(exc)
+            except ImportError:
+                pass
 
             detail = str(exc) if not settings.is_production else "Internal server error"
 
@@ -107,5 +136,5 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                     "detail": detail,
                     "instance": request.url.path,
                 },
-                headers={"X-Request-ID": request_id},
+                headers={"X-Request-ID": rid},
             )

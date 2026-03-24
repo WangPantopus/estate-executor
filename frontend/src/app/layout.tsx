@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Crimson_Pro } from "next/font/google";
 import { Auth0Provider } from "@auth0/nextjs-auth0";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { SentryProvider } from "@/components/providers/SentryProvider";
 import "./globals.css";
 
 // Self-hosted via next/font — eliminates external network request to
@@ -36,9 +37,11 @@ export default function RootLayout({
       className={`h-full antialiased ${inter.variable} ${crimsonPro.variable}`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <Auth0Provider>
-          <QueryProvider>{children}</QueryProvider>
-        </Auth0Provider>
+        <SentryProvider>
+          <Auth0Provider>
+            <QueryProvider>{children}</QueryProvider>
+          </Auth0Provider>
+        </SentryProvider>
       </body>
     </html>
   );

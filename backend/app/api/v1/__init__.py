@@ -16,6 +16,7 @@ from app.api.v1.entities import router as entities_router
 from app.api.v1.events import router as events_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
+from app.api.v1.monitoring import router as monitoring_router
 from app.api.v1.integrations import router as integrations_router
 from app.api.v1.integrations import webhook_router as integrations_webhook_router
 from app.api.v1.matters import router as matters_router
@@ -34,6 +35,7 @@ from app.api.v1.upload import router as upload_router
 api_router = APIRouter()
 
 api_router.include_router(health_router, tags=["health"])
+api_router.include_router(monitoring_router, tags=["monitoring"])
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(firms_router, prefix="/firms", tags=["firms"])
 api_router.include_router(matters_router, prefix="/firms/{firm_id}/matters", tags=["matters"])

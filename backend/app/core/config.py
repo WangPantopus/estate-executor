@@ -102,6 +102,18 @@ class Settings(BaseSettings):
     # CSRF
     csrf_enabled: bool = True
 
+    # Monitoring & Observability
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.1  # 10% of requests sampled for perf
+    sentry_profiles_sample_rate: float = 0.1
+    sentry_environment: str = ""  # defaults to app_env if empty
+    uptimerobot_readonly_api_key: str = ""
+    metrics_retention_hours: int = 24  # In-memory metrics window
+    alert_error_rate_threshold: float = 0.05  # 5% error rate triggers alert
+    alert_p99_latency_ms: float = 5000.0  # 5s p99 triggers alert
+    alert_queue_depth_threshold: int = 100  # Celery queue depth alert
+    alert_deadline_failure_window_hours: int = 24
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
     def model_post_init(self, __context: object) -> None:
@@ -163,10 +175,9 @@ class Settings(BaseSettings):
         return f"https://{self.auth0_domain}/.well-known/jwks.json"
 
     def configure_logging(self) -> None:
-        logging.basicConfig(
-            level=getattr(logging, self.log_level.upper(), logging.INFO),
-            format="%(asctime)s %(levelname)s %(name)s %(message)s",
-        )
+        from app.core.logging import configure_logging
+
+        configure_logging(level=self.log_level, environment=self.app_env)
 
 
 settings = Settings()
