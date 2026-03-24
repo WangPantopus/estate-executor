@@ -195,7 +195,12 @@ async def _ensure_valid_token(db: AsyncSession, conn: IntegrationConnection) -> 
 
     if conn.token_expires_at and conn.token_expires_at <= datetime.now(UTC):
         token_data = await refresh_access_token(conn.refresh_token)
-        conn.access_token = token_data.get("access_token")
+        new_access = token_data.get("access_token")
+        if not new_access:
+            raise ValidationError(
+                detail="DocuSign token refresh failed. Please reconnect."
+            )
+        conn.access_token = new_access
         conn.refresh_token = token_data.get("refresh_token", conn.refresh_token)
         conn.token_expires_at = token_expires_at(token_data.get("expires_in"))
         await db.flush()

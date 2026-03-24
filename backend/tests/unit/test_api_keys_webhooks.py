@@ -120,6 +120,85 @@ class TestWebhookSchemas:
         assert delivery.duration_ms == 150
 
 
+class TestWebhookURLValidation:
+    def test_https_required(self):
+        from app.services.webhook_service import _validate_webhook_url
+
+        with pytest.raises(Exception, match="HTTPS"):
+            _validate_webhook_url("http://example.com/hook")
+
+    def test_valid_https(self):
+        from app.services.webhook_service import _validate_webhook_url
+
+        _validate_webhook_url("https://example.com/hook")  # Should not raise
+
+    def test_localhost_blocked(self):
+        from app.services.webhook_service import _validate_webhook_url
+
+        with pytest.raises(Exception, match="internal"):
+            _validate_webhook_url("https://localhost/hook")
+
+    def test_private_ip_blocked(self):
+        from app.services.webhook_service import _validate_webhook_url
+
+        with pytest.raises(Exception, match="private"):
+            _validate_webhook_url("https://192.168.1.1/hook")
+
+    def test_metadata_ip_blocked(self):
+        from app.services.webhook_service import _validate_webhook_url
+
+        with pytest.raises(Exception, match="private"):
+            _validate_webhook_url("https://169.254.169.254/latest")
+
+    def test_10_range_blocked(self):
+        from app.services.webhook_service import _validate_webhook_url
+
+        with pytest.raises(Exception, match="private"):
+            _validate_webhook_url("https://10.0.0.1/hook")
+
+
+class TestWebhookResponseExcludesSecret:
+    def test_response_no_secret(self):
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from app.schemas.webhooks import WebhookResponse
+
+        resp = WebhookResponse(
+            id=uuid4(),
+            firm_id=uuid4(),
+            url="https://example.com/hook",
+            events=["matter.created"],
+            is_active=True,
+            failure_count=0,
+            created_by=uuid4(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        # Secret must NOT be in the standard response
+        assert not hasattr(resp, "secret")
+
+    def test_created_response_has_secret(self):
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from app.schemas.webhooks import WebhookCreatedResponse
+
+        resp = WebhookCreatedResponse(
+            id=uuid4(),
+            firm_id=uuid4(),
+            url="https://example.com/hook",
+            secret="whsec_abc123",
+            events=["matter.created"],
+            is_active=True,
+            failure_count=0,
+            created_by=uuid4(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        assert resp.secret == "whsec_abc123"
+
+
 class TestWebhookServiceHelpers:
     def test_generate_secret(self):
         from app.services.webhook_service import _generate_secret

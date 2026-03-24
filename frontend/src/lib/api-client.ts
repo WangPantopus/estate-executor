@@ -14,6 +14,7 @@ import type {
   SSOConfigUpdate,
   Webhook,
   WebhookCreate,
+  WebhookCreatedResponse,
   WebhookDelivery,
   WebhookUpdate,
   WhiteLabelConfig,
@@ -412,7 +413,7 @@ export class ApiClient {
     return this.get(`/firms/${firmId}/developer/webhooks`);
   }
 
-  async createWebhook(firmId: string, data: WebhookCreate): Promise<Webhook> {
+  async createWebhook(firmId: string, data: WebhookCreate): Promise<WebhookCreatedResponse> {
     return this.post(`/firms/${firmId}/developer/webhooks`, data);
   }
 
@@ -443,9 +444,8 @@ export class ApiClient {
     );
   }
 
-  async getSupportedWebhookEvents(): Promise<{ events: string[] }> {
-    // Uses a hardcoded firm_id placeholder — the endpoint doesn't actually use it
-    return this.get(`/firms/00000000-0000-0000-0000-000000000000/developer/webhooks/events`);
+  async getSupportedWebhookEvents(firmId: string): Promise<{ events: string[] }> {
+    return this.get(`/firms/${firmId}/developer/webhooks/events`);
   }
 
   async getLogoUploadUrl(

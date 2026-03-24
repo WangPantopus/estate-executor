@@ -39,6 +39,45 @@ class TestValidateConfig:
         with pytest.raises(Exception, match="Unsupported protocol"):
             _validate_config("ldap", {})
 
+    def test_valid_allowed_domains(self):
+        _validate_config(
+            "saml",
+            {
+                "saml_metadata_url": "https://idp.example.com/metadata",
+                "allowed_domains": ["example.com", "corp.example.org"],
+            },
+        )
+
+    def test_invalid_domain_format(self):
+        with pytest.raises(Exception, match="Invalid domain"):
+            _validate_config(
+                "saml",
+                {
+                    "saml_metadata_url": "https://idp.example.com/metadata",
+                    "allowed_domains": ["@invalid"],
+                },
+            )
+
+    def test_empty_domain_rejected(self):
+        with pytest.raises(Exception, match="Invalid domain"):
+            _validate_config(
+                "saml",
+                {
+                    "saml_metadata_url": "https://idp.example.com/metadata",
+                    "allowed_domains": [""],
+                },
+            )
+
+    def test_too_many_domains(self):
+        with pytest.raises(Exception, match="Maximum 50"):
+            _validate_config(
+                "saml",
+                {
+                    "saml_metadata_url": "https://idp.example.com/metadata",
+                    "allowed_domains": [f"d{i}.com" for i in range(51)],
+                },
+            )
+
 
 class TestSSOSchemas:
     def test_config_create_saml(self):

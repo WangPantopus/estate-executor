@@ -53,10 +53,10 @@ class SignatureRequest(BaseModel):
     # Request details
     subject: Mapped[str] = mapped_column(String, nullable=False)
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    sent_by: Mapped[uuid.UUID] = mapped_column(
+    sent_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("stakeholders.id", ondelete="SET NULL"),
-        nullable=False,
+        nullable=True,
     )
 
     # Signers (stored as JSONB array of signer objects)

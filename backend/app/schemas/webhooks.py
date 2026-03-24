@@ -27,13 +27,34 @@ class WebhookUpdate(BaseModel):
 
 
 class WebhookResponse(BaseModel):
+    """Webhook response — secret is masked for security."""
+
     model_config = ConfigDict(strict=True, from_attributes=True)
 
     id: UUID
     firm_id: UUID
     url: str
     description: str | None = None
-    secret: str
+    # Secret is only shown at creation and after rotation
+    events: list[str]
+    is_active: bool
+    last_triggered_at: datetime | None = None
+    failure_count: int
+    created_by: UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class WebhookCreatedResponse(BaseModel):
+    """Returned at creation and after secret rotation — includes secret once."""
+
+    model_config = ConfigDict(strict=True, from_attributes=True)
+
+    id: UUID
+    firm_id: UUID
+    url: str
+    description: str | None = None
+    secret: str  # Only exposed here
     events: list[str]
     is_active: bool
     last_triggered_at: datetime | None = None

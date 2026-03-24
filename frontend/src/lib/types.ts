@@ -1497,7 +1497,7 @@ export interface Webhook {
   firm_id: string;
   url: string;
   description?: string | null;
-  secret: string;
+  // secret is NOT returned in list responses — only at creation/rotation
   events: string[];
   is_active: boolean;
   last_triggered_at?: string | null;
@@ -1505,6 +1505,10 @@ export interface Webhook {
   created_by: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface WebhookCreatedResponse extends Webhook {
+  secret: string; // Only returned at creation and secret rotation
 }
 
 export interface WebhookCreate {

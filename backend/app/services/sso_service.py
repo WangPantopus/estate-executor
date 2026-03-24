@@ -229,26 +229,30 @@ async def get_sso_login_url(db: AsyncSession, *, firm_id: uuid.UUID) -> dict[str
 async def check_sso_enforcement(db: AsyncSession, *, email: str) -> dict[str, Any] | None:
     """Check if the user's email domain requires SSO login.
 
-    Returns SSO config info if enforcement applies, None otherwise.
+    Returns minimal SSO info if enforcement applies, None otherwise.
     Called during normal login to redirect SSO-enforced users.
+
+    NOTE: This is called unauthenticated — only return the minimum info
+    the login page needs to redirect. Never expose firm_id/firm_name.
     """
     domain = email.split("@")[-1].lower() if "@" in email else ""
     if not domain:
         return None
 
     # Find any SSO config with matching allowed domain and enforcement
-    result = await db.execute(select(SSOConfig).where(SSOConfig.enforce_sso.is_(True)))
+    result = await db.execute(
+        select(SSOConfig).where(
+            SSOConfig.enforce_sso.is_(True),
+            SSOConfig.enabled.is_(True),
+        )
+    )
     configs = list(result.scalars().all())
 
     for config in configs:
         allowed = [d.lower() for d in (config.allowed_domains or [])]
-        if domain in allowed and config.enabled:
-            # Load firm info
-            firm_result = await db.execute(select(Firm).where(Firm.id == config.firm_id))
-            firm = firm_result.scalar_one_or_none()
+        if domain in allowed:
+            # Only return what the login page needs — no firm details
             return {
-                "firm_id": str(config.firm_id),
-                "firm_name": firm.name if firm else "",
                 "connection_name": config.auth0_connection_name,
                 "protocol": config.protocol,
             }
@@ -372,6 +376,19 @@ def _validate_config(protocol: str, data: dict[str, Any]) -> None:
     else:
         raise ValidationError(detail=f"Unsupported protocol: {protocol}")
 
+    # Validate allowed_domains
+    import re
+
+    domains = data.get("allowed_domains", [])
+    if len(domains) > 50:
+        raise ValidationError(detail="Maximum 50 allowed domains")
+    domain_re = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$")
+    for d in domains:
+        if not isinstance(d, str) or not domain_re.match(d) or len(d) > 255:
+            raise ValidationError(
+                detail=f"Invalid domain: {d!r}. Use format: example.com"
+            )
+
 
 async def _parse_saml_metadata(config: SSOConfig) -> None:
     """Fetch and parse SAML metadata URL to extract entity ID and SSO URL."""
@@ -382,6 +399,14 @@ async def _parse_saml_metadata(config: SSOConfig) -> None:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(config.saml_metadata_url)
             resp.raise_for_status()
+
+            # Validate response size (max 1MB) to prevent DoS
+            content_length = len(resp.content)
+            if content_length > 1_048_576:
+                raise ValidationError(
+                    detail="SAML metadata too large (max 1MB)"
+                )
+
             xml_text = resp.text
 
         config.saml_metadata_xml = xml_text

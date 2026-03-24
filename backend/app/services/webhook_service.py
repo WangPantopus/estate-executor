@@ -51,6 +51,62 @@ MAX_WEBHOOKS_PER_FIRM = 10
 DELIVERY_TIMEOUT_SECONDS = 10.0
 MAX_RESPONSE_BODY_LEN = 2048
 
+# Blocked IP ranges for SSRF prevention
+_BLOCKED_IP_PREFIXES = (
+    "127.",
+    "10.",
+    "172.16.",
+    "172.17.",
+    "172.18.",
+    "172.19.",
+    "172.20.",
+    "172.21.",
+    "172.22.",
+    "172.23.",
+    "172.24.",
+    "172.25.",
+    "172.26.",
+    "172.27.",
+    "172.28.",
+    "172.29.",
+    "172.30.",
+    "172.31.",
+    "192.168.",
+    "169.254.",
+    "0.",
+)
+_BLOCKED_HOSTS = {"localhost", "metadata.google.internal"}
+
+
+def _validate_webhook_url(url: str) -> None:
+    """Validate webhook URL to prevent SSRF attacks."""
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+
+    # Must be HTTPS
+    if parsed.scheme not in ("https",):
+        raise ValidationError(
+            detail="Webhook URL must use HTTPS"
+        )
+
+    hostname = (parsed.hostname or "").lower()
+    if not hostname:
+        raise ValidationError(detail="Invalid webhook URL")
+
+    # Block internal/reserved hostnames
+    if hostname in _BLOCKED_HOSTS:
+        raise ValidationError(
+            detail="Webhook URL cannot point to internal services"
+        )
+
+    # Block private/reserved IP ranges
+    for prefix in _BLOCKED_IP_PREFIXES:
+        if hostname.startswith(prefix):
+            raise ValidationError(
+                detail="Webhook URL cannot point to private IP addresses"
+            )
+
 
 def _generate_secret() -> str:
     return f"whsec_{secrets.token_hex(24)}"
@@ -86,6 +142,9 @@ async def create_webhook(
     description: str | None = None,
     current_user: CurrentUser,
 ) -> Webhook:
+    # Validate URL (SSRF prevention)
+    _validate_webhook_url(url)
+
     # Validate events
     invalid = [e for e in events if e not in SUPPORTED_EVENTS]
     if invalid:
@@ -138,6 +197,9 @@ async def update_webhook(
     updates: dict[str, Any],
 ) -> Webhook:
     webhook = await get_webhook(db, webhook_id=webhook_id, firm_id=firm_id)
+
+    if "url" in updates and updates["url"]:
+        _validate_webhook_url(updates["url"])
 
     if "events" in updates:
         invalid = [

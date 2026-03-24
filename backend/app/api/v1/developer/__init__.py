@@ -17,6 +17,7 @@ from app.schemas.auth import CurrentUser
 from app.schemas.webhooks import (
     SupportedEventsResponse,
     WebhookCreate,
+    WebhookCreatedResponse,
     WebhookDeliveryResponse,
     WebhookResponse,
     WebhookUpdate,
@@ -136,7 +137,9 @@ async def delete_api_key(
 
 
 @router.get("/webhooks/events", response_model=SupportedEventsResponse)
-async def list_supported_events() -> SupportedEventsResponse:
+async def list_supported_events(
+    _membership: FirmMembership = Depends(require_firm_member),
+) -> SupportedEventsResponse:
     """List all event types available for webhook subscription."""
     return SupportedEventsResponse(
         events=webhook_service.get_supported_events()
@@ -155,15 +158,15 @@ async def list_webhooks(
     return [WebhookResponse.model_validate(w) for w in webhooks]
 
 
-@router.post("/webhooks", response_model=WebhookResponse, status_code=201)
+@router.post("/webhooks", response_model=WebhookCreatedResponse, status_code=201)
 async def create_webhook(
     firm_id: UUID,
     body: WebhookCreate,
     membership: FirmMembership = Depends(require_firm_member),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> WebhookResponse:
-    """Create a new webhook endpoint."""
+) -> WebhookCreatedResponse:
+    """Create a new webhook endpoint. Secret is returned ONLY in this response."""
     _require_admin(membership)
     webhook = await webhook_service.create_webhook(
         db,
@@ -173,7 +176,7 @@ async def create_webhook(
         description=body.description,
         current_user=current_user,
     )
-    return WebhookResponse.model_validate(webhook)
+    return WebhookCreatedResponse.model_validate(webhook)
 
 
 @router.patch("/webhooks/{webhook_id}", response_model=WebhookResponse)
@@ -211,20 +214,20 @@ async def delete_webhook(
 
 @router.post(
     "/webhooks/{webhook_id}/rotate-secret",
-    response_model=WebhookResponse,
+    response_model=WebhookCreatedResponse,
 )
 async def rotate_webhook_secret(
     firm_id: UUID,
     webhook_id: UUID,
     membership: FirmMembership = Depends(require_firm_member),
     db: AsyncSession = Depends(get_db),
-) -> WebhookResponse:
-    """Rotate the HMAC signing secret for a webhook."""
+) -> WebhookCreatedResponse:
+    """Rotate the HMAC signing secret. New secret returned ONLY here."""
     _require_admin(membership)
     webhook = await webhook_service.rotate_secret(
         db, webhook_id=webhook_id, firm_id=firm_id
     )
-    return WebhookResponse.model_validate(webhook)
+    return WebhookCreatedResponse.model_validate(webhook)
 
 
 @router.post(

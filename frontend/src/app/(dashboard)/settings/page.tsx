@@ -27,8 +27,6 @@ import {
   Webhook,
   Copy,
   Send,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1593,8 +1591,6 @@ function APIKeysCard({ firmId, isAdmin }: { firmId: string; isAdmin: boolean }) 
   const [newKey, setNewKey] = useState<string | null>(null);
   const [showNewKeyForm, setShowNewKeyForm] = useState(false);
   const [keyName, setKeyName] = useState("");
-  const [visibleSecrets, setVisibleSecrets] = useState<Set<string>>(new Set());
-
   const handleCreate = useCallback(async () => {
     if (!keyName.trim()) return;
     const result = await createKey.mutateAsync({ name: keyName.trim() });
