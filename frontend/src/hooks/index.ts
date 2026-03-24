@@ -124,6 +124,12 @@ export {
   useConnectQuickBooks,
   useDisconnectQuickBooks,
   useSyncQuickBooks,
+  // Privacy
+  useMyPrivacyRequests,
+  usePrivacyQueue,
+  useCreatePrivacyRequest,
+  useReviewPrivacyRequest,
+  useDownloadDataExport,
   // Search
   useSearch,
 } from "./use-queries";

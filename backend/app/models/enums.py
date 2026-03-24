@@ -250,3 +250,16 @@ class SignatureRequestType(enum.StrEnum):
     beneficiary_acknowledgment = "beneficiary_acknowledgment"
     executor_oath = "executor_oath"
     general = "general"
+
+
+class PrivacyRequestType(enum.StrEnum):
+    data_export = "data_export"
+    data_deletion = "data_deletion"
+
+
+class PrivacyRequestStatus(enum.StrEnum):
+    pending = "pending"
+    approved = "approved"
+    processing = "processing"
+    completed = "completed"
+    rejected = "rejected"

@@ -53,6 +53,8 @@ import type {
   FirmUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
+  PrivacyRequestCreate,
+  PrivacyRequestReview,
 } from "@/lib/types";
 
 // ─── Query key factories ────────────────────────────────────────────────────
@@ -1395,6 +1397,56 @@ export function useSyncQuickBooks(firmId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.quickbooksConnection(firmId) });
     },
+  });
+}
+
+// ─── Privacy ─────────────────────────────────────────────────────────────────
+
+export function useMyPrivacyRequests(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "privacy", "my-requests"] as const,
+    queryFn: () => api.getMyPrivacyRequests(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function usePrivacyQueue(firmId: string, status?: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "privacy", "queue", status] as const,
+    queryFn: () => api.getPrivacyQueue(firmId, { status }),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreatePrivacyRequest(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: PrivacyRequestCreate) => api.createPrivacyRequest(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["firms", firmId, "privacy"] });
+    },
+  });
+}
+
+export function useReviewPrivacyRequest(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { requestId: string; data: PrivacyRequestReview }) =>
+      api.reviewPrivacyRequest(firmId, params.requestId, params.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["firms", firmId, "privacy"] });
+    },
+  });
+}
+
+export function useDownloadDataExport(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.downloadDataExport(firmId),
   });
 }
 
