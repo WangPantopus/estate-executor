@@ -165,14 +165,31 @@ class TestPrivacyWorkerTaskStructure:
         import sys
         from unittest.mock import MagicMock
 
-        # Mock celery_app to avoid Redis connection
-        mock_celery = MagicMock()
-        mock_celery.task = lambda **kwargs: lambda fn: fn
-        mock_module = MagicMock()
-        mock_module.celery_app = mock_celery
-        sys.modules["app.workers.celery_app"] = mock_module
+        # Save original module so we can restore it after the test
+        original = sys.modules.get("app.workers.celery_app")
 
-        from app.workers import privacy_tasks
+        try:
+            # Mock celery_app to avoid Redis connection
+            mock_celery = MagicMock()
+            mock_celery.task = lambda **kwargs: lambda fn: fn
+            mock_module = MagicMock()
+            mock_module.celery_app = mock_celery
+            sys.modules["app.workers.celery_app"] = mock_module
 
-        assert hasattr(privacy_tasks, "process_deletion_request")
-        assert hasattr(privacy_tasks, "process_export_request")
+            # Force re-import with mock in place
+            if "app.workers.privacy_tasks" in sys.modules:
+                del sys.modules["app.workers.privacy_tasks"]
+
+            from app.workers import privacy_tasks
+
+            assert hasattr(privacy_tasks, "process_deletion_request")
+            assert hasattr(privacy_tasks, "process_export_request")
+        finally:
+            # Restore original module to avoid polluting other tests
+            if original is not None:
+                sys.modules["app.workers.celery_app"] = original
+            elif "app.workers.celery_app" in sys.modules:
+                del sys.modules["app.workers.celery_app"]
+            # Also clear the privacy_tasks module so it reimports cleanly
+            if "app.workers.privacy_tasks" in sys.modules:
+                del sys.modules["app.workers.privacy_tasks"]
