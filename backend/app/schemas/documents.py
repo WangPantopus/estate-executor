@@ -248,3 +248,56 @@ class BulkDownloadStatusResponse(BaseModel):
     job_id: str
     status: str
     download_url: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# Document Request (token-based upload flow)
+# ---------------------------------------------------------------------------
+
+
+class DocumentRequestResponse(BaseModel):
+    """Response after creating a document request."""
+
+    model_config = ConfigDict(strict=True)
+
+    id: UUID
+    upload_token: str
+    upload_url: str
+    status: str
+    expires_at: datetime
+
+
+class DocumentRequestInfo(BaseModel):
+    """Public info returned when loading an upload page via token."""
+
+    model_config = ConfigDict(strict=True)
+
+    request_id: UUID
+    matter_title: str
+    decedent_name: str
+    requester_name: str
+    doc_type_needed: str
+    message: str | None
+    status: str
+    expires_at: datetime
+    firm_name: str | None = None
+
+
+class TokenUploadRequest(BaseModel):
+    """Input for requesting a presigned upload URL via token."""
+
+    model_config = ConfigDict(strict=True)
+
+    filename: str
+    mime_type: str
+
+
+class TokenUploadComplete(BaseModel):
+    """Input for completing an upload via token."""
+
+    model_config = ConfigDict(strict=True)
+
+    filename: str
+    storage_key: str
+    mime_type: str
+    size_bytes: int

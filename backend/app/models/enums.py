@@ -174,6 +174,18 @@ class DistributionType(enum.StrEnum):
     in_kind = "in_kind"
 
 
+class DisputeStatus(enum.StrEnum):
+    open = "open"
+    under_review = "under_review"
+    resolved = "resolved"
+
+
+class DocumentRequestStatus(enum.StrEnum):
+    pending = "pending"
+    uploaded = "uploaded"
+    expired = "expired"
+
+
 class ActorType(enum.StrEnum):
     user = "user"
     system = "system"

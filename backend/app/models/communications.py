@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from sqlalchemy.dialects.postgresql import TIMESTAMP
+
 from app.models.base import BaseModel
-from app.models.enums import CommunicationType, CommunicationVisibility
+from app.models.enums import CommunicationType, CommunicationVisibility, DisputeStatus
 
 if TYPE_CHECKING:
     from app.models.matters import Matter
@@ -49,5 +52,25 @@ class Communication(BaseModel):
         ARRAY(UUID(as_uuid=True)), nullable=True
     )
 
+    # Dispute-specific fields (populated only when type == dispute_flag)
+    disputed_entity_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    disputed_entity_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    dispute_status: Mapped[DisputeStatus | None] = mapped_column(
+        Enum(DisputeStatus, name="dispute_status", native_enum=True),
+        nullable=True,
+    )
+    dispute_resolution_note: Mapped[str | None] = mapped_column(String, nullable=True)
+    dispute_resolved_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
+    dispute_resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("stakeholders.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     matter: Mapped[Matter] = relationship(back_populates="communications")
     sender: Mapped[Stakeholder] = relationship(foreign_keys=[sender_id])
+    resolver: Mapped[Stakeholder | None] = relationship(foreign_keys=[dispute_resolved_by])

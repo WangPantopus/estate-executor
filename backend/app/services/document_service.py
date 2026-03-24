@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, select
@@ -11,12 +12,18 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.events import event_logger
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import BadRequestError, NotFoundError
 from app.models.asset_documents import asset_documents
 from app.models.communications import Communication
+from app.models.document_requests import DocumentRequest
 from app.models.document_versions import DocumentVersion
 from app.models.documents import Document
-from app.models.enums import ActorType, CommunicationType, CommunicationVisibility
+from app.models.enums import (
+    ActorType,
+    CommunicationType,
+    CommunicationVisibility,
+    DocumentRequestStatus,
+)
 from app.models.stakeholders import Stakeholder
 from app.models.task_documents import task_documents
 from app.services import storage_service
@@ -381,6 +388,8 @@ async def register_version(
 # Request document from stakeholder
 # ---------------------------------------------------------------------------
 
+_REQUEST_EXPIRY_DAYS = 14  # Upload tokens expire after 14 days
+
 
 async def request_document(
     db: AsyncSession,
@@ -392,8 +401,11 @@ async def request_document(
     task_id: uuid.UUID | None = None,
     message: str | None = None,
     current_user: CurrentUser,
-) -> Communication:
-    """Create a document request communication to a stakeholder."""
+) -> tuple[Communication, DocumentRequest]:
+    """Create a document request with a token-based upload link.
+
+    Returns (Communication, DocumentRequest) so the caller can access the token.
+    """
     body = message or f"Please upload a {doc_type_needed} document."
     subject = f"Document Request: {doc_type_needed}"
 
@@ -410,35 +422,203 @@ async def request_document(
     db.add(comm)
     await db.flush()
 
+    # Create a DocumentRequest record with a unique upload token
+    doc_request = DocumentRequest(
+        matter_id=matter_id,
+        requester_stakeholder_id=sender.id,
+        target_stakeholder_id=target_stakeholder_id,
+        task_id=task_id,
+        doc_type_needed=doc_type_needed,
+        message=message,
+        expires_at=datetime.now(UTC) + timedelta(days=_REQUEST_EXPIRY_DAYS),
+    )
+    db.add(doc_request)
+    await db.flush()
+
     await event_logger.log(
         db,
         matter_id=matter_id,
         actor_id=current_user.user_id,
         actor_type=ActorType.user,
-        entity_type="communication",
-        entity_id=comm.id,
+        entity_type="document_request",
+        entity_id=doc_request.id,
         action="document_requested",
         metadata={
             "target_stakeholder_id": str(target_stakeholder_id),
             "doc_type_needed": doc_type_needed,
             "task_id": str(task_id) if task_id else None,
+            "upload_token": doc_request.upload_token,
         },
     )
 
-    # Email stub
-    target = await db.execute(select(Stakeholder).where(Stakeholder.id == target_stakeholder_id))
-    target_stakeholder = target.scalar_one_or_none()
-    if target_stakeholder:
-        logger.info(
-            "document_request_email_stub",
-            extra={
-                "target_email": target_stakeholder.email,
-                "target_name": target_stakeholder.full_name,
-                "doc_type_needed": doc_type_needed,
-            },
+    # Fetch target stakeholder and matter info, then dispatch email via Celery
+    from app.models.matters import Matter
+
+    target_result = await db.execute(
+        select(Stakeholder).where(Stakeholder.id == target_stakeholder_id)
+    )
+    target_stakeholder = target_result.scalar_one_or_none()
+
+    matter_result = await db.execute(
+        select(Matter).where(Matter.id == matter_id)
+    )
+    matter = matter_result.scalar_one_or_none()
+
+    if target_stakeholder and matter:
+        from app.workers.notification_tasks import send_document_request
+
+        send_document_request.delay(
+            matter_id=str(matter_id),
+            to=target_stakeholder.email,
+            recipient_name=target_stakeholder.full_name,
+            requester_name=sender.full_name,
+            doc_type=doc_type_needed,
+            reason=message,
+            decedent_name=matter.decedent_name,
+            upload_token=doc_request.upload_token,
         )
 
-    return comm
+    return comm, doc_request
+
+
+# ---------------------------------------------------------------------------
+# Token-based upload flow (public, no auth required)
+# ---------------------------------------------------------------------------
+
+
+async def get_request_by_token(
+    db: AsyncSession, *, token: str
+) -> DocumentRequest:
+    """Look up a document request by upload token. Validates expiry and status."""
+    result = await db.execute(
+        select(DocumentRequest)
+        .options(
+            selectinload(DocumentRequest.matter),
+            selectinload(DocumentRequest.requester),
+            selectinload(DocumentRequest.target),
+            selectinload(DocumentRequest.task),
+        )
+        .where(DocumentRequest.upload_token == token)
+    )
+    doc_request = result.scalar_one_or_none()
+    if doc_request is None:
+        raise NotFoundError(detail="Document request not found or link is invalid")
+
+    if doc_request.status == DocumentRequestStatus.uploaded:
+        raise BadRequestError(detail="This document has already been uploaded")
+
+    if doc_request.status == DocumentRequestStatus.expired or (
+        doc_request.expires_at and datetime.now(UTC) > doc_request.expires_at
+    ):
+        # Mark as expired if not already
+        if doc_request.status != DocumentRequestStatus.expired:
+            doc_request.status = DocumentRequestStatus.expired
+            await db.flush()
+        raise BadRequestError(detail="This upload link has expired")
+
+    return doc_request
+
+
+def get_token_upload_url(
+    *, matter: Any, filename: str, mime_type: str
+) -> tuple[str, str, int]:
+    """Generate presigned upload URL for a token-based upload."""
+    from app.models.matters import Matter as MatterModel
+
+    matter_obj: MatterModel = matter
+    upload_url, storage_key = storage_service.generate_upload_url(
+        firm_id=matter_obj.firm_id,
+        matter_id=matter_obj.id,
+        filename=filename,
+        mime_type=mime_type,
+    )
+    return upload_url, storage_key, _PRESIGN_EXPIRY
+
+
+async def complete_token_upload(
+    db: AsyncSession,
+    *,
+    doc_request: DocumentRequest,
+    filename: str,
+    storage_key: str,
+    mime_type: str,
+    size_bytes: int,
+) -> Document:
+    """Complete a token-based upload: register document, link to task, notify requester."""
+
+    # Register the document (uploaded_by = target stakeholder)
+    doc = Document(
+        matter_id=doc_request.matter_id,
+        uploaded_by=doc_request.target_stakeholder_id,
+        filename=filename,
+        storage_key=storage_key,
+        mime_type=mime_type,
+        size_bytes=size_bytes,
+    )
+    db.add(doc)
+    await db.flush()
+
+    # Create initial version record
+    v1 = DocumentVersion(
+        document_id=doc.id,
+        version_number=1,
+        storage_key=storage_key,
+        size_bytes=size_bytes,
+        uploaded_by=doc_request.target_stakeholder_id,
+    )
+    db.add(v1)
+
+    # Link to task if the request specified one
+    if doc_request.task_id is not None:
+        await db.execute(
+            task_documents.insert().values(
+                task_id=doc_request.task_id, document_id=doc.id
+            )
+        )
+
+    # Update the document request record
+    doc_request.status = DocumentRequestStatus.uploaded
+    doc_request.document_id = doc.id
+    doc_request.completed_at = datetime.now(UTC)
+    await db.flush()
+
+    # Log event (system actor since no authenticated user)
+    await event_logger.log(
+        db,
+        matter_id=doc_request.matter_id,
+        actor_id=doc_request.target_stakeholder_id,
+        actor_type=ActorType.user,
+        entity_type="document",
+        entity_id=doc.id,
+        action="uploaded_via_request",
+        metadata={
+            "filename": filename,
+            "mime_type": mime_type,
+            "size_bytes": size_bytes,
+            "document_request_id": str(doc_request.id),
+            "task_id": str(doc_request.task_id) if doc_request.task_id else None,
+        },
+    )
+
+    # Enqueue AI classification
+    try:
+        from app.workers.ai_tasks import classify_document
+
+        classify_document.delay(str(doc.id), str(doc_request.matter_id))
+    except Exception:
+        logger.warning("Failed to enqueue AI classification for token upload", exc_info=True)
+
+    # Notify the professional who requested the document
+    try:
+        from app.workers.notification_tasks import send_document_upload_complete
+
+        send_document_upload_complete.delay(
+            document_request_id=str(doc_request.id),
+        )
+    except Exception:
+        logger.warning("Failed to enqueue upload-complete notification", exc_info=True)
+
+    return await _get_document_or_404(db, doc_id=doc.id, matter_id=doc_request.matter_id)
 
 
 # ---------------------------------------------------------------------------

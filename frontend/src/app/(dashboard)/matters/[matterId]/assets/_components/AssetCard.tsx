@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Paperclip,
   Link2,
+  ShieldAlert,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,10 +70,11 @@ function formatCurrency(value: number): string {
 
 interface AssetCardProps {
   asset: AssetListItem;
+  isDisputed?: boolean;
   onClick: () => void;
 }
 
-export function AssetCard({ asset, onClick }: AssetCardProps) {
+export function AssetCard({ asset, isDisputed, onClick }: AssetCardProps) {
   const displayValue =
     asset.current_estimated_value ?? asset.date_of_death_value ?? null;
   const entityName = asset.entities.length > 0 ? asset.entities[0].name : null;
@@ -103,7 +105,15 @@ export function AssetCard({ asset, onClick }: AssetCardProps) {
               </h3>
             </div>
           </div>
-          <StatusBadge status={asset.status} />
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isDisputed && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200" title="This asset has an active dispute">
+                <ShieldAlert className="size-3" />
+                Disputed
+              </span>
+            )}
+            <StatusBadge status={asset.status} />
+          </div>
         </div>
 
         {/* Institution */}

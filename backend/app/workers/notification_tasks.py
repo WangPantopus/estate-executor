@@ -722,12 +722,17 @@ def send_document_request(
     reason: str | None = None,
     decedent_name: str = "Unknown",
     firm_name: str | None = None,
+    upload_token: str | None = None,
 ) -> dict[str, str]:
-    """Send document request email to a stakeholder."""
+    """Send document request email to a stakeholder with a secure upload link."""
     from app.core.config import settings
 
     try:
-        upload_url = f"{settings.frontend_url}/matters/{matter_id}/documents?upload=true"
+        # Use token-based standalone upload page when available
+        if upload_token:
+            upload_url = f"{settings.frontend_url}/upload/{upload_token}"
+        else:
+            upload_url = f"{settings.frontend_url}/matters/{matter_id}/documents?upload=true"
 
         send_templated_email.delay(
             to=to,
@@ -747,4 +752,95 @@ def send_document_request(
 
     except Exception as exc:
         logger.exception("send_document_request failed")
+        raise self.retry(exc=exc) from exc
+
+
+# ---------------------------------------------------------------------------
+# Document upload complete notification (back to the requester)
+# ---------------------------------------------------------------------------
+
+
+@celery_app.task(  # type: ignore[untyped-decorator]
+    name="app.workers.notification_tasks.send_document_upload_complete",
+    bind=True,
+    max_retries=3,
+    retry_backoff=True,
+)
+def send_document_upload_complete(
+    self: Any,
+    document_request_id: str,
+) -> dict[str, str]:
+    """Notify the professional who requested a document that it has been uploaded."""
+    try:
+
+        async def _fetch() -> dict[str, Any] | None:
+            from sqlalchemy import select
+            from sqlalchemy.orm import selectinload
+
+            from app.core.config import settings
+            from app.core.database import async_session_factory
+            from app.models.document_requests import DocumentRequest
+            from app.models.documents import Document
+            from app.models.matters import Matter
+
+            async with async_session_factory() as session:
+                result = await session.execute(
+                    select(DocumentRequest)
+                    .options(
+                        selectinload(DocumentRequest.requester),
+                        selectinload(DocumentRequest.target),
+                        selectinload(DocumentRequest.document),
+                        selectinload(DocumentRequest.matter).selectinload(Matter.firm),
+                        selectinload(DocumentRequest.task),
+                    )
+                    .where(DocumentRequest.id == document_request_id)
+                )
+                doc_request = result.scalar_one_or_none()
+                if doc_request is None or doc_request.requester is None:
+                    return None
+
+                matter = doc_request.matter
+                firm = matter.firm if matter else None
+                document = doc_request.document
+                matter_id = str(matter.id) if matter else ""
+
+                return {
+                    "to": doc_request.requester.email,
+                    "recipient_name": doc_request.requester.full_name,
+                    "uploader_name": doc_request.target.full_name if doc_request.target else "Unknown",
+                    "doc_type": doc_request.doc_type_needed,
+                    "filename": document.filename if document else "Unknown",
+                    "decedent_name": matter.decedent_name if matter else "Unknown",
+                    "firm_name": firm.name if firm else None,
+                    "task_title": doc_request.task.title if doc_request.task else None,
+                    "document_url": (
+                        f"{settings.frontend_url}/matters/{matter_id}/documents"
+                        f"?doc={document.id}" if document else ""
+                    ),
+                }
+
+        info = _run_async(_fetch())
+        if info is None:
+            return {"status": "skipped", "reason": "document_request_not_found"}
+
+        # Build subject line
+        subject = f"Document uploaded: {info['doc_type']}"
+        if info.get("task_title"):
+            subject += f" — {info['task_title']}"
+
+        send_templated_email.delay(
+            to=info["to"],
+            subject=subject,
+            template_name="document_upload_complete.html",
+            context=info,
+        )
+
+        logger.info(
+            "document_upload_complete_notification_queued",
+            extra={"document_request_id": document_request_id},
+        )
+        return {"status": "queued", "document_request_id": document_request_id}
+
+    except Exception as exc:
+        logger.exception("send_document_upload_complete failed")
         raise self.retry(exc=exc) from exc

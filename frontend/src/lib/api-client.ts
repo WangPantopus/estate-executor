@@ -33,6 +33,8 @@ import type {
   DeadlineResponse,
   DeadlineUpdate,
   DisputeFlagCreate,
+  DisputeStatusUpdate,
+  ActiveDisputes,
   DocumentConfirmType,
   DocumentDetail,
   DocumentRegister,
@@ -808,6 +810,29 @@ export class ApiClient {
     return this.post(
       `/firms/${firmId}/matters/${matterId}/dispute-flag`,
       data,
+    );
+  }
+
+  async updateDisputeStatus(
+    firmId: string,
+    matterId: string,
+    commId: string,
+    data: DisputeStatusUpdate,
+  ): Promise<CommunicationResponse> {
+    return this.put(
+      `/firms/${firmId}/matters/${matterId}/dispute-flag/${commId}`,
+      data,
+    );
+  }
+
+  async getActiveDisputes(
+    firmId: string,
+    matterId: string,
+    entityType?: string,
+  ): Promise<ActiveDisputes> {
+    const params = entityType ? `?entity_type=${entityType}` : '';
+    return this.get(
+      `${this.commBase(firmId, matterId)}/disputes${params}`,
     );
   }
 

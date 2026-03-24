@@ -704,6 +704,8 @@ export interface CommunicationCreate {
   visible_to?: string[];
 }
 
+export type DisputeStatus = 'open' | 'under_review' | 'resolved';
+
 export interface CommunicationResponse {
   id: string;
   matter_id: string;
@@ -715,12 +717,28 @@ export interface CommunicationResponse {
   visibility: CommunicationVisibility;
   acknowledged_by: string[];
   created_at: string;
+  // Dispute-specific fields
+  disputed_entity_type?: string | null;
+  disputed_entity_id?: string | null;
+  dispute_status?: DisputeStatus | null;
+  dispute_resolution_note?: string | null;
+  dispute_resolved_at?: string | null;
+  dispute_resolved_by?: string | null;
 }
 
 export interface DisputeFlagCreate {
   entity_type: string;
   entity_id: string;
   reason: string;
+}
+
+export interface DisputeStatusUpdate {
+  status: 'under_review' | 'resolved';
+  resolution_note: string;
+}
+
+export interface ActiveDisputes {
+  disputes: Record<string, Array<{ entity_id: string; dispute_status: DisputeStatus }>>;
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────

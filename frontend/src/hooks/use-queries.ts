@@ -32,6 +32,7 @@ import type {
   DocumentConfirmType,
   DocumentRequestCreate,
   DisputeFlagCreate,
+  DisputeStatusUpdate,
   FirmUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
@@ -705,7 +706,35 @@ export function useCreateDisputeFlag(firmId: string, matterId: string) {
       qc.invalidateQueries({
         queryKey: queryKeys.communications(firmId, matterId),
       });
+      qc.invalidateQueries({
+        queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
+      });
     },
+  });
+}
+
+export function useUpdateDisputeStatus(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { commId: string; data: DisputeStatusUpdate }) =>
+      api.updateDisputeStatus(firmId, matterId, params.commId, params.data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.communications(firmId, matterId),
+      });
+      qc.invalidateQueries({
+        queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
+      });
+    },
+  });
+}
+
+export function useActiveDisputes(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
+    queryFn: () => api.getActiveDisputes(firmId, matterId),
   });
 }
 

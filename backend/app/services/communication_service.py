@@ -11,10 +11,12 @@ from sqlalchemy.orm import selectinload
 from app.core.events import event_logger
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.models.communications import Communication
+from app.core.exceptions import BadRequestError
 from app.models.enums import (
     ActorType,
     CommunicationType,
     CommunicationVisibility,
+    DisputeStatus,
     StakeholderRole,
 )
 from app.models.stakeholders import Stakeholder
@@ -281,6 +283,10 @@ async def create_dispute_flag(
         visibility=CommunicationVisibility.all_stakeholders,
         visible_to=None,
         acknowledged_by=[],
+        # Dispute-specific fields
+        disputed_entity_type=entity_type,
+        disputed_entity_id=entity_id,
+        dispute_status=DisputeStatus.open,
     )
     db.add(comm)
     await db.flush()
@@ -318,3 +324,117 @@ async def create_dispute_flag(
 
     # Reload with sender relationship
     return await _get_communication_or_404(db, comm_id=comm.id, matter_id=matter_id)
+
+
+# ---------------------------------------------------------------------------
+# Update dispute status
+# ---------------------------------------------------------------------------
+
+_VALID_DISPUTE_TRANSITIONS: dict[DisputeStatus, list[DisputeStatus]] = {
+    DisputeStatus.open: [DisputeStatus.under_review, DisputeStatus.resolved],
+    DisputeStatus.under_review: [DisputeStatus.resolved, DisputeStatus.open],
+    DisputeStatus.resolved: [],  # Terminal — cannot reopen
+}
+
+
+async def update_dispute_status(
+    db: AsyncSession,
+    *,
+    comm_id: uuid.UUID,
+    matter_id: uuid.UUID,
+    new_status: str,
+    resolution_note: str,
+    stakeholder: Stakeholder,
+    current_user: CurrentUser,
+) -> Communication:
+    """Update a dispute flag's status. Only matter admins can do this.
+
+    Resolution requires a note explaining the resolution.
+    """
+    from datetime import UTC, datetime
+
+    comm = await _get_communication_or_404(db, comm_id=comm_id, matter_id=matter_id)
+
+    if comm.type != CommunicationType.dispute_flag:
+        raise BadRequestError(detail="Only dispute flags can have their status updated")
+
+    # Validate the new status value
+    try:
+        target_status = DisputeStatus(new_status)
+    except ValueError:
+        raise BadRequestError(
+            detail=f"Invalid dispute status: {new_status}. "
+            f"Valid values: {', '.join(s.value for s in DisputeStatus)}"
+        )
+
+    # Check valid transition
+    current_status = comm.dispute_status or DisputeStatus.open
+    valid_targets = _VALID_DISPUTE_TRANSITIONS.get(current_status, [])
+    if target_status not in valid_targets:
+        raise BadRequestError(
+            detail=f"Cannot transition dispute from '{current_status.value}' to '{target_status.value}'"
+        )
+
+    old_status = current_status.value
+    comm.dispute_status = target_status
+
+    if target_status == DisputeStatus.resolved:
+        comm.dispute_resolved_at = datetime.now(UTC)
+        comm.dispute_resolved_by = stakeholder.id
+        comm.dispute_resolution_note = resolution_note
+    elif target_status == DisputeStatus.under_review:
+        # Store the review note but don't set resolved fields
+        comm.dispute_resolution_note = resolution_note
+
+    await db.flush()
+
+    await event_logger.log(
+        db,
+        matter_id=matter_id,
+        actor_id=current_user.user_id,
+        actor_type=ActorType.user,
+        entity_type="communication",
+        entity_id=comm.id,
+        action=f"dispute_{target_status.value}",
+        changes={"dispute_status": {"old": old_status, "new": target_status.value}},
+        metadata={
+            "disputed_entity_type": comm.disputed_entity_type,
+            "disputed_entity_id": str(comm.disputed_entity_id) if comm.disputed_entity_id else None,
+            "resolution_note": resolution_note,
+        },
+    )
+
+    return comm
+
+
+# ---------------------------------------------------------------------------
+# Get active disputes for an entity
+# ---------------------------------------------------------------------------
+
+
+async def get_entity_dispute_ids(
+    db: AsyncSession,
+    *,
+    matter_id: uuid.UUID,
+    entity_type: str,
+    entity_ids: list[uuid.UUID],
+) -> set[uuid.UUID]:
+    """Return the set of entity IDs that have active (non-resolved) disputes."""
+    if not entity_ids:
+        return set()
+
+    result = await db.execute(
+        select(Communication.disputed_entity_id)
+        .where(
+            Communication.matter_id == matter_id,
+            Communication.type == CommunicationType.dispute_flag,
+            Communication.disputed_entity_type == entity_type,
+            Communication.disputed_entity_id.in_(entity_ids),
+            Communication.dispute_status.in_([
+                DisputeStatus.open,
+                DisputeStatus.under_review,
+            ]),
+        )
+        .distinct()
+    )
+    return {row[0] for row in result.all()}

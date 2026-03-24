@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   AlertTriangle,
   Shield,
@@ -15,8 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { STAKEHOLDER_ROLE_LABELS } from "@/lib/constants";
-import { useAcknowledgeCommunication } from "@/hooks";
-import type { CommunicationResponse, CommunicationType, Stakeholder } from "@/lib/types";
+import { useAcknowledgeCommunication, useUpdateDisputeStatus } from "@/hooks";
+import type { CommunicationResponse, CommunicationType, DisputeStatus, Stakeholder } from "@/lib/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,18 @@ interface MessageDetailProps {
   currentUserId: string | null;
 }
 
+const DISPUTE_STATUS_LABELS: Record<string, string> = {
+  open: "Open",
+  under_review: "Under Review",
+  resolved: "Resolved",
+};
+
+const DISPUTE_STATUS_COLORS: Record<string, string> = {
+  open: "bg-red-50 text-red-700 border-red-200",
+  under_review: "bg-amber-50 text-amber-700 border-amber-200",
+  resolved: "bg-green-50 text-green-700 border-green-200",
+};
+
 export function MessageDetail({
   communication: comm,
   firmId,
@@ -63,6 +76,8 @@ export function MessageDetail({
   currentUserId,
 }: MessageDetailProps) {
   const acknowledgeMutation = useAcknowledgeCommunication(firmId, matterId);
+  const disputeMutation = useUpdateDisputeStatus(firmId, matterId);
+  const [resolutionNote, setResolutionNote] = React.useState("");
 
   const isDispute = comm.type === "dispute_flag";
   const isDistNotice = comm.type === "distribution_notice";
@@ -84,15 +99,37 @@ export function MessageDetail({
   return (
     <ScrollArea className="h-full">
       <div className="p-6 space-y-5">
-        {/* Dispute flag warning banner */}
+        {/* Dispute flag warning banner with status */}
         {isDispute && (
           <div className="rounded-lg border-2 border-warning bg-warning-light/30 p-4 flex items-start gap-3">
             <AlertTriangle className="size-5 text-warning shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-warning">Dispute Flag</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-warning">Dispute Flag</p>
+                {comm.dispute_status && (
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${DISPUTE_STATUS_COLORS[comm.dispute_status] || DISPUTE_STATUS_COLORS.open}`}>
+                    {DISPUTE_STATUS_LABELS[comm.dispute_status] || comm.dispute_status}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                A stakeholder has flagged a dispute on this matter. Review and address promptly.
+                {comm.dispute_status === "resolved"
+                  ? "This dispute has been resolved."
+                  : comm.dispute_status === "under_review"
+                    ? "This dispute is currently under review."
+                    : "A stakeholder has flagged a dispute. Review and address promptly."}
               </p>
+              {comm.disputed_entity_type && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Disputed {comm.disputed_entity_type}: <span className="font-mono text-[10px]">{comm.disputed_entity_id}</span>
+                </p>
+              )}
+              {comm.dispute_status === "resolved" && comm.dispute_resolution_note && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800">
+                  <p className="font-medium mb-0.5">Resolution Note:</p>
+                  <p>{comm.dispute_resolution_note}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -211,6 +248,65 @@ export function MessageDetail({
                   You have acknowledged this notice.
                 </p>
               )}
+            </div>
+          </>
+        )}
+
+        {/* Dispute resolution controls (matter admins only) */}
+        {isDispute && comm.dispute_status !== "resolved" && currentStakeholder?.role === "matter_admin" && (
+          <>
+            <Separator />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground mb-3">
+                Dispute Resolution
+              </h3>
+              <textarea
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[80px] resize-y"
+                placeholder="Enter a note explaining the status change..."
+                value={resolutionNote}
+                onChange={(e) => setResolutionNote(e.target.value)}
+              />
+              <div className="flex gap-2 mt-3">
+                {comm.dispute_status !== "under_review" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    disabled={!resolutionNote.trim() || disputeMutation.isPending}
+                    onClick={() => {
+                      disputeMutation.mutate(
+                        { commId: comm.id, data: { status: "under_review", resolution_note: resolutionNote.trim() } },
+                        { onSuccess: () => setResolutionNote("") },
+                      );
+                    }}
+                  >
+                    {disputeMutation.isPending ? (
+                      <Loader2 className="size-4 mr-1 animate-spin" />
+                    ) : (
+                      <Clock className="size-4 mr-1" />
+                    )}
+                    Mark Under Review
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  disabled={!resolutionNote.trim() || disputeMutation.isPending}
+                  onClick={() => {
+                    disputeMutation.mutate(
+                      { commId: comm.id, data: { status: "resolved", resolution_note: resolutionNote.trim() } },
+                      { onSuccess: () => setResolutionNote("") },
+                    );
+                  }}
+                >
+                  {disputeMutation.isPending ? (
+                    <Loader2 className="size-4 mr-1 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="size-4 mr-1" />
+                  )}
+                  Mark Resolved
+                </Button>
+              </div>
             </div>
           </>
         )}

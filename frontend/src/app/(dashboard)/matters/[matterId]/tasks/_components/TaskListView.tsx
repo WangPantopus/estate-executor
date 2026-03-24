@@ -12,6 +12,7 @@ import {
   Paperclip,
   MoreHorizontal,
   UserCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/layout/StatusBadge";
@@ -40,6 +41,7 @@ interface TaskListViewProps {
   stakeholders: Stakeholder[];
   groupBy: GroupBy;
   selectedIds: Set<string>;
+  disputedTaskIds?: Set<string>;
   onToggleSelect: (taskId: string) => void;
   onSelectAll: (taskIds: string[]) => void;
   onTaskClick: (taskId: string) => void;
@@ -164,6 +166,7 @@ function TaskRow({
   task,
   stakeholders,
   selected,
+  isDisputed,
   onToggleSelect,
   onTaskClick,
   onComplete,
@@ -174,6 +177,7 @@ function TaskRow({
   task: Task;
   stakeholders: Stakeholder[];
   selected: boolean;
+  isDisputed?: boolean;
   onToggleSelect: () => void;
   onTaskClick: () => void;
   onComplete: () => void;
@@ -225,6 +229,14 @@ function TaskRow({
       >
         {task.title}
       </button>
+
+      {/* Disputed badge */}
+      {isDisputed && (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200 shrink-0" title="This task has an active dispute">
+          <ShieldAlert className="size-3" />
+          Disputed
+        </span>
+      )}
 
       {/* Priority indicator */}
       {task.priority === "critical" && (
@@ -317,6 +329,7 @@ function GroupSection({
   group,
   stakeholders,
   selectedIds,
+  disputedTaskIds,
   defaultOpen,
   onToggleSelect,
   onTaskClick,
@@ -329,6 +342,7 @@ function GroupSection({
   group: TaskGroup;
   stakeholders: Stakeholder[];
   selectedIds: Set<string>;
+  disputedTaskIds?: Set<string>;
   defaultOpen: boolean;
   onToggleSelect: (taskId: string) => void;
   onTaskClick: (taskId: string) => void;
@@ -363,6 +377,7 @@ function GroupSection({
               task={task}
               stakeholders={stakeholders}
               selected={selectedIds.has(task.id)}
+              isDisputed={disputedTaskIds?.has(task.id)}
               onToggleSelect={() => onToggleSelect(task.id)}
               onTaskClick={() => onTaskClick(task.id)}
               onComplete={() => onComplete(task.id)}
@@ -384,6 +399,7 @@ export function TaskListView({
   stakeholders,
   groupBy,
   selectedIds,
+  disputedTaskIds,
   onToggleSelect,
   onTaskClick,
   onComplete,
@@ -433,6 +449,7 @@ export function TaskListView({
             task={task}
             stakeholders={stakeholders}
             selected={selectedIds.has(task.id)}
+            isDisputed={disputedTaskIds?.has(task.id)}
             onToggleSelect={() => onToggleSelect(task.id)}
             onTaskClick={() => onTaskClick(task.id)}
             onComplete={() => onComplete(task.id)}
@@ -446,6 +463,7 @@ export function TaskListView({
             group={completedGroup}
             stakeholders={stakeholders}
             selectedIds={selectedIds}
+            disputedTaskIds={disputedTaskIds}
             defaultOpen={false}
             onToggleSelect={onToggleSelect}
             onTaskClick={onTaskClick}
@@ -468,6 +486,7 @@ export function TaskListView({
           group={group}
           stakeholders={stakeholders}
           selectedIds={selectedIds}
+          disputedTaskIds={disputedTaskIds}
           defaultOpen={true}
           onToggleSelect={onToggleSelect}
           onTaskClick={onTaskClick}
@@ -483,6 +502,7 @@ export function TaskListView({
           group={completedGroup}
           stakeholders={stakeholders}
           selectedIds={selectedIds}
+          disputedTaskIds={disputedTaskIds}
           defaultOpen={false}
           onToggleSelect={onToggleSelect}
           onTaskClick={onTaskClick}

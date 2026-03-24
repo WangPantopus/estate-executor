@@ -27,6 +27,7 @@ from app.schemas.documents import (
     DocumentListResponse,
     DocumentRegister,
     DocumentRequestCreate,
+    DocumentRequestResponse,
     DocumentResponse,
     DocumentUploadRequest,
     DocumentUploadURL,
@@ -244,7 +245,7 @@ async def list_documents(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/request", status_code=201)
+@router.post("/request", response_model=DocumentRequestResponse, status_code=201)
 async def request_document(
     firm_id: UUID,
     matter_id: UUID,
@@ -253,10 +254,12 @@ async def request_document(
     stakeholder: Stakeholder = Depends(require_stakeholder),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    """Request a document from a stakeholder. Sends email with upload link."""
+) -> DocumentRequestResponse:
+    """Request a document from a stakeholder. Sends email with secure upload link."""
     _require_doc_admin(stakeholder)
-    comm = await document_service.request_document(
+    from app.core.config import settings as app_settings
+
+    _comm, doc_request = await document_service.request_document(
         db,
         matter_id=matter_id,
         sender=stakeholder,
@@ -266,7 +269,14 @@ async def request_document(
         message=body.message,
         current_user=current_user,
     )
-    return {"id": str(comm.id), "status": "sent"}
+    upload_url = f"{app_settings.frontend_url}/upload/{doc_request.upload_token}"
+    return DocumentRequestResponse(
+        id=doc_request.id,
+        upload_token=doc_request.upload_token,
+        upload_url=upload_url,
+        status=doc_request.status.value,
+        expires_at=doc_request.expires_at,
+    )
 
 
 # ---------------------------------------------------------------------------
