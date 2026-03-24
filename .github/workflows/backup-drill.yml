@@ -42,7 +42,7 @@ jobs:
       endpoint: ${{ steps.endpoint.outputs.endpoint }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -115,7 +115,7 @@ jobs:
     needs: restore
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
