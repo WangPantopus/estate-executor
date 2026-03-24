@@ -12,6 +12,7 @@ import time
 from typing import Any
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 
@@ -30,14 +31,12 @@ async def health_check() -> dict[str, str]:
 
 
 @router.get("/health/ready")
-async def readiness_check() -> dict[str, Any]:
+async def readiness_check() -> JSONResponse:
     """Deep readiness probe — verifies all critical dependencies.
 
     Returns 200 if all checks pass, 503 if any check fails.
     Each check includes its latency in milliseconds.
     """
-    from fastapi.responses import JSONResponse
-
     checks: dict[str, dict[str, Any]] = {}
     overall_ok = True
 
@@ -100,7 +99,7 @@ async def _check_redis() -> dict[str, Any]:
     try:
         import redis.asyncio as aioredis
 
-        r = aioredis.from_url(settings.redis_url, decode_responses=True)
+        r = aioredis.from_url(settings.redis_url, decode_responses=True)  # type: ignore[no-untyped-call]
         try:
             pong = await r.ping()
             latency = (time.perf_counter() - start) * 1000
@@ -208,7 +207,7 @@ async def _check_celery() -> dict[str, Any]:
     try:
         import redis.asyncio as aioredis
 
-        r = aioredis.from_url(settings.celery_broker_url, decode_responses=True)
+        r = aioredis.from_url(settings.celery_broker_url, decode_responses=True)  # type: ignore[no-untyped-call]
         try:
             pong = await r.ping()
             latency = (time.perf_counter() - start) * 1000

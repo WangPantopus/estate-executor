@@ -67,7 +67,7 @@ async def get_business_metrics(
 
         matter_rows = await db.execute(
             select(Matter.status, func.count(Matter.id))
-            .where(Matter.deleted_at.is_(None))
+            .where(Matter.deleted_at.is_(None))  # type: ignore[attr-defined]
             .group_by(Matter.status)
         )
         matter_counts = {
@@ -131,7 +131,7 @@ async def get_business_metrics(
         overdue_row = await db.execute(
             select(func.count(Deadline.id)).where(
                 Deadline.due_date < text("NOW()"),
-                Deadline.completed_at.is_(None),
+                Deadline.completed_at.is_(None),  # type: ignore[attr-defined]
             )
         )
         metrics["overdue_deadlines"] = overdue_row.scalar() or 0

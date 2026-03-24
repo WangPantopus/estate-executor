@@ -7,8 +7,12 @@ If SENTRY_DSN is empty, Sentry is silently disabled — no-op in development.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 from app.core.config import settings
+
+if TYPE_CHECKING:
+    import sentry_sdk.types
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +79,9 @@ def _traces_sampler(sampling_context: dict) -> float:  # type: ignore[type-arg]
     return settings.sentry_traces_sample_rate
 
 
-def _before_send(event: dict, hint: dict) -> dict | None:  # type: ignore[type-arg]
+def _before_send(
+    event: sentry_sdk.types.Event, hint: dict[str, Any]
+) -> sentry_sdk.types.Event | None:
     """Filter events before sending to Sentry.
 
     - Strip sensitive headers

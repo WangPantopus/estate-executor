@@ -60,10 +60,10 @@ def cache_get(namespace: str, *parts: str) -> Any | None:
     """Fetch a cached JSON value. Returns None on miss or Redis failure."""
     try:
         r = _get_redis()
-        raw = r.get(_key(namespace, *parts))
+        raw = r.get(_key(namespace, *parts))  # type: ignore[union-attr]
         if raw is None:
             return None
-        return json.loads(raw)
+        return json.loads(raw)  # type: ignore[arg-type]
     except Exception:
         logger.debug("Cache miss (error) for %s:%s", namespace, parts)
         return None
@@ -102,7 +102,7 @@ def cache_invalidate_pattern(namespace: str, *parts: str) -> None:
         pattern = _key(namespace, *parts, "*")
         cursor = 0
         while True:
-            cursor, keys = r.scan(cursor=cursor, match=pattern, count=100)
+            cursor, keys = r.scan(cursor=cursor, match=pattern, count=100)  # type: ignore[misc]
             if keys:
                 r.delete(*keys)
             if cursor == 0:

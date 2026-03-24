@@ -161,8 +161,8 @@ async def _check_db_pool() -> list[Alert]:
         from app.core.database import engine
 
         pool = engine.pool
-        pool_size = pool.size()
-        checked_out = pool.checkedout()
+        pool_size = pool.size()  # type: ignore[attr-defined]
+        checked_out = pool.checkedout()  # type: ignore[attr-defined]
 
         # Alert if >80% of pool is in use
         total_available = pool_size + engine.pool._max_overflow  # type: ignore[attr-defined]
