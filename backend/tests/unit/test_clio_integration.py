@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.models.enums import (
     IntegrationProvider,
     IntegrationStatus,
@@ -15,7 +13,6 @@ from app.services.clio_client import (
     generate_state,
     token_expires_at,
 )
-
 
 # ─── Enum tests ──────────────────────────────────────────────────────────────
 
