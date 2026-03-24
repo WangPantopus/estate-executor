@@ -6,6 +6,7 @@ from app.models.base import BaseModel
 from app.models.communications import Communication
 from app.models.deadlines import Deadline
 from app.models.distributions import Distribution
+from app.models.document_requests import DocumentRequest
 from app.models.document_versions import DocumentVersion
 from app.models.documents import Document
 from app.models.email_logs import EmailLog
@@ -19,7 +20,9 @@ from app.models.enums import (
     CommunicationVisibility,
     DeadlineSource,
     DeadlineStatus,
+    DisputeStatus,
     DistributionType,
+    DocumentRequestStatus,
     EntityType,
     EstateType,
     FirmRole,
@@ -45,6 +48,7 @@ from app.models.task_comments import TaskComment
 from app.models.task_dependencies import TaskDependency
 from app.models.task_documents import task_documents
 from app.models.tasks import Task
+from app.models.time_entries import TimeEntry
 from app.models.users import User
 
 __all__ = [
@@ -70,6 +74,8 @@ __all__ = [
     "TaskPhase",
     "TaskPriority",
     "TaskStatus",
+    "DisputeStatus",
+    "DocumentRequestStatus",
     "DistributionType",
     "TransferMechanism",
     # Base
@@ -93,8 +99,10 @@ __all__ = [
     "Deadline",
     "Communication",
     "Distribution",
+    "DocumentRequest",
     "Event",
     "EmailLog",
+    "TimeEntry",
     "AIUsageLog",
     "AIFeedback",
 ]

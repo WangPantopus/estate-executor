@@ -33,6 +33,15 @@ import type {
   DeadlineResponse,
   DeadlineUpdate,
   DisputeFlagCreate,
+  DisputeStatusUpdate,
+  ActiveDisputes,
+  MilestoneStatusResponse,
+  MilestoneSettingUpdate,
+  TimeEntry,
+  TimeEntryCreate,
+  TimeEntryUpdate,
+  TimeEntryListResponse,
+  TimeTrackingSummary,
   DocumentConfirmType,
   DocumentDetail,
   DocumentRegister,
@@ -239,6 +248,10 @@ export class ApiClient {
 
   private patch<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>('PATCH', path, body);
+  }
+
+  private put<T>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>('PUT', path, body);
   }
 
   private del<T = void>(path: string): Promise<T> {
@@ -811,6 +824,99 @@ export class ApiClient {
     );
   }
 
+  async updateDisputeStatus(
+    firmId: string,
+    matterId: string,
+    commId: string,
+    data: DisputeStatusUpdate,
+  ): Promise<CommunicationResponse> {
+    return this.put(
+      `/firms/${firmId}/matters/${matterId}/dispute-flag/${commId}`,
+      data,
+    );
+  }
+
+  async getActiveDisputes(
+    firmId: string,
+    matterId: string,
+    entityType?: string,
+  ): Promise<ActiveDisputes> {
+    const params = entityType ? `?entity_type=${entityType}` : '';
+    return this.get(
+      `${this.commBase(firmId, matterId)}/disputes${params}`,
+    );
+  }
+
+  // ─── Time Tracking ──────────────────────────────────────────────────
+
+  private timeBase(firmId: string, matterId: string): string {
+    return `/firms/${firmId}/matters/${matterId}/time`;
+  }
+
+  async getTimeEntries(
+    firmId: string,
+    matterId: string,
+    params?: { task_id?: string; stakeholder_id?: string; billable?: boolean; date_from?: string; date_to?: string; page?: number; per_page?: number },
+  ): Promise<TimeEntryListResponse> {
+    return this.get(
+      `${this.timeBase(firmId, matterId)}${buildQueryString(params)}`,
+    );
+  }
+
+  async createTimeEntry(
+    firmId: string,
+    matterId: string,
+    data: TimeEntryCreate,
+  ): Promise<TimeEntry> {
+    return this.post(this.timeBase(firmId, matterId), data);
+  }
+
+  async updateTimeEntry(
+    firmId: string,
+    matterId: string,
+    entryId: string,
+    data: TimeEntryUpdate,
+  ): Promise<TimeEntry> {
+    return this.put(`${this.timeBase(firmId, matterId)}/${entryId}`, data);
+  }
+
+  async deleteTimeEntry(
+    firmId: string,
+    matterId: string,
+    entryId: string,
+  ): Promise<void> {
+    return this.del(`${this.timeBase(firmId, matterId)}/${entryId}`);
+  }
+
+  async getTimeSummary(
+    firmId: string,
+    matterId: string,
+  ): Promise<TimeTrackingSummary> {
+    return this.get(`${this.timeBase(firmId, matterId)}/summary`);
+  }
+
+  // ─── Milestones ──────────────────────────────────────────────────────
+
+  async getMilestones(
+    firmId: string,
+    matterId: string,
+  ): Promise<MilestoneStatusResponse> {
+    return this.get(
+      `/firms/${firmId}/matters/${matterId}/milestones`,
+    );
+  }
+
+  async updateMilestoneSetting(
+    firmId: string,
+    matterId: string,
+    data: MilestoneSettingUpdate,
+  ): Promise<{ milestone_notifications: Record<string, boolean> }> {
+    return this.put(
+      `/firms/${firmId}/matters/${matterId}/milestones/settings`,
+      data,
+    );
+  }
+
   // ─── Events ──────────────────────────────────────────────────────────
 
   async getEvents(
@@ -842,8 +948,7 @@ export class ApiClient {
     reportType: string,
     format: string = "pdf",
   ): string {
-    const base = this.baseUrl || process.env.NEXT_PUBLIC_API_URL || "";
-    return `${base}/api/v1${this.reportBase(firmId, matterId)}/${reportType}?format=${format}`;
+    return `${this.baseUrl}${this.reportBase(firmId, matterId)}/${reportType}?format=${format}`;
   }
 
   async generateReportAsync(

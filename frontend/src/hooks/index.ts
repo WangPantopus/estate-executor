@@ -51,6 +51,11 @@ export {
   useCreateCommunication,
   useAcknowledgeCommunication,
   useCreateDisputeFlag,
+  // Distributions
+  useDistributions,
+  useDistributionSummary,
+  useRecordDistribution,
+  useAcknowledgeDistribution,
   // Events
   useEvents,
   // Documents
@@ -63,6 +68,18 @@ export {
   useSuggestTasks,
   useDetectAnomalies,
   useAIUsageStats,
+  // Time Tracking
+  useTimeEntries,
+  useTimeSummary,
+  useCreateTimeEntry,
+  useUpdateTimeEntry,
+  useDeleteTimeEntry,
+  // Milestones
+  useMilestones,
+  useUpdateMilestoneSetting,
+  // Disputes
+  useUpdateDisputeStatus,
+  useActiveDisputes,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

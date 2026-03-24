@@ -32,6 +32,10 @@ import type {
   DocumentConfirmType,
   DocumentRequestCreate,
   DisputeFlagCreate,
+  DisputeStatusUpdate,
+  MilestoneSettingUpdate,
+  TimeEntryCreate,
+  TimeEntryUpdate,
   FirmUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
@@ -704,6 +708,124 @@ export function useCreateDisputeFlag(firmId: string, matterId: string) {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: queryKeys.communications(firmId, matterId),
+      });
+      qc.invalidateQueries({
+        queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
+      });
+    },
+  });
+}
+
+export function useUpdateDisputeStatus(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { commId: string; data: DisputeStatusUpdate }) =>
+      api.updateDisputeStatus(firmId, matterId, params.commId, params.data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.communications(firmId, matterId),
+      });
+      qc.invalidateQueries({
+        queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
+      });
+    },
+  });
+}
+
+export function useActiveDisputes(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
+    queryFn: () => api.getActiveDisputes(firmId, matterId),
+  });
+}
+
+// ─── Time Tracking ───────────────────────────────────────────────────────────
+
+export function useTimeEntries(
+  firmId: string,
+  matterId: string,
+  params?: { task_id?: string; page?: number },
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "time", params],
+    queryFn: () => api.getTimeEntries(firmId, matterId, params),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useTimeSummary(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "time", "summary"],
+    queryFn: () => api.getTimeSummary(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useCreateTimeEntry(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: TimeEntryCreate) =>
+      api.createTimeEntry(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "time"],
+      });
+    },
+  });
+}
+
+export function useUpdateTimeEntry(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { entryId: string; data: TimeEntryUpdate }) =>
+      api.updateTimeEntry(firmId, matterId, params.entryId, params.data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "time"],
+      });
+    },
+  });
+}
+
+export function useDeleteTimeEntry(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) =>
+      api.deleteTimeEntry(firmId, matterId, entryId),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "time"],
+      });
+    },
+  });
+}
+
+// ─── Milestones ──────────────────────────────────────────────────────────────
+
+export function useMilestones(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "milestones"],
+    queryFn: () => api.getMilestones(firmId, matterId),
+  });
+}
+
+export function useUpdateMilestoneSetting(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: MilestoneSettingUpdate) =>
+      api.updateMilestoneSetting(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "milestones"],
       });
     },
   });

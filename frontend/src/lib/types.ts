@@ -704,6 +704,8 @@ export interface CommunicationCreate {
   visible_to?: string[];
 }
 
+export type DisputeStatus = 'open' | 'under_review' | 'resolved';
+
 export interface CommunicationResponse {
   id: string;
   matter_id: string;
@@ -715,12 +717,101 @@ export interface CommunicationResponse {
   visibility: CommunicationVisibility;
   acknowledged_by: string[];
   created_at: string;
+  // Dispute-specific fields
+  disputed_entity_type?: string | null;
+  disputed_entity_id?: string | null;
+  dispute_status?: DisputeStatus | null;
+  dispute_resolution_note?: string | null;
+  dispute_resolved_at?: string | null;
+  dispute_resolved_by?: string | null;
 }
 
 export interface DisputeFlagCreate {
   entity_type: string;
   entity_id: string;
   reason: string;
+}
+
+export interface DisputeStatusUpdate {
+  status: 'under_review' | 'resolved';
+  resolution_note: string;
+}
+
+export interface ActiveDisputes {
+  disputes: Record<string, Array<{ entity_id: string; dispute_status: DisputeStatus }>>;
+}
+
+// ─── Milestones ──────────────────────────────────────────────────────────────
+
+export interface MilestoneStatus {
+  key: string;
+  title: string;
+  description: string;
+  phase: string;
+  total_tasks: number;
+  completed_tasks: number;
+  is_complete: boolean;
+  achieved_at: string | null;
+  auto_notify: boolean;
+}
+
+export interface MilestoneStatusResponse {
+  milestones: MilestoneStatus[];
+}
+
+export interface MilestoneSettingUpdate {
+  milestone_key: string;
+  enabled: boolean;
+}
+
+// ─── Time Tracking ───────────────────────────────────────────────────────────
+
+export interface TimeEntry {
+  id: string;
+  matter_id: string;
+  task_id: string | null;
+  task_title: string | null;
+  stakeholder_id: string;
+  stakeholder_name: string;
+  hours: number;
+  minutes: number;
+  description: string;
+  entry_date: string;
+  billable: boolean;
+  created_at: string;
+}
+
+export interface TimeEntryCreate {
+  task_id?: string | null;
+  hours: number;
+  minutes: number;
+  description: string;
+  entry_date: string;
+  billable?: boolean;
+}
+
+export interface TimeEntryUpdate {
+  task_id?: string | null;
+  hours?: number;
+  minutes?: number;
+  description?: string;
+  entry_date?: string;
+  billable?: boolean;
+}
+
+export interface TimeEntryListResponse {
+  data: TimeEntry[];
+  meta: PaginationMeta;
+}
+
+export interface TimeTrackingSummary {
+  total_hours: number;
+  total_minutes: number;
+  total_decimal_hours: number;
+  billable_hours: number;
+  non_billable_hours: number;
+  by_stakeholder: Array<{ stakeholder_id: string; name: string; total_minutes: number; decimal_hours: number }>;
+  by_task: Array<{ task_id: string; title: string; total_minutes: number; decimal_hours: number }>;
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────

@@ -22,6 +22,7 @@ from app.schemas.communications import (
     CommunicationListResponse,
     CommunicationResponse,
     DisputeFlagCreate,
+    DisputeStatusUpdate,
 )
 from app.services import communication_service
 
@@ -42,6 +43,13 @@ def _comm_to_response(comm: Communication) -> CommunicationResponse:
         visibility=comm.visibility,
         acknowledged_by=comm.acknowledged_by,
         created_at=comm.created_at,
+        # Dispute fields
+        disputed_entity_type=comm.disputed_entity_type,
+        disputed_entity_id=comm.disputed_entity_id,
+        dispute_status=comm.dispute_status.value if comm.dispute_status else None,
+        dispute_resolution_note=comm.dispute_resolution_note,
+        dispute_resolved_at=comm.dispute_resolved_at,
+        dispute_resolved_by=comm.dispute_resolved_by,
     )
 
 
@@ -132,6 +140,72 @@ async def list_communications(
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# GET .../communications/disputes — List active disputes for a matter
+# ---------------------------------------------------------------------------
+
+
+@router.get("/disputes")
+async def list_active_disputes(
+    firm_id: UUID,
+    matter_id: UUID,
+    entity_type: str | None = Query(None),
+    _membership: FirmMembership = Depends(require_firm_member),
+    _stakeholder: Stakeholder = Depends(require_stakeholder),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """List entity IDs with active (non-resolved) disputes.
+
+    Returns a map of entity_type → list of disputed entity_ids.
+    Used by frontend to show "Disputed" badges on tasks/assets.
+    """
+    from sqlalchemy import select
+
+    from app.models.enums import DisputeStatus
+
+    filters = [
+        Communication.matter_id == matter_id,
+        Communication.type == CommunicationType.dispute_flag,
+        Communication.dispute_status.in_(
+            [
+                DisputeStatus.open,
+                DisputeStatus.under_review,
+            ]
+        ),
+    ]
+    if entity_type:
+        filters.append(Communication.disputed_entity_type == entity_type)
+
+    result = await db.execute(
+        select(
+            Communication.disputed_entity_type,
+            Communication.disputed_entity_id,
+            Communication.dispute_status,
+        )
+        .where(*filters)
+        .distinct()
+    )
+
+    disputes: dict[str, list[dict[str, object]]] = {}
+    for row in result.all():
+        etype = row[0] or "unknown"
+        if etype not in disputes:
+            disputes[etype] = []
+        disputes[etype].append(
+            {
+                "entity_id": str(row[1]) if row[1] else None,
+                "dispute_status": row[2].value if row[2] else "open",
+            }
+        )
+
+    return {"disputes": disputes}
+
+
+# ---------------------------------------------------------------------------
+# POST .../communications/{comm_id}/acknowledge
+# ---------------------------------------------------------------------------
+
+
 @router.post("/{comm_id}/acknowledge", response_model=CommunicationResponse)
 async def acknowledge_communication(
     firm_id: UUID,
@@ -176,6 +250,42 @@ async def create_dispute_flag(
         entity_type=body.entity_type,
         entity_id=body.entity_id,
         reason=body.reason,
+        current_user=current_user,
+    )
+    return _comm_to_response(comm)
+
+
+# ---------------------------------------------------------------------------
+# PUT .../dispute-flag/{comm_id} — Update dispute status
+# ---------------------------------------------------------------------------
+
+
+@dispute_flag_router.put("/{comm_id}", response_model=CommunicationResponse)
+async def update_dispute_status(
+    firm_id: UUID,
+    matter_id: UUID,
+    comm_id: UUID,
+    body: DisputeStatusUpdate,
+    _membership: FirmMembership = Depends(require_firm_member),
+    stakeholder: Stakeholder = Depends(require_stakeholder),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CommunicationResponse:
+    """Update a dispute's status. Only matter admins can do this.
+
+    Valid transitions: open → under_review, open → resolved, under_review → resolved.
+    Resolution requires a note.
+    """
+    if stakeholder.role != StakeholderRole.matter_admin:
+        raise PermissionDeniedError(detail="Only matter admins can update dispute status")
+
+    comm = await communication_service.update_dispute_status(
+        db,
+        comm_id=comm_id,
+        matter_id=matter_id,
+        new_status=body.status,
+        resolution_note=body.resolution_note,
+        stakeholder=stakeholder,
         current_user=current_user,
     )
     return _comm_to_response(comm)

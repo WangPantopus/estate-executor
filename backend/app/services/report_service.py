@@ -13,7 +13,7 @@ from __future__ import annotations
 import io
 import logging
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
@@ -216,8 +216,8 @@ def _create_workbook() -> Any:
     return wb
 
 
-def _style_excel_header(ws: Any, col_count: int) -> None:
-    """Style the first row as a navy header with white text."""
+def _style_excel_header(ws: Any, col_count: int, *, row: int = 1) -> None:
+    """Style a row as a navy header with white text."""
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
     navy_fill = PatternFill(start_color="1A2332", end_color="1A2332", fill_type="solid")
@@ -227,7 +227,7 @@ def _style_excel_header(ws: Any, col_count: int) -> None:
     )
 
     for col in range(1, col_count + 1):
-        cell = ws.cell(row=1, column=col)
+        cell = ws.cell(row=row, column=col)
         cell.fill = navy_fill
         cell.font = white_font
         cell.alignment = Alignment(horizontal="left", vertical="center")
@@ -725,51 +725,97 @@ async def generate_distribution_ledger_pdf(db: AsyncSession, *, matter_id: uuid.
 
 
 async def generate_time_tracking_xlsx(db: AsyncSession, *, matter_id: uuid.UUID) -> bytes:
-    """Generate a stub time tracking export.
+    """Generate a time tracking export with all entries and a summary sheet."""
+    from app.models.time_entries import TimeEntry
 
-    Time tracking is not yet implemented — this generates a template
-    with column headers and a note about the feature being upcoming.
-    """
-    await _get_matter_with_firm(db, matter_id)
-    stakeholders = await _get_stakeholders(db, matter_id)
+    matter = await _get_matter_with_firm(db, matter_id)
+
+    # Fetch all time entries with relationships
+    result = await db.execute(
+        select(TimeEntry)
+        .options(
+            selectinload(TimeEntry.task),
+            selectinload(TimeEntry.stakeholder),
+        )
+        .where(TimeEntry.matter_id == matter_id)
+        .order_by(TimeEntry.entry_date.desc(), TimeEntry.created_at.desc())
+    )
+    entries = list(result.scalars().unique().all())
 
     wb = _create_workbook()
+
+    # ── Sheet 1: Time Entries ──
     ws = wb.active
-    ws.title = "Time Tracking"
+    ws.title = "Time Entries"
 
     headers = [
         "Date",
         "Professional",
         "Task",
         "Hours",
+        "Minutes",
+        "Decimal Hours",
         "Description",
         "Billable",
     ]
     ws.append(headers)
     _style_excel_header(ws, len(headers))
 
-    # Add a note row
-    ws.append(
-        [
-            "",
-            "Time tracking entries will appear here once the feature is enabled.",
-            "",
-            "",
-            "",
-            "",
-        ]
-    )
-
-    # Add professional names as reference
-    ws.append([])
-    ws.append(["Professionals on this matter:"])
-    for s in stakeholders:
-        role_val = s.role.value if hasattr(s.role, "value") else s.role
-        if role_val in ("matter_admin", "professional"):
-            ws.append(["", s.full_name, s.email])
+    for entry in entries:
+        total_mins = entry.hours * 60 + entry.minutes
+        decimal_hours = round(total_mins / 60, 2)
+        ws.append(
+            [
+                entry.entry_date.isoformat() if entry.entry_date else "",
+                entry.stakeholder.full_name if entry.stakeholder else "",
+                entry.task.title if entry.task else "(No task)",
+                entry.hours,
+                entry.minutes,
+                decimal_hours,
+                entry.description,
+                "Yes" if entry.billable else "No",
+            ]
+        )
 
     _auto_width(ws)
     _freeze_header(ws)
+
+    # ── Sheet 2: Summary ──
+    ws2 = wb.create_sheet("Summary")
+
+    # Summary by professional
+    ws2.append(["Matter:", matter.title])
+    ws2.append(["Decedent:", matter.decedent_name])
+    ws2.append(["Generated:", datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")])
+    ws2.append([])
+    ws2.append(["Summary by Professional"])
+    ws2.append(["Professional", "Total Hours", "Billable Hours", "Non-Billable Hours"])
+    _style_excel_header(ws2, 4, row=6)
+
+    # Aggregate by professional
+    prof_totals: dict[str, dict[str, float]] = {}
+    for entry in entries:
+        name = entry.stakeholder.full_name if entry.stakeholder else "Unknown"
+        if name not in prof_totals:
+            prof_totals[name] = {"total": 0, "billable": 0, "non_billable": 0}
+        mins = entry.hours * 60 + entry.minutes
+        prof_totals[name]["total"] += mins
+        if entry.billable:
+            prof_totals[name]["billable"] += mins
+        else:
+            prof_totals[name]["non_billable"] += mins
+
+    for name, totals in prof_totals.items():
+        ws2.append(
+            [
+                name,
+                round(totals["total"] / 60, 2),
+                round(totals["billable"] / 60, 2),
+                round(totals["non_billable"] / 60, 2),
+            ]
+        )
+
+    _auto_width(ws2)
 
     buffer = io.BytesIO()
     wb.save(buffer)

@@ -45,6 +45,7 @@ export async function loginAs(
   const user = TEST_USERS[userKey];
 
   if (process.env.E2E_MOCK_AUTH === 'true') {
+    const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
     // Mock auth — set a session cookie that the backend/middleware recognises
     await page.context().addCookies([
       {
@@ -56,7 +57,7 @@ export async function loginAs(
             name: user.fullName,
           },
         }),
-        domain: new URL(page.url() || 'http://localhost:3000').hostname,
+        domain: new URL(baseURL).hostname,
         path: '/',
         httpOnly: true,
         secure: false,

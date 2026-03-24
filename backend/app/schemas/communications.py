@@ -71,6 +71,14 @@ class CommunicationResponse(BaseModel):
     acknowledged_by: list[UUID] | None
     created_at: datetime
 
+    # Dispute-specific fields (populated only for dispute_flag type)
+    disputed_entity_type: str | None = None
+    disputed_entity_id: UUID | None = None
+    dispute_status: str | None = None
+    dispute_resolution_note: str | None = None
+    dispute_resolved_at: datetime | None = None
+    dispute_resolved_by: UUID | None = None
+
 
 class CommunicationListResponse(BaseModel):
     """Paginated list of communications."""
@@ -100,3 +108,22 @@ class DisputeFlagCreate(BaseModel):
     entity_type: str
     entity_id: UUID
     reason: str
+
+
+class DisputeStatusUpdate(BaseModel):
+    """Schema for updating a dispute's status (under_review or resolved)."""
+
+    model_config = ConfigDict(
+        strict=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "status": "resolved",
+                    "resolution_note": "Ownership verified via title deed. Dispute closed.",
+                }
+            ]
+        },
+    )
+
+    status: str  # "under_review" or "resolved"
+    resolution_note: str  # Required for both transitions
