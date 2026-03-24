@@ -49,9 +49,21 @@ class StructuredFormatter(logging.Formatter):
             log_entry["firm_id"] = fid
 
         # Include extra fields passed via logger.info("msg", extra={...})
-        for key in ("event_id", "matter_id", "entity_type", "entity_id", "action",
-                     "duration_ms", "status_code", "method", "path", "error",
-                     "component", "check", "metric"):
+        for key in (
+            "event_id",
+            "matter_id",
+            "entity_type",
+            "entity_id",
+            "action",
+            "duration_ms",
+            "status_code",
+            "method",
+            "path",
+            "error",
+            "component",
+            "check",
+            "metric",
+        ):
             val = getattr(record, key, None)
             if val is not None:
                 log_entry[key] = val
@@ -67,11 +79,11 @@ class DevelopmentFormatter(logging.Formatter):
     """Human-readable formatter for development that still includes correlation IDs."""
 
     COLORS = {
-        "DEBUG": "\033[36m",    # cyan
-        "INFO": "\033[32m",     # green
+        "DEBUG": "\033[36m",  # cyan
+        "INFO": "\033[32m",  # green
         "WARNING": "\033[33m",  # yellow
-        "ERROR": "\033[31m",    # red
-        "CRITICAL": "\033[41m", # red bg
+        "ERROR": "\033[31m",  # red
+        "CRITICAL": "\033[41m",  # red bg
     }
     RESET = "\033[0m"
 
@@ -110,8 +122,16 @@ def configure_logging(*, level: str = "INFO", environment: str = "development") 
     root.addHandler(handler)
 
     # Reduce noise from third-party libraries
-    for noisy in ("uvicorn.access", "uvicorn.error", "httpcore", "httpx",
-                   "urllib3", "botocore", "boto3", "celery"):
+    for noisy in (
+        "uvicorn.access",
+        "uvicorn.error",
+        "httpcore",
+        "httpx",
+        "urllib3",
+        "botocore",
+        "boto3",
+        "celery",
+    ):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 

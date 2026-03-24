@@ -130,8 +130,7 @@ async def _check_queue_depth() -> list[Alert]:
                             rule="high_queue_depth",
                             severity=AlertSeverity.WARNING,
                             message=(
-                                f"Queue '{queue_name}' depth {depth} "
-                                f"exceeds threshold {threshold}"
+                                f"Queue '{queue_name}' depth {depth} exceeds threshold {threshold}"
                             ),
                             value=depth,
                             threshold=threshold,

@@ -86,9 +86,7 @@ async def get_business_metrics(
     try:
         from app.models.tasks import Task
 
-        task_rows = await db.execute(
-            select(Task.status, func.count(Task.id)).group_by(Task.status)
-        )
+        task_rows = await db.execute(select(Task.status, func.count(Task.id)).group_by(Task.status))
         task_counts = {
             str(row[0].value) if hasattr(row[0], "value") else str(row[0]): row[1]
             for row in task_rows
@@ -114,9 +112,7 @@ async def get_business_metrics(
                 func.count(AIUsageLog.id),
                 func.sum(AIUsageLog.input_tokens),
                 func.sum(AIUsageLog.output_tokens),
-            ).where(
-                AIUsageLog.created_at >= text("NOW() - INTERVAL '30 days'")
-            )
+            ).where(AIUsageLog.created_at >= text("NOW() - INTERVAL '30 days'"))
         )
         row = ai_row.one()
         metrics["ai_usage_30d"] = {

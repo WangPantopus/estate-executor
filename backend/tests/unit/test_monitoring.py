@@ -14,8 +14,13 @@ class TestStructuredLogging:
 
         formatter = StructuredFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test message", args=None, exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test message",
+            args=None,
+            exc_info=None,
         )
         output = formatter.format(record)
         parsed = json.loads(output)
@@ -32,8 +37,13 @@ class TestStructuredLogging:
         try:
             formatter = StructuredFormatter()
             record = logging.LogRecord(
-                name="test", level=logging.INFO, pathname="", lineno=0,
-                msg="correlated", args=None, exc_info=None,
+                name="test",
+                level=logging.INFO,
+                pathname="",
+                lineno=0,
+                msg="correlated",
+                args=None,
+                exc_info=None,
             )
             output = formatter.format(record)
             parsed = json.loads(output)
@@ -47,8 +57,13 @@ class TestStructuredLogging:
 
         formatter = StructuredFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="with extras", args=None, exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="with extras",
+            args=None,
+            exc_info=None,
         )
         record.duration_ms = 42.5  # type: ignore[attr-defined]
         record.status_code = 200  # type: ignore[attr-defined]
@@ -65,8 +80,13 @@ class TestStructuredLogging:
         try:
             formatter = DevelopmentFormatter()
             record = logging.LogRecord(
-                name="test", level=logging.INFO, pathname="", lineno=0,
-                msg="dev mode", args=None, exc_info=None,
+                name="test",
+                level=logging.INFO,
+                pathname="",
+                lineno=0,
+                msg="dev mode",
+                args=None,
+                exc_info=None,
             )
             output = formatter.format(record)
             assert "abcdef12" in output
@@ -87,20 +107,14 @@ class TestStructuredLogging:
 
         configure_logging(level="INFO", environment="production")
         root = logging.getLogger()
-        assert any(
-            isinstance(h.formatter, StructuredFormatter)
-            for h in root.handlers
-        )
+        assert any(isinstance(h.formatter, StructuredFormatter) for h in root.handlers)
 
     def test_configure_logging_development(self):
         from app.core.logging import DevelopmentFormatter, configure_logging
 
         configure_logging(level="INFO", environment="development")
         root = logging.getLogger()
-        assert any(
-            isinstance(h.formatter, DevelopmentFormatter)
-            for h in root.handlers
-        )
+        assert any(isinstance(h.formatter, DevelopmentFormatter) for h in root.handlers)
 
 
 class TestRequestTimer:

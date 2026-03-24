@@ -22,12 +22,14 @@ logger = logging.getLogger(__name__)
 
 # Allowlist of materialized view names that may be refreshed.
 # Prevents SQL injection via view_name parameter.
-_ALLOWED_MATERIALIZED_VIEWS = frozenset({
-    "mv_portfolio_task_stats",
-    "mv_matter_summary",
-    "mv_asset_summary",
-    "mv_deadline_summary",
-})
+_ALLOWED_MATERIALIZED_VIEWS = frozenset(
+    {
+        "mv_portfolio_task_stats",
+        "mv_matter_summary",
+        "mv_asset_summary",
+        "mv_deadline_summary",
+    }
+)
 
 
 async def explain_analyze(
@@ -53,9 +55,7 @@ async def explain_analyze(
         List of plan lines (TEXT format) or serialized plan (JSON/YAML/XML).
     """
     if not (settings.is_development or settings.app_env == "staging"):
-        raise RuntimeError(
-            "explain_analyze is only available in development/staging environments"
-        )
+        raise RuntimeError("explain_analyze is only available in development/staging environments")
     if not query_sql or not query_sql.strip():
         raise ValueError("query_sql must not be empty")
 
