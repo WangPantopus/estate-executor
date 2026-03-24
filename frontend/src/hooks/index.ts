@@ -13,6 +13,17 @@ export {
   // Branding
   useFirmBranding,
   useUpdateBranding,
+  // API Keys
+  useAPIKeys,
+  useCreateAPIKey,
+  useRevokeAPIKey,
+  useDeleteAPIKey,
+  // Webhooks
+  useWebhooks,
+  useCreateWebhook,
+  useDeleteWebhook,
+  useTestWebhook,
+  useWebhookDeliveries,
   // SSO
   useSSOConfig,
   useCreateSSOConfig,

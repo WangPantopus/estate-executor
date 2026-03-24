@@ -6,9 +6,16 @@
  */
 
 import type {
+  APIKey,
+  APIKeyCreate,
+  APIKeyCreatedResponse,
   SSOConfig,
   SSOConfigCreate,
   SSOConfigUpdate,
+  Webhook,
+  WebhookCreate,
+  WebhookDelivery,
+  WebhookUpdate,
   WhiteLabelConfig,
   WhiteLabelUpdate,
   LogoUploadResponse,
@@ -375,6 +382,70 @@ export class ApiClient {
 
   async disableSSO(firmId: string): Promise<SSOConfig> {
     return this.post(`/firms/${firmId}/sso/disable`);
+  }
+
+  // ─── API Keys ───────────────────────────────────────────────────────
+
+  async listAPIKeys(firmId: string): Promise<APIKey[]> {
+    return this.get(`/firms/${firmId}/developer/api-keys`);
+  }
+
+  async createAPIKey(firmId: string, data: APIKeyCreate): Promise<APIKeyCreatedResponse> {
+    return this.post(`/firms/${firmId}/developer/api-keys`, data);
+  }
+
+  async revokeAPIKey(firmId: string, keyId: string): Promise<APIKey> {
+    return this.post(`/firms/${firmId}/developer/api-keys/${keyId}/revoke`);
+  }
+
+  async regenerateAPIKey(firmId: string, keyId: string): Promise<APIKeyCreatedResponse> {
+    return this.post(`/firms/${firmId}/developer/api-keys/${keyId}/regenerate`);
+  }
+
+  async deleteAPIKey(firmId: string, keyId: string): Promise<void> {
+    return this.del(`/firms/${firmId}/developer/api-keys/${keyId}`);
+  }
+
+  // ─── Webhooks ───────────────────────────────────────────────────────
+
+  async listWebhooks(firmId: string): Promise<Webhook[]> {
+    return this.get(`/firms/${firmId}/developer/webhooks`);
+  }
+
+  async createWebhook(firmId: string, data: WebhookCreate): Promise<Webhook> {
+    return this.post(`/firms/${firmId}/developer/webhooks`, data);
+  }
+
+  async updateWebhook(firmId: string, webhookId: string, data: WebhookUpdate): Promise<Webhook> {
+    return this.patch(`/firms/${firmId}/developer/webhooks/${webhookId}`, data);
+  }
+
+  async deleteWebhook(firmId: string, webhookId: string): Promise<void> {
+    return this.del(`/firms/${firmId}/developer/webhooks/${webhookId}`);
+  }
+
+  async testWebhook(firmId: string, webhookId: string): Promise<WebhookDelivery> {
+    return this.post(`/firms/${firmId}/developer/webhooks/${webhookId}/test`);
+  }
+
+  async rotateWebhookSecret(firmId: string, webhookId: string): Promise<Webhook> {
+    return this.post(`/firms/${firmId}/developer/webhooks/${webhookId}/rotate-secret`);
+  }
+
+  async listWebhookDeliveries(
+    firmId: string,
+    webhookId: string,
+    limit = 50,
+    offset = 0,
+  ): Promise<WebhookDelivery[]> {
+    return this.get(
+      `/firms/${firmId}/developer/webhooks/${webhookId}/deliveries?limit=${limit}&offset=${offset}`,
+    );
+  }
+
+  async getSupportedWebhookEvents(): Promise<{ events: string[] }> {
+    // Uses a hardcoded firm_id placeholder — the endpoint doesn't actually use it
+    return this.get(`/firms/00000000-0000-0000-0000-000000000000/developer/webhooks/events`);
   }
 
   async getLogoUploadUrl(

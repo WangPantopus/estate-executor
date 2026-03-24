@@ -1457,3 +1457,79 @@ export interface SSOLoginUrlResponse {
   connection_name: string;
   protocol: string;
 }
+
+// ─── Developer API Keys ─────────────────────────────────────────────────────
+
+export interface APIKey {
+  id: string;
+  firm_id: string;
+  name: string;
+  description?: string | null;
+  key_prefix: string;
+  scopes: string[];
+  rate_limit_per_minute: number;
+  is_active: boolean;
+  last_used_at?: string | null;
+  expires_at?: string | null;
+  created_by: string;
+  total_requests: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface APIKeyCreate {
+  name: string;
+  description?: string;
+  scopes?: string[];
+  rate_limit_per_minute?: number;
+  expires_at?: string;
+}
+
+export interface APIKeyCreatedResponse {
+  key: APIKey;
+  raw_key: string;
+}
+
+// ─── Webhooks ────────────────────────────────────────────────────────────────
+
+export interface Webhook {
+  id: string;
+  firm_id: string;
+  url: string;
+  description?: string | null;
+  secret: string;
+  events: string[];
+  is_active: boolean;
+  last_triggered_at?: string | null;
+  failure_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WebhookCreate {
+  url: string;
+  events: string[];
+  description?: string;
+}
+
+export interface WebhookUpdate {
+  url?: string;
+  events?: string[];
+  description?: string;
+  is_active?: boolean;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  webhook_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  status_code?: number | null;
+  response_body?: string | null;
+  error_message?: string | null;
+  success: boolean;
+  duration_ms?: number | null;
+  attempt: number;
+  created_at: string;
+}

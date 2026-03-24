@@ -8,8 +8,11 @@ import {
 } from "@tanstack/react-query";
 import { useApi } from "./use-api";
 import type {
+  APIKeyCreate,
   SSOConfigCreate,
   SSOConfigUpdate,
+  WebhookCreate,
+  WebhookUpdate,
   WhiteLabelUpdate,
   AssetCreate,
   AssetFilters,
@@ -61,6 +64,10 @@ export const queryKeys = {
   firmMembers: (firmId: string) => ["firms", firmId, "members"] as const,
   firmBranding: (firmId: string) => ["firms", firmId, "branding"] as const,
   ssoConfig: (firmId: string) => ["firms", firmId, "sso"] as const,
+  apiKeys: (firmId: string) => ["firms", firmId, "api-keys"] as const,
+  webhooks: (firmId: string) => ["firms", firmId, "webhooks"] as const,
+  webhookDeliveries: (firmId: string, webhookId: string) =>
+    ["firms", firmId, "webhooks", webhookId, "deliveries"] as const,
   matters: (firmId: string, filters?: MatterFilters) =>
     ["firms", firmId, "matters", filters] as const,
   matterDashboard: (firmId: string, matterId: string) =>
@@ -222,6 +229,99 @@ export function useUpdateBranding(firmId: string) {
       qc.invalidateQueries({ queryKey: queryKeys.firmBranding(firmId) });
       qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
     },
+  });
+}
+
+// ─── API Keys ────────────────────────────────────────────────────────────────
+
+export function useAPIKeys(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.apiKeys(firmId),
+    queryFn: () => api.listAPIKeys(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateAPIKey(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: APIKeyCreate) => api.createAPIKey(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.apiKeys(firmId) });
+    },
+  });
+}
+
+export function useRevokeAPIKey(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (keyId: string) => api.revokeAPIKey(firmId, keyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.apiKeys(firmId) });
+    },
+  });
+}
+
+export function useDeleteAPIKey(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (keyId: string) => api.deleteAPIKey(firmId, keyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.apiKeys(firmId) });
+    },
+  });
+}
+
+// ─── Webhooks ────────────────────────────────────────────────────────────────
+
+export function useWebhooks(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.webhooks(firmId),
+    queryFn: () => api.listWebhooks(firmId),
+    enabled: !!firmId,
+  });
+}
+
+export function useCreateWebhook(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WebhookCreate) => api.createWebhook(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.webhooks(firmId) });
+    },
+  });
+}
+
+export function useDeleteWebhook(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (webhookId: string) => api.deleteWebhook(firmId, webhookId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.webhooks(firmId) });
+    },
+  });
+}
+
+export function useTestWebhook(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (webhookId: string) => api.testWebhook(firmId, webhookId),
+  });
+}
+
+export function useWebhookDeliveries(firmId: string, webhookId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.webhookDeliveries(firmId, webhookId),
+    queryFn: () => api.listWebhookDeliveries(firmId, webhookId),
+    enabled: !!firmId && !!webhookId,
   });
 }
 

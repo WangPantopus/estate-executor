@@ -8,6 +8,7 @@ from app.api.v1.billing import webhook_router
 from app.api.v1.communications import dispute_flag_router
 from app.api.v1.communications import router as communications_router
 from app.api.v1.deadlines import router as deadlines_router
+from app.api.v1.developer import router as developer_router
 from app.api.v1.distributions import router as distributions_router
 from app.api.v1.documents import router as documents_router
 from app.api.v1.entities import entity_map_router
@@ -132,6 +133,11 @@ api_router.include_router(
     sso_router,
     prefix="/firms/{firm_id}/sso",
     tags=["sso"],
+)
+api_router.include_router(
+    developer_router,
+    prefix="/firms/{firm_id}/developer",
+    tags=["developer"],
 )
 api_router.include_router(
     portal_router,

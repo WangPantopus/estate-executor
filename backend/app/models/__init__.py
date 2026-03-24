@@ -1,5 +1,6 @@
 from app.models.ai_feedback import AIFeedback
 from app.models.ai_usage_logs import AIUsageLog
+from app.models.api_keys import APIKey
 from app.models.asset_documents import asset_documents
 from app.models.assets import Asset
 from app.models.base import BaseModel
@@ -62,6 +63,7 @@ from app.models.task_documents import task_documents
 from app.models.tasks import Task
 from app.models.time_entries import TimeEntry
 from app.models.users import User
+from app.models.webhooks import Webhook, WebhookDelivery
 
 __all__ = [
     # Enums
@@ -123,6 +125,9 @@ __all__ = [
     "SignatureRequest",
     "SSOConfig",
     "IntegrationConnection",
+    "APIKey",
+    "Webhook",
+    "WebhookDelivery",
     "SignatureRequestStatus",
     "SignatureRequestType",
     "IntegrationProvider",

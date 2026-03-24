@@ -23,6 +23,12 @@ import {
   Clock,
   FolderSync,
   UserCheck,
+  Key,
+  Webhook,
+  Copy,
+  Send,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +74,14 @@ import {
   useSSOConfig,
   useEnableSSO,
   useDisableSSO,
+  useAPIKeys,
+  useCreateAPIKey,
+  useRevokeAPIKey,
+  useDeleteAPIKey,
+  useWebhooks,
+  useCreateWebhook,
+  useDeleteWebhook,
+  useTestWebhook,
   useBillingOverview,
   useBillingInvoices,
   useCreateCheckout,
@@ -177,6 +191,12 @@ export default function SettingsPage() {
             <Puzzle className="size-3.5" />
             Integrations
           </TabsTrigger>
+          {tier === "enterprise" && (
+            <TabsTrigger value="developer" className="gap-1.5">
+              <Key className="size-3.5" />
+              Developer
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ─── General Tab ────────────────────────────────────────────────── */}
@@ -416,6 +436,14 @@ export default function SettingsPage() {
         <TabsContent value="integrations">
           <IntegrationsTabContent firmId={FIRM_ID} isAdmin={isAdmin} />
         </TabsContent>
+
+        {/* ─── Developer Tab ──────────────────────────────────────────────── */}
+        {tier === "enterprise" && (
+          <TabsContent value="developer" className="space-y-4">
+            <APIKeysCard firmId={FIRM_ID} isAdmin={isAdmin} />
+            <WebhooksCard firmId={FIRM_ID} isAdmin={isAdmin} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
@@ -1548,6 +1576,286 @@ function SSOConfigCard({ firmId, isOwner }: { firmId: string; isOwner: boolean }
         {!isConfigured && isOwner && (
           <p className="text-xs text-muted-foreground">
             Contact support to configure SAML or OIDC single sign-on for your organization.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── API Keys Card ───────────────────────────────────────────────────────────
+
+function APIKeysCard({ firmId, isAdmin }: { firmId: string; isAdmin: boolean }) {
+  const { data: keys, isLoading } = useAPIKeys(firmId);
+  const createKey = useCreateAPIKey(firmId);
+  const revokeKey = useRevokeAPIKey(firmId);
+  const deleteKey = useDeleteAPIKey(firmId);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [showNewKeyForm, setShowNewKeyForm] = useState(false);
+  const [keyName, setKeyName] = useState("");
+  const [visibleSecrets, setVisibleSecrets] = useState<Set<string>>(new Set());
+
+  const handleCreate = useCallback(async () => {
+    if (!keyName.trim()) return;
+    const result = await createKey.mutateAsync({ name: keyName.trim() });
+    setNewKey(result.raw_key);
+    setKeyName("");
+    setShowNewKeyForm(false);
+  }, [keyName, createKey]);
+
+  const copyToClipboard = useCallback((text: string) => {
+    navigator.clipboard.writeText(text);
+  }, []);
+
+  if (isLoading) return null;
+
+  return (
+    <Card>
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">API Keys</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Manage API keys for programmatic access
+            </p>
+          </div>
+          {isAdmin && (
+            <Button size="sm" onClick={() => setShowNewKeyForm(true)}>
+              <Key className="size-3.5 mr-1" />
+              Create Key
+            </Button>
+          )}
+        </div>
+
+        {newKey && (
+          <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md space-y-2">
+            <p className="text-xs font-medium text-green-800 dark:text-green-200">
+              API key created! Copy it now — it won&apos;t be shown again.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="text-xs bg-green-100 dark:bg-green-900 px-2 py-1 rounded flex-1 truncate">
+                {newKey}
+              </code>
+              <Button size="sm" variant="outline" onClick={() => { copyToClipboard(newKey); }}>
+                <Copy className="size-3" />
+              </Button>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setNewKey(null)} className="text-xs">
+              Dismiss
+            </Button>
+          </div>
+        )}
+
+        {showNewKeyForm && (
+          <div className="flex gap-2">
+            <Input
+              placeholder="Key name (e.g. Production API)"
+              value={keyName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKeyName(e.target.value)}
+              className="text-sm"
+            />
+            <Button size="sm" onClick={handleCreate} disabled={createKey.isPending || !keyName.trim()}>
+              {createKey.isPending ? <Loader2 className="size-3.5 animate-spin" /> : "Create"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowNewKeyForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        )}
+
+        {keys && keys.length > 0 ? (
+          <div className="space-y-2">
+            {keys.map((k) => (
+              <div key={k.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{k.name}</span>
+                    <Badge variant={k.is_active ? "default" : "muted"} className="text-[10px]">
+                      {k.is_active ? "Active" : "Revoked"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <code>{k.key_prefix}...</code>
+                    <span>{k.total_requests.toLocaleString()} requests</span>
+                    <span>{k.rate_limit_per_minute}/min</span>
+                    {k.last_used_at && <span>Last used {formatDate(k.last_used_at)}</span>}
+                  </div>
+                </div>
+                {isAdmin && k.is_active && (
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => revokeKey.mutate(k.id)}
+                      disabled={revokeKey.isPending}
+                    >
+                      Revoke
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteKey.mutate(k.id)}
+                      disabled={deleteKey.isPending}
+                    >
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No API keys created yet.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Webhooks Card ───────────────────────────────────────────────────────────
+
+function WebhooksCard({ firmId, isAdmin }: { firmId: string; isAdmin: boolean }) {
+  const { data: webhooks, isLoading } = useWebhooks(firmId);
+  const createWebhook = useCreateWebhook(firmId);
+  const deleteWebhook = useDeleteWebhook(firmId);
+  const testWebhook = useTestWebhook(firmId);
+  const [showForm, setShowForm] = useState(false);
+  const [whUrl, setWhUrl] = useState("");
+  const [whEvents, setWhEvents] = useState("matter.created,task.updated");
+  const [testResult, setTestResult] = useState<{ id: string; success: boolean } | null>(null);
+
+  const handleCreate = useCallback(async () => {
+    if (!whUrl.trim()) return;
+    await createWebhook.mutateAsync({
+      url: whUrl.trim(),
+      events: whEvents.split(",").map((e) => e.trim()).filter(Boolean),
+    });
+    setWhUrl("");
+    setWhEvents("matter.created,task.updated");
+    setShowForm(false);
+  }, [whUrl, whEvents, createWebhook]);
+
+  const handleTest = useCallback(async (webhookId: string) => {
+    const result = await testWebhook.mutateAsync(webhookId);
+    setTestResult({ id: webhookId, success: result.success });
+    setTimeout(() => setTestResult(null), 5000);
+  }, [testWebhook]);
+
+  if (isLoading) return null;
+
+  return (
+    <Card>
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Webhooks</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Receive HTTP notifications when events occur
+            </p>
+          </div>
+          {isAdmin && (
+            <Button size="sm" onClick={() => setShowForm(true)}>
+              <Webhook className="size-3.5 mr-1" />
+              Add Endpoint
+            </Button>
+          )}
+        </div>
+
+        {showForm && (
+          <div className="space-y-2 p-3 border rounded-md">
+            <Input
+              placeholder="https://your-server.com/webhooks"
+              value={whUrl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWhUrl(e.target.value)}
+              className="text-sm"
+            />
+            <Input
+              placeholder="Events (comma-separated)"
+              value={whEvents}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWhEvents(e.target.value)}
+              className="text-sm font-mono text-xs"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Available: matter.created, matter.updated, task.created, task.updated, task.completed,
+              document.uploaded, stakeholder.added, asset.created, distribution.created, deadline.approaching
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleCreate} disabled={createWebhook.isPending || !whUrl.trim()}>
+                {createWebhook.isPending ? <Loader2 className="size-3.5 animate-spin" /> : "Create"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {webhooks && webhooks.length > 0 ? (
+          <div className="space-y-2">
+            {webhooks.map((wh) => (
+              <div key={wh.id} className="p-3 bg-muted/50 rounded-md space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs truncate max-w-[300px]">{wh.url}</code>
+                      <Badge variant={wh.is_active ? "default" : "muted"} className="text-[10px]">
+                        {wh.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                      {wh.failure_count > 0 && (
+                        <Badge variant="destructive" className="text-[10px]">
+                          {wh.failure_count} failures
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      {wh.events.map((e) => (
+                        <span key={e} className="bg-muted px-1.5 py-0.5 rounded">{e}</span>
+                      ))}
+                    </div>
+                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleTest(wh.id)}
+                        disabled={testWebhook.isPending}
+                      >
+                        <Send className="size-3 mr-1" />
+                        Test
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteWebhook.mutate(wh.id)}
+                        disabled={deleteWebhook.isPending}
+                      >
+                        <Trash2 className="size-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {testResult?.id === wh.id && (
+                  <div className={`text-xs px-2 py-1 rounded ${testResult.success
+                    ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+                    : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                  }`}>
+                    {testResult.success ? "Test delivery successful" : "Test delivery failed"}
+                  </div>
+                )}
+                {wh.last_triggered_at && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Last triggered {formatDate(wh.last_triggered_at)}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No webhook endpoints configured.
           </p>
         )}
       </CardContent>
