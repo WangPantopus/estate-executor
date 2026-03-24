@@ -1,6 +1,6 @@
 """Unit tests for milestone detection and auto-notification."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 from app.models.enums import TaskPhase, TaskStatus
 from app.services.milestone_service import (

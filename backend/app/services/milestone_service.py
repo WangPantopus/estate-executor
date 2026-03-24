@@ -204,7 +204,10 @@ async def fire_milestone_notification(
         )
         admin_row = admin_result.scalar_one_or_none()
         if admin_row is None:
-            logger.warning("No matter_admin found for milestone sender", extra={"matter_id": str(matter_id)})
+            logger.warning(
+                "No matter_admin found for milestone sender",
+                extra={"matter_id": str(matter_id)},
+            )
             return None
         sender_id = admin_row
 

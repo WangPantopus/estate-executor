@@ -522,7 +522,7 @@ def get_token_upload_url(
     *, matter: Any, filename: str, mime_type: str
 ) -> tuple[str, str, int]:
     """Generate presigned upload URL for a token-based upload."""
-    from app.models.matters import Matter as MatterModel
+    from app.models.matters import Matter as MatterModel  # noqa: TC001
 
     matter_obj: MatterModel = matter
     upload_url, storage_key = storage_service.generate_upload_url(

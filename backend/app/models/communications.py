@@ -5,10 +5,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, Index, String
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from app.models.base import BaseModel
 from app.models.enums import CommunicationType, CommunicationVisibility, DisputeStatus

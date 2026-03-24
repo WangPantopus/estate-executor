@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Date, case, cast, func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
@@ -267,7 +267,9 @@ async def get_time_summary(
         select(
             Stakeholder.id,
             Stakeholder.full_name,
-            func.coalesce(func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0).label("total_minutes"),
+            func.coalesce(
+                func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0
+            ).label("total_minutes"),
         )
         .join(TimeEntry, TimeEntry.stakeholder_id == Stakeholder.id)
         .where(TimeEntry.matter_id == matter_id)
@@ -289,7 +291,9 @@ async def get_time_summary(
         select(
             Task.id,
             Task.title,
-            func.coalesce(func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0).label("total_minutes"),
+            func.coalesce(
+                func.sum(TimeEntry.hours * 60 + TimeEntry.minutes), 0
+            ).label("total_minutes"),
         )
         .join(TimeEntry, TimeEntry.task_id == Task.id)
         .where(TimeEntry.matter_id == matter_id)

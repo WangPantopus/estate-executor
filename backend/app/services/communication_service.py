@@ -9,9 +9,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
 from app.core.events import event_logger
-from app.core.exceptions import NotFoundError, PermissionDeniedError
+from app.core.exceptions import BadRequestError, NotFoundError, PermissionDeniedError
 from app.models.communications import Communication
-from app.core.exceptions import BadRequestError
 from app.models.enums import (
     ActorType,
     CommunicationType,
@@ -361,18 +360,19 @@ async def update_dispute_status(
     # Validate the new status value
     try:
         target_status = DisputeStatus(new_status)
-    except ValueError:
+    except ValueError as err:
         raise BadRequestError(
             detail=f"Invalid dispute status: {new_status}. "
             f"Valid values: {', '.join(s.value for s in DisputeStatus)}"
-        )
+        ) from err
 
     # Check valid transition
     current_status = comm.dispute_status or DisputeStatus.open
     valid_targets = _VALID_DISPUTE_TRANSITIONS.get(current_status, [])
     if target_status not in valid_targets:
         raise BadRequestError(
-            detail=f"Cannot transition dispute from '{current_status.value}' to '{target_status.value}'"
+            detail=f"Cannot transition dispute from '{current_status.value}'"
+            f" to '{target_status.value}'"
         )
 
     old_status = current_status.value

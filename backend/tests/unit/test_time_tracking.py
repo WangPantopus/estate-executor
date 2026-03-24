@@ -8,7 +8,6 @@ from datetime import date, datetime
 from app.models.time_entries import TimeEntry
 from app.schemas.time_tracking import (
     TimeEntryCreate,
-    TimeEntryListResponse,
     TimeEntryResponse,
     TimeEntryUpdate,
     TimeTrackingSummary,
@@ -85,7 +84,7 @@ class TestTimeEntryCreateSchema:
     def test_negative_hours_rejected(self):
         import pytest
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             TimeEntryCreate(
                 hours=-1,
                 minutes=0,
@@ -96,7 +95,7 @@ class TestTimeEntryCreateSchema:
     def test_minutes_over_59_rejected(self):
         import pytest
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             TimeEntryCreate(
                 hours=0,
                 minutes=60,
@@ -171,10 +170,20 @@ class TestTimeTrackingSummarySchema:
             billable_hours=8.0,
             non_billable_hours=2.5,
             by_stakeholder=[
-                {"stakeholder_id": str(uuid.uuid4()), "name": "Jane", "total_minutes": 630, "decimal_hours": 10.5}
+                {
+                    "stakeholder_id": str(uuid.uuid4()),
+                    "name": "Jane",
+                    "total_minutes": 630,
+                    "decimal_hours": 10.5,
+                }
             ],
             by_task=[
-                {"task_id": str(uuid.uuid4()), "title": "Review docs", "total_minutes": 120, "decimal_hours": 2.0}
+                {
+                    "task_id": str(uuid.uuid4()),
+                    "title": "Review docs",
+                    "total_minutes": 120,
+                    "decimal_hours": 2.0,
+                }
             ],
         )
         assert summary.total_decimal_hours == 10.5
