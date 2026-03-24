@@ -31,7 +31,10 @@ jobs:
         run: |
           cd backend
           pip install -e .
-          pip-audit --desc --skip-editable
+          pip-audit --desc --skip-editable \
+            --ignore-vuln CVE-2026-4539
+          # CVE-2026-4539: ReDoS in pygments AdlLexer — local-access only,
+          # no fix version available yet. Re-evaluate when pygments >2.19.2 releases.
 
   npm-audit:
     name: npm Dependency Audit
