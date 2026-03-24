@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.ai import router as ai_router
+from app.api.v1.portal import router as portal_router
 from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.communications import dispute_flag_router
@@ -82,4 +83,9 @@ api_router.include_router(
     ai_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/ai",
     tags=["ai"],
+)
+api_router.include_router(
+    portal_router,
+    prefix="/portal",
+    tags=["portal"],
 )

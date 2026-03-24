@@ -77,6 +77,12 @@ import type {
   TaskWaive,
   UpdateMemberRoleRequest,
   UserProfile,
+  PortalBeneficiaryMattersResponse,
+  PortalOverviewResponse,
+  PortalDocumentsResponse,
+  PortalMessagesResponse,
+  PortalMessageCreate,
+  PortalMessageItem,
 } from './types';
 
 // ─── Error classes ───────────────────────────────────────────────────────────
@@ -908,5 +914,39 @@ export class ApiClient {
     matterId: string,
   ): Promise<AIUsageStats> {
     return this.get(`${this.aiBase(firmId, matterId)}/usage-stats`);
+  }
+
+  // ─── Portal (Beneficiary) ──────────────────────────────────────────────
+
+  async getPortalMatters(): Promise<PortalBeneficiaryMattersResponse> {
+    return this.get('/portal/matters');
+  }
+
+  async getPortalOverview(matterId: string): Promise<PortalOverviewResponse> {
+    return this.get(`/portal/matters/${matterId}/overview`);
+  }
+
+  async getPortalDocuments(matterId: string): Promise<PortalDocumentsResponse> {
+    return this.get(`/portal/matters/${matterId}/documents`);
+  }
+
+  async getPortalMessages(matterId: string): Promise<PortalMessagesResponse> {
+    return this.get(`/portal/matters/${matterId}/messages`);
+  }
+
+  async postPortalMessage(
+    matterId: string,
+    data: PortalMessageCreate,
+  ): Promise<PortalMessageItem> {
+    return this.post(`/portal/matters/${matterId}/messages`, data);
+  }
+
+  async acknowledgePortalNotice(
+    matterId: string,
+    commId: string,
+  ): Promise<PortalMessageItem> {
+    return this.post(
+      `/portal/matters/${matterId}/messages/${commId}/acknowledge`,
+    );
   }
 }

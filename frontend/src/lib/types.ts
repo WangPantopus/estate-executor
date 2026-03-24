@@ -816,6 +816,95 @@ export interface AIUsageStats {
   };
 }
 
+// ─── Portal (Beneficiary) ───────────────────────────────────────────────────
+
+export interface PortalMatterBrief {
+  matter_id: string;
+  firm_id: string;
+  decedent_name: string;
+  phase: MatterPhase;
+  firm_name: string;
+}
+
+export interface PortalBeneficiaryMattersResponse {
+  matters: PortalMatterBrief[];
+}
+
+export interface PortalContactInfo {
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface PortalMilestone {
+  title: string;
+  date: string;
+  completed: boolean;
+  is_next: boolean;
+}
+
+export interface PortalDistributionSummary {
+  total_estate_value: number | null;
+  distribution_status: string;
+  notices_count: number;
+  pending_acknowledgments: number;
+}
+
+export interface PortalMatterSummary {
+  matter_id: string;
+  decedent_name: string;
+  estate_type: string;
+  jurisdiction_state: string;
+  phase: MatterPhase;
+  completion_percentage: number;
+  estimated_completion: string | null;
+}
+
+export interface PortalOverviewResponse {
+  matter: PortalMatterSummary;
+  your_role: string;
+  your_relationship: string | null;
+  contacts: PortalContactInfo[];
+  milestones: PortalMilestone[];
+  distribution: PortalDistributionSummary;
+  firm_name: string;
+  firm_logo_url: string | null;
+}
+
+export interface PortalDocumentItem {
+  id: string;
+  filename: string;
+  doc_type: string | null;
+  size_bytes: number;
+  shared_at: string;
+}
+
+export interface PortalDocumentsResponse {
+  documents: PortalDocumentItem[];
+  total: number;
+}
+
+export interface PortalMessageItem {
+  id: string;
+  sender_name: string;
+  type: string;
+  subject: string | null;
+  body: string;
+  created_at: string;
+  requires_acknowledgment: boolean;
+  acknowledged: boolean;
+}
+
+export interface PortalMessagesResponse {
+  messages: PortalMessageItem[];
+  total: number;
+}
+
+export interface PortalMessageCreate {
+  subject?: string;
+  body: string;
+}
+
 // ─── Filter / query params ──────────────────────────────────────────────────
 
 export interface PaginationParams {
