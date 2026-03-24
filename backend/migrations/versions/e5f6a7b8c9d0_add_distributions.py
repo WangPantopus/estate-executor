@@ -9,21 +9,25 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "e5f6a7b8c9d0"
 down_revision: str | None = "d4e5f6a7b8c9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+# Define once; create_type=False prevents auto-creation inside create_table
+distribution_type_enum = postgresql.ENUM(
+    "cash",
+    "asset_transfer",
+    "in_kind",
+    name="distribution_type",
+    create_type=False,
+)
+
 
 def upgrade() -> None:
-    # Create distribution_type enum
-    distribution_type_enum = sa.Enum(
-        "cash",
-        "asset_transfer",
-        "in_kind",
-        name="distribution_type",
-    )
+    # Explicitly create the enum first
     distribution_type_enum.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
@@ -34,17 +38,7 @@ def upgrade() -> None:
         sa.Column("beneficiary_stakeholder_id", sa.UUID(), nullable=False),
         sa.Column("amount", sa.Numeric(precision=15, scale=2), nullable=True),
         sa.Column("description", sa.String(), nullable=False),
-        sa.Column(
-            "distribution_type",
-            sa.Enum(
-                "cash",
-                "asset_transfer",
-                "in_kind",
-                name="distribution_type",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
+        sa.Column("distribution_type", distribution_type_enum, nullable=False),
         sa.Column("distribution_date", sa.Date(), nullable=False),
         sa.Column("receipt_acknowledged", sa.Boolean(), server_default="false", nullable=False),
         sa.Column("receipt_acknowledged_at", sa.TIMESTAMP(timezone=True), nullable=True),
@@ -76,4 +70,4 @@ def downgrade() -> None:
     op.drop_index("ix_distributions_beneficiary", table_name="distributions")
     op.drop_index("ix_distributions_matter_id", table_name="distributions")
     op.drop_table("distributions")
-    sa.Enum(name="distribution_type").drop(op.get_bind(), checkfirst=True)
+    distribution_type_enum.drop(op.get_bind(), checkfirst=True)
