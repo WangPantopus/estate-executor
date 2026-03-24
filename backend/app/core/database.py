@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.pool import AsyncAdaptedQueuePool
 
 from app.core.config import settings
 
@@ -15,7 +15,7 @@ _max_overflow = 20 if settings.is_production else 15
 engine = create_async_engine(
     settings.database_url,
     echo=settings.is_development,
-    poolclass=QueuePool,
+    poolclass=AsyncAdaptedQueuePool,
     pool_size=_pool_size,
     max_overflow=_max_overflow,
     pool_pre_ping=True,
