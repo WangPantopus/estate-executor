@@ -10,8 +10,11 @@ import type {
   PaginatedResponse,
   Matter,
   Task,
+  TaskDetail,
   CommunicationResponse,
   UserProfile,
+  DocumentUploadURL,
+  DocumentDetail,
 } from "./types";
 
 // ─── Error classes ──────────────────────────────────────────────────────────
@@ -133,14 +136,74 @@ export class ApiClient {
     );
   }
 
+  async getTask(
+    firmId: string,
+    matterId: string,
+    taskId: string,
+  ): Promise<TaskDetail> {
+    return this.get(`/firms/${firmId}/matters/${matterId}/tasks/${taskId}`);
+  }
+
   async completeTask(
     firmId: string,
     matterId: string,
     taskId: string,
+    notes?: string,
   ): Promise<Task> {
     return this.post(
       `/firms/${firmId}/matters/${matterId}/tasks/${taskId}/complete`,
-      {},
+      notes ? { notes } : {},
+    );
+  }
+
+  async waiveTask(
+    firmId: string,
+    matterId: string,
+    taskId: string,
+    reason: string,
+  ): Promise<Task> {
+    return this.post(
+      `/firms/${firmId}/matters/${matterId}/tasks/${taskId}/waive`,
+      { reason },
+    );
+  }
+
+  // ─── Documents ─────────────────────────────────────────────────────────
+
+  async getUploadUrl(
+    firmId: string,
+    matterId: string,
+    data: { filename: string; mime_type: string },
+  ): Promise<DocumentUploadURL> {
+    return this.post(
+      `/firms/${firmId}/matters/${matterId}/documents/upload-url`,
+      data,
+    );
+  }
+
+  async registerDocument(
+    firmId: string,
+    matterId: string,
+    data: {
+      filename: string;
+      storage_key: string;
+      mime_type: string;
+      size_bytes: number;
+      task_id?: string;
+    },
+  ): Promise<DocumentDetail> {
+    return this.post(`/firms/${firmId}/matters/${matterId}/documents`, data);
+  }
+
+  async linkTaskDocument(
+    firmId: string,
+    matterId: string,
+    taskId: string,
+    documentId: string,
+  ): Promise<void> {
+    return this.post(
+      `/firms/${firmId}/matters/${matterId}/tasks/${taskId}/documents`,
+      { document_id: documentId },
     );
   }
 

@@ -1,5 +1,5 @@
 /**
- * Matters list screen — shows all active matters for the user's firm.
+ * Matters list screen — cards with status, progress bar, next deadline.
  */
 
 import React from "react";
@@ -11,11 +11,12 @@ import {
   Text,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, Badge, LoadingScreen, EmptyState } from "@/components/ui";
 import { PHASE_LABELS } from "@/lib/constants";
-import { colors, spacing, fontSize, fontWeight, borderRadius, shadow } from "@/lib/theme";
+import { colors, spacing, fontSize, fontWeight, borderRadius } from "@/lib/theme";
 import type { Matter } from "@/lib/types";
 
 const FIRM_ID = "current";
@@ -29,17 +30,38 @@ function formatCurrency(value: number | null): string {
   }).format(value);
 }
 
-function MatterCard({ matter }: { matter: Matter }) {
-  const phaseColor =
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// We use portfolio-style data when available; fallback to basic matter data.
+// The portfolio endpoint provides task counts and deadlines per matter.
+
+interface MatterWithProgress extends Matter {
+  _taskComplete?: number;
+  _taskTotal?: number;
+  _nextDeadline?: string | null;
+  _overdueCount?: number;
+}
+
+function MatterCard({ matter, onPress }: { matter: MatterWithProgress; onPress: () => void }) {
+  const phaseColor: "green" | "amber" | "blue" =
     matter.phase === "distribution" || matter.phase === "closing"
       ? "green"
       : matter.phase === "administration"
         ? "blue"
         : "amber";
 
+  // Simulated progress — in production comes from portfolio endpoint
+  const completePct = matter._taskTotal
+    ? Math.round(((matter._taskComplete ?? 0) / matter._taskTotal) * 100)
+    : null;
+
   return (
-    <Pressable style={({ pressed }) => [pressed && { opacity: 0.9 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.9 }]}>
       <Card style={styles.matterCard}>
+        {/* Title row */}
         <View style={styles.matterHeader}>
           <View style={styles.matterTitleRow}>
             <Text style={styles.matterTitle} numberOfLines={1}>
@@ -55,6 +77,25 @@ function MatterCard({ matter }: { matter: Matter }) {
           </Text>
         </View>
 
+        {/* Progress bar */}
+        {completePct != null && (
+          <View style={styles.progressSection}>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${completePct}%`,
+                    backgroundColor: completePct >= 75 ? colors.success : completePct >= 40 ? colors.gold : colors.info,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressLabel}>{completePct}% complete</Text>
+          </View>
+        )}
+
+        {/* Footer stats */}
         <View style={styles.matterFooter}>
           <View style={styles.matterStat}>
             <Text style={styles.matterStatLabel}>Est. Value</Text>
@@ -62,19 +103,34 @@ function MatterCard({ matter }: { matter: Matter }) {
               {formatCurrency(matter.estimated_value)}
             </Text>
           </View>
-          <View style={styles.matterStat}>
-            <Text style={styles.matterStatLabel}>Status</Text>
-            <Text style={[styles.matterStatValue, { textTransform: "capitalize" }]}>
-              {matter.status.replace(/_/g, " ")}
-            </Text>
-          </View>
+          {matter._nextDeadline && (
+            <View style={styles.matterStat}>
+              <Text style={styles.matterStatLabel}>Next Deadline</Text>
+              <View style={styles.deadlineRow}>
+                <Ionicons name="calendar-outline" size={12} color={colors.warning} />
+                <Text style={styles.deadlineText}>{formatDate(matter._nextDeadline)}</Text>
+              </View>
+            </View>
+          )}
+          {(matter._overdueCount ?? 0) > 0 && (
+            <View style={styles.matterStat}>
+              <Text style={styles.matterStatLabel}>Overdue</Text>
+              <Text style={[styles.matterStatValue, { color: colors.danger }]}>
+                {matter._overdueCount}
+              </Text>
+            </View>
+          )}
         </View>
       </Card>
     </Pressable>
   );
 }
 
-export function MattersScreen() {
+interface MattersScreenProps {
+  onSelectMatter?: (matterId: string) => void;
+}
+
+export function MattersScreen({ onSelectMatter }: MattersScreenProps) {
   const { api } = useAuth();
 
   const {
@@ -89,14 +145,19 @@ export function MattersScreen() {
 
   if (isLoading) return <LoadingScreen />;
 
-  const matters = data?.data ?? [];
+  const matters: MatterWithProgress[] = data?.data ?? [];
 
   return (
     <View style={styles.container}>
       <FlatList
         data={matters}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MatterCard matter={item} />}
+        renderItem={({ item }) => (
+          <MatterCard
+            matter={item}
+            onPress={() => onSelectMatter?.(item.id)}
+          />
+        )}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         refreshControl={
@@ -126,72 +187,35 @@ export function MattersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  list: {
-    padding: spacing.lg,
-    paddingBottom: spacing["4xl"],
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  list: { padding: spacing.lg, paddingBottom: spacing["4xl"] },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "baseline",
+    flexDirection: "row", justifyContent: "space-between", alignItems: "baseline",
     marginBottom: spacing.lg,
   },
-  headerTitle: {
-    fontSize: fontSize["2xl"],
-    fontWeight: fontWeight.semibold,
-    color: colors.foreground,
-    letterSpacing: -0.5,
-  },
-  headerCount: {
-    fontSize: fontSize.sm,
-    color: colors.foregroundMuted,
-  },
+  headerTitle: { fontSize: fontSize["2xl"], fontWeight: fontWeight.semibold, color: colors.foreground, letterSpacing: -0.5 },
+  headerCount: { fontSize: fontSize.sm, color: colors.foregroundMuted },
 
-  // Matter card
-  matterCard: {
-    gap: spacing.md,
-  },
-  matterHeader: {
-    gap: spacing.xs,
-  },
-  matterTitleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  matterTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.medium,
-    color: colors.foreground,
-    flex: 1,
-  },
-  matterType: {
-    fontSize: fontSize.xs,
-    color: colors.foregroundMuted,
-    textTransform: "capitalize",
-  },
+  matterCard: { gap: spacing.md },
+  matterHeader: { gap: spacing.xs },
+  matterTitleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.sm },
+  matterTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.foreground, flex: 1 },
+  matterType: { fontSize: fontSize.xs, color: colors.foregroundMuted, textTransform: "capitalize" },
+
+  // Progress
+  progressSection: { gap: spacing.xs },
+  progressBar: { height: 6, backgroundColor: colors.muted, borderRadius: 3, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 3 },
+  progressLabel: { fontSize: fontSize.xs, color: colors.foregroundMuted },
+
+  // Footer
   matterFooter: {
-    flexDirection: "row",
-    gap: spacing.xl,
-    paddingTop: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderLight,
+    flexDirection: "row", gap: spacing.xl, paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderLight,
   },
-  matterStat: {
-    gap: 2,
-  },
-  matterStatLabel: {
-    fontSize: fontSize.xs,
-    color: colors.foregroundMuted,
-  },
-  matterStatValue: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.foreground,
-  },
+  matterStat: { gap: 2 },
+  matterStatLabel: { fontSize: fontSize.xs, color: colors.foregroundMuted },
+  matterStatValue: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.foreground },
+  deadlineRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  deadlineText: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.warning },
 });

@@ -31,7 +31,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Estate Executor to access your photos for document uploads.",
+          "cameraPermission": "Allow Estate Executor to use the camera for document capture."
+        }
+      ]
     ]
   }
 }

@@ -27,6 +27,30 @@ export const TASK_PRIORITY_LABELS: Record<string, string> = {
   informational: "Info",
 };
 
+export const TASK_PHASE_LABELS: Record<string, string> = {
+  immediate: "Immediate",
+  asset_inventory: "Asset Inventory",
+  notification: "Notification",
+  probate_filing: "Probate Filing",
+  tax: "Tax",
+  transfer_distribution: "Transfer & Distribution",
+  family_communication: "Family Communication",
+  closing: "Closing",
+  custom: "Custom",
+};
+
+export const TASK_PHASE_ORDER: string[] = [
+  "immediate",
+  "asset_inventory",
+  "notification",
+  "probate_filing",
+  "tax",
+  "transfer_distribution",
+  "family_communication",
+  "closing",
+  "custom",
+];
+
 export const ESTATE_TYPE_LABELS: Record<string, string> = {
   testate_probate: "Probate (with Will)",
   intestate_probate: "Probate (no Will)",

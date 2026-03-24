@@ -125,17 +125,62 @@ export interface MatterDashboard {
 
 // ─── Tasks ──────────────────────────────────────────────────────────────────
 
+export interface DocumentBrief {
+  id: string;
+  filename: string;
+  doc_type: string | null;
+  created_at: string;
+}
+
+export interface CommentBrief {
+  id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   matter_id: string;
   title: string;
   description: string | null;
+  instructions: string | null;
   phase: TaskPhase;
   status: TaskStatus;
   priority: TaskPriority;
   assigned_to: string | null;
   due_date: string | null;
+  requires_document: boolean;
   completed_at: string | null;
+  sort_order: number;
+  metadata: Record<string, unknown>;
+  documents: DocumentBrief[];
+  dependencies: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskDetail extends Task {
+  dependents: string[];
+  comments: CommentBrief[];
+}
+
+// ─── Documents ──────────────────────────────────────────────────────────────
+
+export interface DocumentUploadURL {
+  upload_url: string;
+  storage_key: string;
+  expires_in: number;
+}
+
+export interface DocumentDetail {
+  id: string;
+  matter_id: string;
+  filename: string;
+  storage_key: string;
+  mime_type: string;
+  size_bytes: number;
+  doc_type: string | null;
   created_at: string;
 }
 
