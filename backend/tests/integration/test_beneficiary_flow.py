@@ -67,11 +67,11 @@ def _make_matter(**overrides):
 
 
 def _make_stakeholder(
-    id=None,
+    id=None,  # noqa: A002
     role="matter_admin",
     name="Attorney Smith",
     email="attorney@firm.com",
-    **kw,  # noqa: A002
+    **kw,
 ):
     from app.models.enums import StakeholderRole
 
