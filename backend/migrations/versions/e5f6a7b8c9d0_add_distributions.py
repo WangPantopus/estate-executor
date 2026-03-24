@@ -37,7 +37,11 @@ def upgrade() -> None:
         sa.Column(
             "distribution_type",
             sa.Enum(
-                "cash", "asset_transfer", "in_kind", name="distribution_type", native_enum=True
+                "cash",
+                "asset_transfer",
+                "in_kind",
+                name="distribution_type",
+                create_type=False,
             ),
             nullable=False,
         ),
