@@ -99,7 +99,8 @@ async def refresh_materialized_view(
                 "Concurrent refresh of %s failed, falling back to blocking refresh",
                 view_name,
             )
-            await db.execute(text(f"REFRESH MATERIALIZED VIEW {view_name}"))  # view_name already validated above
+            # view_name already validated against allowlist above
+            await db.execute(text(f"REFRESH MATERIALIZED VIEW {view_name}"))
         else:
             raise
 

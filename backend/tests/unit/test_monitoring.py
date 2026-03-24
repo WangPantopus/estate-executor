@@ -202,7 +202,7 @@ class TestAlertingService:
     """Verify alert rule evaluation."""
 
     def test_no_alerts_when_healthy(self):
-        from app.core.metrics import MetricsCollector, metrics_collector
+        from app.core.metrics import metrics_collector
 
         # Record some healthy requests
         metrics_collector.record_request(method="GET", path="/ok", status_code=200, duration_ms=5.0)
@@ -211,10 +211,10 @@ class TestAlertingService:
         # but we can test the sync alert checks
         from app.services.alerting_service import _check_error_rate, _check_latency
 
-        error_alerts = _check_error_rate()
-        latency_alerts = _check_latency()
         # With only 200s and low latency, no alerts should fire
         # (Note: this uses the global singleton which may have state from other tests)
+        _check_error_rate()
+        _check_latency()
 
     def test_high_error_rate_triggers_alert(self):
         from unittest.mock import patch

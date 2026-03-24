@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from app.core.config import settings
@@ -24,7 +24,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     CRITICAL = "critical"
     WARNING = "warning"
     INFO = "info"
@@ -129,7 +129,10 @@ async def _check_queue_depth() -> list[Alert]:
                         Alert(
                             rule="high_queue_depth",
                             severity=AlertSeverity.WARNING,
-                            message=f"Queue '{queue_name}' depth {depth} exceeds threshold {threshold}",
+                            message=(
+                                f"Queue '{queue_name}' depth {depth} "
+                                f"exceeds threshold {threshold}"
+                            ),
                             value=depth,
                             threshold=threshold,
                         )
@@ -231,9 +234,16 @@ async def _check_deadline_failures() -> list[Alert]:
                 )
             )
     except Exception as exc:
-        logger.warning("alert_check_failed", extra={"check": "deadline_failures", "error": str(exc)})
+        logger.warning(
+            "alert_check_failed",
+            extra={"check": "deadline_failures", "error": str(exc)},
+        )
 
     return alerts
+
+
+# UptimeRobot status codes that indicate a problem (8 = seems down, 9 = down)
+_UPTIMEROBOT_DOWN_STATUSES = {8: "seems down", 9: "down"}
 
 
 async def _check_uptime_monitors() -> list[Alert]:
@@ -249,9 +259,6 @@ async def _check_uptime_monitors() -> list[Alert]:
     api_key = settings.uptimerobot_readonly_api_key
     if not api_key:
         return alerts
-
-    # Status codes that indicate a problem
-    _DOWN_STATUSES = {8: "seems down", 9: "down"}
 
     try:
         import httpx
@@ -273,9 +280,9 @@ async def _check_uptime_monitors() -> list[Alert]:
 
         for monitor in data.get("monitors", []):
             status_code = monitor.get("status")
-            if status_code in _DOWN_STATUSES:
+            if status_code in _UPTIMEROBOT_DOWN_STATUSES:
                 name = monitor.get("friendly_name", monitor.get("url", "unknown"))
-                label = _DOWN_STATUSES[status_code]
+                label = _UPTIMEROBOT_DOWN_STATUSES[status_code]
                 alerts.append(
                     Alert(
                         rule="uptime_monitor_down",

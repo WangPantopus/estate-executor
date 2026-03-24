@@ -5,20 +5,11 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.core.cache import (
-    _DASHBOARD_NS,
-    _FIRM_SETTINGS_NS,
-    _PERMISSIONS_NS,
-    _TEMPLATES_NS,
     cache_delete,
     cache_get,
     cache_set,
-    get_cached_dashboard,
-    get_cached_firm_settings,
     get_cached_templates,
-    get_cached_user_permissions,
     invalidate_dashboard,
     invalidate_firm_settings,
     invalidate_user_permissions,

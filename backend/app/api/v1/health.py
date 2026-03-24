@@ -106,7 +106,11 @@ async def _check_redis() -> dict[str, Any]:
             latency = (time.perf_counter() - start) * 1000
             if pong:
                 return {"status": "ok", "latency_ms": round(latency, 2)}
-            return {"status": "error", "latency_ms": round(latency, 2), "error": "PING returned False"}
+            return {
+                "status": "error",
+                "latency_ms": round(latency, 2),
+                "error": "PING returned False",
+            }
         finally:
             await r.aclose()
     except Exception as exc:
@@ -210,7 +214,11 @@ async def _check_celery() -> dict[str, Any]:
             latency = (time.perf_counter() - start) * 1000
             if pong:
                 return {"status": "ok", "latency_ms": round(latency, 2)}
-            return {"status": "error", "latency_ms": round(latency, 2), "error": "Broker PING failed"}
+            return {
+                "status": "error",
+                "latency_ms": round(latency, 2),
+                "error": "Broker PING failed",
+            }
         finally:
             await r.aclose()
     except Exception as exc:

@@ -16,11 +16,11 @@ from app.api.v1.entities import router as entities_router
 from app.api.v1.events import router as events_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
-from app.api.v1.monitoring import router as monitoring_router
 from app.api.v1.integrations import router as integrations_router
 from app.api.v1.integrations import webhook_router as integrations_webhook_router
 from app.api.v1.matters import router as matters_router
 from app.api.v1.milestones import router as milestones_router
+from app.api.v1.monitoring import router as monitoring_router
 from app.api.v1.portal import router as portal_router
 from app.api.v1.privacy import router as privacy_router
 from app.api.v1.reports import router as reports_router

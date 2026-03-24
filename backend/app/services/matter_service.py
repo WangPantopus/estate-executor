@@ -224,7 +224,9 @@ async def get_dashboard(
     """
     from app.core.cache import get_cached_dashboard, set_cached_dashboard
 
-    cache_key_role = stakeholder_role.value if hasattr(stakeholder_role, "value") else str(stakeholder_role)
+    cache_key_role = (
+        stakeholder_role.value if hasattr(stakeholder_role, "value") else str(stakeholder_role)
+    )
     cached = get_cached_dashboard(str(matter_id), cache_key_role)
     if cached is not None:
         # The cached dict contains only serializable aggregate fields

@@ -124,7 +124,7 @@ class RequestTimer:
         self._start = 0.0
         self.duration_ms = 0.0
 
-    def __enter__(self) -> "RequestTimer":
+    def __enter__(self) -> RequestTimer:
         self._start = time.perf_counter()
         return self
 

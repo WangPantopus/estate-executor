@@ -8,15 +8,18 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
-from app.schemas.auth import CurrentUser
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -56,8 +59,6 @@ async def get_business_metrics(
 
     Returns aggregate counts useful for operational dashboards.
     """
-    from app.models.enums import MatterStatus, TaskStatus
-
     metrics: dict[str, Any] = {}
 
     # ── Active matters by status ───────────────────────────────────────
@@ -69,7 +70,10 @@ async def get_business_metrics(
             .where(Matter.deleted_at.is_(None))
             .group_by(Matter.status)
         )
-        matter_counts = {str(row[0].value) if hasattr(row[0], "value") else str(row[0]): row[1] for row in matter_rows}
+        matter_counts = {
+            str(row[0].value) if hasattr(row[0], "value") else str(row[0]): row[1]
+            for row in matter_rows
+        }
         metrics["matters"] = {
             "by_status": matter_counts,
             "total": sum(matter_counts.values()),
@@ -85,7 +89,10 @@ async def get_business_metrics(
         task_rows = await db.execute(
             select(Task.status, func.count(Task.id)).group_by(Task.status)
         )
-        task_counts = {str(row[0].value) if hasattr(row[0], "value") else str(row[0]): row[1] for row in task_rows}
+        task_counts = {
+            str(row[0].value) if hasattr(row[0], "value") else str(row[0]): row[1]
+            for row in task_rows
+        }
         total_tasks = sum(task_counts.values())
         completed = task_counts.get("complete", 0) + task_counts.get("completed", 0)
         metrics["tasks"] = {
