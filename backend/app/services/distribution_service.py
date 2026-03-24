@@ -278,7 +278,7 @@ async def get_distribution_summary(
     db: AsyncSession,
     *,
     matter_id: uuid.UUID,
-) -> dict:
+) -> dict[str, Any]:
     """Get distribution summary by beneficiary and type."""
 
     # Per-beneficiary summary

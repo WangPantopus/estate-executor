@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import selectinload
@@ -83,7 +83,7 @@ async def list_beneficiary_matters(
     db: AsyncSession,
     *,
     current_user: CurrentUser,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Return all matters where user is a beneficiary stakeholder."""
     result = await db.execute(
         select(Stakeholder, Matter, Firm)
@@ -117,7 +117,7 @@ async def get_portal_overview(
     *,
     matter_id: uuid.UUID,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     """Build the portal overview response for a beneficiary."""
     stakeholder = await _get_beneficiary_stakeholder(
         db, matter_id=matter_id, user_id=current_user.user_id
@@ -172,7 +172,7 @@ async def get_portal_overview(
     milestone_comms = milestone_result.scalars().all()
 
     # Build milestones from phases and milestone events
-    milestones = _build_milestones(matter, milestone_comms)
+    milestones = _build_milestones(matter, list(milestone_comms))
 
     # Distribution summary
     dist_result = await db.execute(
@@ -213,7 +213,7 @@ async def get_portal_overview(
             "estimated_completion": None,
         },
         "your_role": "Beneficiary",
-        "your_relationship": stakeholder.relationship,
+        "your_relationship": stakeholder.relationship_label,
         "contacts": contacts,
         "milestones": milestones,
         "distribution": {
@@ -227,7 +227,7 @@ async def get_portal_overview(
     }
 
 
-def _build_milestones(matter: Matter, milestone_comms: list[Communication]) -> list[dict]:
+def _build_milestones(matter: Matter, milestone_comms: list[Communication]) -> list[dict[str, Any]]:
     """Build milestone list from matter phase and milestone communications."""
     current_phase_idx = _PHASE_ORDER.index(matter.phase) if matter.phase in _PHASE_ORDER else 0
     milestones = []
@@ -269,7 +269,7 @@ async def get_portal_documents(
     *,
     matter_id: uuid.UUID,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     """Return documents shared with the beneficiary."""
     await _get_beneficiary_stakeholder(db, matter_id=matter_id, user_id=current_user.user_id)
 
@@ -321,7 +321,7 @@ async def get_portal_messages(
     *,
     matter_id: uuid.UUID,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     """Return communications visible to the beneficiary."""
     stakeholder = await _get_beneficiary_stakeholder(
         db, matter_id=matter_id, user_id=current_user.user_id
@@ -384,7 +384,7 @@ async def post_beneficiary_message(
     current_user: CurrentUser,
     subject: str | None,
     body: str,
-) -> dict:
+) -> dict[str, Any]:
     """Create a message from a beneficiary (visible to professionals)."""
     stakeholder = await _get_beneficiary_stakeholder(
         db, matter_id=matter_id, user_id=current_user.user_id
@@ -424,7 +424,7 @@ async def acknowledge_distribution_notice(
     matter_id: uuid.UUID,
     communication_id: uuid.UUID,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     """Acknowledge a distribution notice."""
     await _get_beneficiary_stakeholder(db, matter_id=matter_id, user_id=current_user.user_id)
 
