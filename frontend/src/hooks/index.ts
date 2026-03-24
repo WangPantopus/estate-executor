@@ -85,12 +85,19 @@ export {
   useBillingInvoices,
   useCreateCheckout,
   useCreatePortalSession,
-  // Integrations
+  // Integrations — Clio
   useClioConnection,
   useConnectClio,
   useDisconnectClio,
   useUpdateClioSettings,
   useSyncClio,
+  // Integrations — DocuSign
+  useDocuSignConnection,
+  useConnectDocuSign,
+  useDisconnectDocuSign,
+  useSignatureRequests,
+  useSendForSignature,
+  useVoidSignatureRequest,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

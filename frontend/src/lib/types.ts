@@ -1284,3 +1284,64 @@ export interface DisconnectResponse {
   disconnected: boolean;
   provider: string;
 }
+
+// ─── DocuSign / Signatures ──────────────────────────────────────────────────
+
+export type SignatureRequestStatus =
+  | 'draft' | 'sent' | 'delivered' | 'signed'
+  | 'completed' | 'declined' | 'voided' | 'expired';
+
+export type SignatureRequestType =
+  | 'distribution_consent' | 'beneficiary_acknowledgment'
+  | 'executor_oath' | 'general';
+
+export interface SignerInfo {
+  email: string;
+  name: string;
+  role?: string;
+  stakeholder_id?: string;
+}
+
+export interface SendForSignatureRequest {
+  document_id: string;
+  request_type?: SignatureRequestType;
+  subject: string;
+  message?: string;
+  signers: SignerInfo[];
+}
+
+export interface SignatureRequest {
+  id: string;
+  matter_id: string;
+  document_id?: string | null;
+  request_type: SignatureRequestType;
+  status: SignatureRequestStatus;
+  envelope_id?: string | null;
+  subject: string;
+  message?: string | null;
+  signers: Array<{
+    email: string;
+    name: string;
+    role: string;
+    status?: string | null;
+    signed_at?: string | null;
+    stakeholder_id?: string | null;
+  }>;
+  sent_by: string;
+  sent_at?: string | null;
+  completed_at?: string | null;
+  voided_at?: string | null;
+  expires_at?: string | null;
+  signed_document_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SignatureRequestListResponse {
+  data: SignatureRequest[];
+  total: number;
+}
+
+export interface VoidEnvelopeRequest {
+  reason?: string;
+}

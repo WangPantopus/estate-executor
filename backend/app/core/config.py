@@ -53,6 +53,16 @@ class Settings(BaseSettings):
     clio_auth_url: str = "https://app.clio.com/oauth/authorize"
     clio_token_url: str = "https://app.clio.com/oauth/token"
 
+    # DocuSign Integration
+    docusign_integration_key: str = ""  # OAuth client ID
+    docusign_secret_key: str = ""
+    docusign_redirect_uri: str = ""
+    docusign_webhook_secret: str = ""  # HMAC key for Connect
+    docusign_base_url: str = "https://account-d.docusign.com"  # demo; prod: account.docusign.com
+    docusign_auth_url: str = "https://account-d.docusign.com/oauth/auth"
+    docusign_token_url: str = "https://account-d.docusign.com/oauth/token"
+    docusign_api_base_url: str = "https://demo.docusign.net/restapi"  # prod: na*.docusign.net
+
     # Email
     resend_api_key: str = ""
     email_from: str = "Estate Executor <notifications@estate-executor.com>"

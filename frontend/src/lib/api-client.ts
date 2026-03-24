@@ -17,9 +17,13 @@ import type {
   InvoiceListResponse,
   OAuthInitResponse,
   PortalSessionResponse,
+  SendForSignatureRequest,
+  SignatureRequest,
+  SignatureRequestListResponse,
   SyncRequest,
   SyncResultResponse,
   UsageInfo,
+  VoidEnvelopeRequest,
   AcceptInviteResponse,
   AIAnomalyResponse,
   AIUsageStats,
@@ -1179,5 +1183,71 @@ export class ApiClient {
     data: SyncRequest,
   ): Promise<SyncResultResponse> {
     return this.post(`${this.intBase(firmId)}/clio/sync`, data);
+  }
+
+  // ─── DocuSign ─────────────────────────────────────────────────────────
+
+  async getDocuSignConnection(firmId: string): Promise<IntegrationConnection | null> {
+    return this.get(`${this.intBase(firmId)}/docusign`);
+  }
+
+  async connectDocuSign(firmId: string): Promise<OAuthInitResponse> {
+    return this.post(`${this.intBase(firmId)}/docusign/connect`);
+  }
+
+  async disconnectDocuSign(firmId: string): Promise<DisconnectResponse> {
+    return this.post(`${this.intBase(firmId)}/docusign/disconnect`);
+  }
+
+  async sendForSignature(
+    firmId: string,
+    matterId: string,
+    data: SendForSignatureRequest,
+  ): Promise<SignatureRequest> {
+    return this.post(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/send`,
+      data,
+    );
+  }
+
+  async getSignatureRequests(
+    firmId: string,
+    matterId: string,
+  ): Promise<SignatureRequestListResponse> {
+    return this.get(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests`,
+    );
+  }
+
+  async getSignatureRequest(
+    firmId: string,
+    matterId: string,
+    requestId: string,
+  ): Promise<SignatureRequest> {
+    return this.get(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests/${requestId}`,
+    );
+  }
+
+  async refreshSignatureStatus(
+    firmId: string,
+    matterId: string,
+    requestId: string,
+  ): Promise<SignatureRequest> {
+    return this.post(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests/${requestId}/refresh`,
+    );
+  }
+
+  async voidSignatureRequest(
+    firmId: string,
+    matterId: string,
+    requestId: string,
+    data?: VoidEnvelopeRequest,
+  ): Promise<SignatureRequest> {
+    return this.post(
+      `${this.intBase(firmId)}/docusign/matters/${matterId}/requests/${requestId}/void`,
+      data ?? {},
+    );
   }
 }

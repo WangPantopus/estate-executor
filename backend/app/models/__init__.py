@@ -35,6 +35,8 @@ from app.models.enums import (
     MatterPhase,
     MatterStatus,
     OwnershipType,
+    SignatureRequestStatus,
+    SignatureRequestType,
     StakeholderRole,
     SubscriptionStatus,
     SubscriptionTier,
@@ -50,6 +52,7 @@ from app.models.firm_memberships import FirmMembership
 from app.models.firms import Firm
 from app.models.integration_connections import IntegrationConnection
 from app.models.matters import Matter
+from app.models.signature_requests import SignatureRequest
 from app.models.stakeholders import Stakeholder
 from app.models.subscriptions import Subscription
 from app.models.task_comments import TaskComment
@@ -116,7 +119,10 @@ __all__ = [
     "AIUsageLog",
     "AIFeedback",
     "Subscription",
+    "SignatureRequest",
     "IntegrationConnection",
+    "SignatureRequestStatus",
+    "SignatureRequestType",
     "IntegrationProvider",
     "IntegrationStatus",
     "SyncDirection",

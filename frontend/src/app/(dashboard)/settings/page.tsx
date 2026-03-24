@@ -73,6 +73,9 @@ import {
   useConnectClio,
   useDisconnectClio,
   useSyncClio,
+  useDocuSignConnection,
+  useConnectDocuSign,
+  useDisconnectDocuSign,
 } from "@/hooks";
 import type { FirmRole, TierLimits, Invoice, SyncRequest } from "@/lib/types";
 
@@ -888,6 +891,10 @@ function IntegrationsTabContent({
   const disconnectClio = useDisconnectClio(firmId);
   const syncClio = useSyncClio(firmId);
 
+  const { data: docusign, isLoading: dsLoading } = useDocuSignConnection(firmId);
+  const connectDocuSign = useConnectDocuSign(firmId);
+  const disconnectDocuSign = useDisconnectDocuSign(firmId);
+
   const [syncingResource, setSyncingResource] = useState<string | null>(null);
 
   const isConnected = clio?.status === "connected";
@@ -1129,14 +1136,96 @@ function IntegrationsTabContent({
         </Card>
       )}
 
+      {/* DocuSign Integration Card */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-lg bg-yellow-100 dark:bg-yellow-950 flex items-center justify-center">
+                <span className="text-yellow-700 dark:text-yellow-300 font-bold text-sm">DS</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-foreground">DocuSign</h3>
+                <p className="text-xs text-muted-foreground">
+                  E-signatures — send documents for signing, track status, receive signed copies
+                </p>
+              </div>
+            </div>
+            <Badge
+              variant={docusign?.status === "connected" ? "default" : "muted"}
+              className="text-xs gap-1"
+            >
+              {docusign?.status === "connected" ? (
+                <><CheckCircle2 className="size-3" aria-hidden="true" /> Connected</>
+              ) : (
+                <><Unplug className="size-3" aria-hidden="true" /> Not Connected</>
+              )}
+            </Badge>
+          </div>
+
+          {docusign?.status === "connected" && docusign.external_account_name && (
+            <p className="text-xs text-muted-foreground mb-4">
+              Connected to: <span className="font-medium text-foreground">{docusign.external_account_name}</span>
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            {isAdmin && docusign?.status !== "connected" && (
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const r = await connectDocuSign.mutateAsync();
+                    window.location.href = r.authorize_url;
+                  } catch { /* handled */ }
+                }}
+                disabled={connectDocuSign.isPending}
+              >
+                {connectDocuSign.isPending ? (
+                  <Loader2 className="size-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Plug className="size-3.5 mr-1" />
+                )}
+                Connect DocuSign
+              </Button>
+            )}
+            {isAdmin && docusign?.status === "connected" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  if (!confirm("Disconnect DocuSign?")) return;
+                  try {
+                    await disconnectDocuSign.mutateAsync();
+                  } catch { /* handled */ }
+                }}
+                disabled={disconnectDocuSign.isPending}
+              >
+                {disconnectDocuSign.isPending ? (
+                  <Loader2 className="size-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Unplug className="size-3.5 mr-1" />
+                )}
+                Disconnect
+              </Button>
+            )}
+          </div>
+
+          {docusign?.status === "connected" && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Send documents for signature from any matter&apos;s Documents tab.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Placeholder for future integrations */}
       <Card>
         <CardContent className="p-6">
           <h3 className="text-sm font-medium text-foreground mb-3">Coming Soon</h3>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {[
               { name: "QuickBooks", desc: "Accounting sync" },
-              { name: "DocuSign", desc: "e-Signatures" },
               { name: "Xero", desc: "Accounting sync" },
             ].map((item) => (
               <div

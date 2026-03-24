@@ -232,3 +232,21 @@ class SyncStatus(enum.StrEnum):
     syncing = "syncing"
     success = "success"
     failed = "failed"
+
+
+class SignatureRequestStatus(enum.StrEnum):
+    draft = "draft"
+    sent = "sent"
+    delivered = "delivered"
+    signed = "signed"
+    completed = "completed"
+    declined = "declined"
+    voided = "voided"
+    expired = "expired"
+
+
+class SignatureRequestType(enum.StrEnum):
+    distribution_consent = "distribution_consent"
+    beneficiary_acknowledgment = "beneficiary_acknowledgment"
+    executor_oath = "executor_oath"
+    general = "general"

@@ -17,7 +17,9 @@ import type {
   CreateCheckoutRequest,
   CreatePortalSessionRequest,
   InvoiceListResponse,
+  SendForSignatureRequest,
   SyncRequest,
+  VoidEnvelopeRequest,
   CommunicationCreate,
   CommunicationFilters,
   DeadlineCreate,
@@ -108,6 +110,10 @@ export const queryKeys = {
     ["firms", firmId, "integrations"] as const,
   clioConnection: (firmId: string) =>
     ["firms", firmId, "integrations", "clio"] as const,
+  docusignConnection: (firmId: string) =>
+    ["firms", firmId, "integrations", "docusign"] as const,
+  signatureRequests: (firmId: string, matterId: string) =>
+    ["firms", firmId, "matters", matterId, "signature-requests"] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -1085,6 +1091,71 @@ export function useSyncClio(firmId: string) {
     mutationFn: (data: SyncRequest) => api.syncClio(firmId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
+  });
+}
+
+// ─── DocuSign ─────────────────────────────────────────────────────────────────
+
+export function useDocuSignConnection(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.docusignConnection(firmId),
+    queryFn: () => api.getDocuSignConnection(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectDocuSign(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.connectDocuSign(firmId),
+  });
+}
+
+export function useDisconnectDocuSign(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectDocuSign(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.docusignConnection(firmId) });
+    },
+  });
+}
+
+export function useSignatureRequests(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.signatureRequests(firmId, matterId),
+    queryFn: () => api.getSignatureRequests(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useSendForSignature(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SendForSignatureRequest) =>
+      api.sendForSignature(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.signatureRequests(firmId, matterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.documents(firmId, matterId) });
+    },
+  });
+}
+
+export function useVoidSignatureRequest(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ requestId, data }: { requestId: string; data?: VoidEnvelopeRequest }) =>
+      api.voidSignatureRequest(firmId, matterId, requestId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.signatureRequests(firmId, matterId) });
     },
   });
 }
