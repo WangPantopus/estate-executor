@@ -13,10 +13,21 @@ from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import text
 
+from app.core.config import settings
+
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
+# Allowlist of materialized view names that may be refreshed.
+# Prevents SQL injection via view_name parameter.
+_ALLOWED_MATERIALIZED_VIEWS = frozenset({
+    "mv_portfolio_task_stats",
+    "mv_matter_summary",
+    "mv_asset_summary",
+    "mv_deadline_summary",
+})
 
 
 async def explain_analyze(
@@ -41,6 +52,13 @@ async def explain_analyze(
     Returns:
         List of plan lines (TEXT format) or serialized plan (JSON/YAML/XML).
     """
+    if not (settings.is_development or settings.app_env == "staging"):
+        raise RuntimeError(
+            "explain_analyze is only available in development/staging environments"
+        )
+    if not query_sql or not query_sql.strip():
+        raise ValueError("query_sql must not be empty")
+
     options = []
     if analyze:
         options.append("ANALYZE")
@@ -65,6 +83,11 @@ async def refresh_materialized_view(
     Uses CONCURRENTLY when possible (requires a unique index on the view)
     to avoid locking reads during refresh.
     """
+    if view_name not in _ALLOWED_MATERIALIZED_VIEWS:
+        raise ValueError(
+            f"Unknown materialized view '{view_name}'. "
+            f"Allowed views: {sorted(_ALLOWED_MATERIALIZED_VIEWS)}"
+        )
     keyword = "CONCURRENTLY" if concurrently else ""
     try:
         await db.execute(text(f"REFRESH MATERIALIZED VIEW {keyword} {view_name}"))
@@ -76,7 +99,7 @@ async def refresh_materialized_view(
                 "Concurrent refresh of %s failed, falling back to blocking refresh",
                 view_name,
             )
-            await db.execute(text(f"REFRESH MATERIALIZED VIEW {view_name}"))
+            await db.execute(text(f"REFRESH MATERIALIZED VIEW {view_name}"))  # view_name already validated above
         else:
             raise
 

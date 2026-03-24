@@ -29,6 +29,11 @@ _redis_client: redis.Redis | None = None
 
 
 def _get_redis() -> redis.Redis:
+    # NOTE: This returns a synchronous Redis client used from an async (FastAPI)
+    # context. Each call will briefly block the event loop for the duration of
+    # the Redis I/O (typically < 1ms on a local/VPC connection; up to 2s on
+    # timeout). Migrating to redis.asyncio with async cache helpers is the
+    # correct long-term fix, but requires updating all call sites.
     global _redis_client
     if _redis_client is None:
         _redis_client = redis.Redis.from_url(
@@ -161,7 +166,15 @@ def set_cached_user_permissions(
 
 
 def invalidate_user_permissions(matter_id: str) -> None:
-    """Invalidate all cached permissions for a matter (e.g., after role change)."""
+    """Invalidate all cached permissions for a matter (e.g., after role change).
+
+    NOTE: The SCAN-then-DELETE pattern used by cache_invalidate_pattern is
+    inherently racy — permission entries written between the SCAN and the DELETE
+    will survive invalidation. The 5-minute TTL (_PERMISSIONS_TTL) is the upper
+    bound on staleness. For a role revocation that must take immediate effect,
+    prefer invalidate_user_permissions_for_user() when the specific user is known,
+    which uses a single atomic DEL rather than SCAN+DEL.
+    """
     cache_invalidate_pattern(_PERMISSIONS_NS, "*", matter_id)
 
 

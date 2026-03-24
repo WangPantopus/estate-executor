@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from typing import Any
@@ -13,6 +14,10 @@ from typing import Any
 from fastapi import APIRouter
 
 from app.core.config import settings
+
+# Cache Anthropic API key validity check: result is valid for 5 minutes
+_claude_api_cache: dict[str, Any] | None = None
+_claude_api_cache_until: float = 0
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -80,7 +85,7 @@ async def _check_database() -> dict[str, Any]:
 
         async with async_session_factory() as session:
             row = await session.execute(text("SELECT 1"))
-            row.scalar()
+            assert row.scalar() == 1
         latency = (time.perf_counter() - start) * 1000
         return {"status": "ok", "latency_ms": round(latency, 2)}
     except Exception as exc:
@@ -111,7 +116,10 @@ async def _check_redis() -> dict[str, Any]:
 
 
 async def _check_s3() -> dict[str, Any]:
-    """Verify S3/MinIO connectivity by listing the bucket (HEAD)."""
+    """Verify S3/MinIO connectivity by listing the bucket (HEAD).
+
+    boto3 is synchronous; we run it in a thread to avoid blocking the event loop.
+    """
     start = time.perf_counter()
     try:
         import boto3
@@ -127,8 +135,11 @@ async def _check_s3() -> dict[str, Any]:
         if settings.s3_endpoint_url:
             s3_kwargs["endpoint_url"] = settings.s3_endpoint_url
 
-        client = boto3.client(**s3_kwargs)
-        client.head_bucket(Bucket=settings.aws_s3_bucket)
+        def _head_bucket() -> None:
+            client = boto3.client(**s3_kwargs)
+            client.head_bucket(Bucket=settings.aws_s3_bucket)
+
+        await asyncio.to_thread(_head_bucket)
         latency = (time.perf_counter() - start) * 1000
         return {"status": "ok", "latency_ms": round(latency, 2)}
     except Exception as exc:
@@ -138,10 +149,21 @@ async def _check_s3() -> dict[str, Any]:
 
 
 async def _check_claude_api() -> dict[str, Any]:
-    """Verify Anthropic API key is valid by counting available models."""
-    start = time.perf_counter()
+    """Verify Anthropic API key is valid.
+
+    Result is cached for 5 minutes to avoid making an external network call
+    on every readiness probe invocation (probes fire every 10-30 seconds).
+    """
+    global _claude_api_cache, _claude_api_cache_until
+
     if not settings.anthropic_api_key:
         return {"status": "error", "latency_ms": 0, "error": "ANTHROPIC_API_KEY not configured"}
+
+    now = time.monotonic()
+    if _claude_api_cache is not None and now < _claude_api_cache_until:
+        return {**_claude_api_cache, "cached": True}
+
+    start = time.perf_counter()
     try:
         import httpx
 
@@ -160,12 +182,16 @@ async def _check_claude_api() -> dict[str, Any]:
         latency = (time.perf_counter() - start) * 1000
         # 400 = key works but body is missing; 401/403 = bad key
         if resp.status_code in (400, 200):
-            return {"status": "ok", "latency_ms": round(latency, 2)}
-        return {
-            "status": "error",
-            "latency_ms": round(latency, 2),
-            "error": f"Unexpected status {resp.status_code}",
-        }
+            result: dict[str, Any] = {"status": "ok", "latency_ms": round(latency, 2)}
+        else:
+            result = {
+                "status": "error",
+                "latency_ms": round(latency, 2),
+                "error": f"Unexpected status {resp.status_code}",
+            }
+        _claude_api_cache = result
+        _claude_api_cache_until = now + 300  # cache for 5 minutes
+        return result
     except Exception as exc:
         latency = (time.perf_counter() - start) * 1000
         logger.error("health_check_failed", extra={"component": "claude_api", "error": str(exc)})

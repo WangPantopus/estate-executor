@@ -224,7 +224,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [restore, verify]
-    if: always() && !inputs.skip_cleanup
+    # Only run cleanup if restore succeeded (i.e., an instance was actually created).
+    # Without this guard, cleanup runs even when restore failed and no instance exists,
+    # producing a confusing empty-deletion log entry.
+    if: always() && needs.restore.result == 'success' && !inputs.skip_cleanup
 
     steps:
       - name: Configure AWS credentials

@@ -42,7 +42,14 @@ class _EndpointMetrics:
 
 
 class MetricsCollector:
-    """Thread-safe in-memory metrics collector."""
+    """Thread-safe in-memory metrics collector.
+
+    Uses threading.Lock for synchronization. In an asyncio context the lock
+    acquisition is blocking, but the critical sections are very short (a deque
+    append and counter increment) so contention is negligible in practice.
+    Migrating to asyncio.Lock would require making record_request and
+    get_summary async, which would cascade through all call sites.
+    """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()

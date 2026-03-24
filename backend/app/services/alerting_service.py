@@ -15,7 +15,6 @@ For push-based alerting, integrate with PagerDuty/Opsgenie/Slack via webhooks.
 from __future__ import annotations
 
 import logging
-import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -57,6 +56,9 @@ async def evaluate_alerts() -> list[Alert]:
     alerts.extend(_check_latency())
     alerts.extend(await _check_queue_depth())
     alerts.extend(await _check_db_pool())
+    alerts.extend(await _check_deadline_failures())
+    alerts.extend(await _check_redis_connectivity())
+    alerts.extend(await _check_uptime_monitors())
 
     return alerts
 
@@ -159,7 +161,6 @@ async def _check_db_pool() -> list[Alert]:
         pool = engine.pool
         pool_size = pool.size()
         checked_out = pool.checkedout()
-        overflow = pool.overflow()
 
         # Alert if >80% of pool is in use
         total_available = pool_size + engine.pool._max_overflow  # type: ignore[attr-defined]
@@ -180,5 +181,152 @@ async def _check_db_pool() -> list[Alert]:
             )
     except Exception as exc:
         logger.warning("alert_check_failed", extra={"check": "db_pool", "error": str(exc)})
+
+    return alerts
+
+
+async def _check_deadline_failures() -> list[Alert]:
+    """Check for deadlines missed within the configured alert window.
+
+    Queries for deadlines whose due_date fell within the last
+    alert_deadline_failure_window_hours hours and whose status is 'missed'
+    (i.e., the deadline passed without being completed or extended).
+    """
+    alerts: list[Alert] = []
+    window_hours = settings.alert_deadline_failure_window_hours
+
+    try:
+        from datetime import UTC, date, datetime, timedelta
+
+        from sqlalchemy import func, select
+
+        from app.core.database import async_session_factory
+        from app.models.deadlines import Deadline
+        from app.models.enums import DeadlineStatus
+
+        today = date.today()
+        window_start = (datetime.now(UTC) - timedelta(hours=window_hours)).date()
+
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(func.count(Deadline.id)).where(
+                    Deadline.due_date >= window_start,
+                    Deadline.due_date < today,
+                    Deadline.status == DeadlineStatus.missed,
+                )
+            )
+            missed_count = result.scalar() or 0
+
+        if missed_count > 0:
+            alerts.append(
+                Alert(
+                    rule="deadline_failures",
+                    severity=AlertSeverity.CRITICAL,
+                    message=(
+                        f"{missed_count} deadline(s) missed in the last {window_hours}h "
+                        f"without completion or extension"
+                    ),
+                    value=missed_count,
+                    threshold=0,
+                )
+            )
+    except Exception as exc:
+        logger.warning("alert_check_failed", extra={"check": "deadline_failures", "error": str(exc)})
+
+    return alerts
+
+
+async def _check_uptime_monitors() -> list[Alert]:
+    """Pull monitor statuses from UptimeRobot and alert on any that are down.
+
+    Requires UPTIMEROBOT_READONLY_API_KEY to be set. Silently skips if the
+    key is absent (e.g., in development).
+
+    UptimeRobot status codes:
+      0 = paused, 1 = not checked yet, 2 = up, 8 = seems down, 9 = down
+    """
+    alerts: list[Alert] = []
+    api_key = settings.uptimerobot_readonly_api_key
+    if not api_key:
+        return alerts
+
+    # Status codes that indicate a problem
+    _DOWN_STATUSES = {8: "seems down", 9: "down"}
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                "https://api.uptimerobot.com/v2/getMonitors",
+                data={"api_key": api_key, "format": "json", "logs": "0"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        if data.get("stat") != "ok":
+            logger.warning(
+                "alert_check_failed",
+                extra={"check": "uptime_monitors", "error": data.get("error", {})},
+            )
+            return alerts
+
+        for monitor in data.get("monitors", []):
+            status_code = monitor.get("status")
+            if status_code in _DOWN_STATUSES:
+                name = monitor.get("friendly_name", monitor.get("url", "unknown"))
+                label = _DOWN_STATUSES[status_code]
+                alerts.append(
+                    Alert(
+                        rule="uptime_monitor_down",
+                        severity=AlertSeverity.CRITICAL,
+                        message=f"UptimeRobot monitor '{name}' is {label}",
+                        value=label,
+                        threshold="up",
+                    )
+                )
+    except Exception as exc:
+        logger.warning("alert_check_failed", extra={"check": "uptime_monitors", "error": str(exc)})
+
+    return alerts
+
+
+async def _check_redis_connectivity() -> list[Alert]:
+    """Check Redis availability with a PING.
+
+    Distinct from the queue depth check — this isolates a Redis connectivity
+    failure from a merely deep queue, so each alert has a clear root cause.
+    """
+    alerts: list[Alert] = []
+
+    try:
+        import redis.asyncio as aioredis
+
+        r = aioredis.from_url(settings.redis_url, decode_responses=True, socket_timeout=2)
+        try:
+            pong = await r.ping()
+            if not pong:
+                alerts.append(
+                    Alert(
+                        rule="redis_connection_failure",
+                        severity=AlertSeverity.CRITICAL,
+                        message="Redis PING returned False — cache and queue unavailable",
+                        value=False,
+                        threshold=True,
+                    )
+                )
+        finally:
+            await r.aclose()
+    except Exception as exc:
+        logger.warning("alert_check_failed", extra={"check": "redis", "error": str(exc)})
+        alerts.append(
+            Alert(
+                rule="redis_connection_failure",
+                severity=AlertSeverity.CRITICAL,
+                message=f"Redis connection failed: {exc}",
+                value=str(exc),
+                threshold=None,
+            )
+        )
 
     return alerts

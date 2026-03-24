@@ -15,13 +15,17 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
+from app.core.security import get_current_user
+from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
 @router.get("/monitoring/metrics")
-async def get_metrics() -> dict[str, Any]:
+async def get_metrics(
+    _current_user: CurrentUser = Depends(get_current_user),
+) -> dict[str, Any]:
     """Return request performance metrics with latency percentiles."""
     from app.core.metrics import metrics_collector
 
@@ -29,7 +33,9 @@ async def get_metrics() -> dict[str, Any]:
 
 
 @router.get("/monitoring/alerts")
-async def get_alerts() -> dict[str, Any]:
+async def get_alerts(
+    _current_user: CurrentUser = Depends(get_current_user),
+) -> dict[str, Any]:
     """Evaluate all alert rules and return any that are firing."""
     from app.services.alerting_service import evaluate_alerts
 
@@ -44,6 +50,7 @@ async def get_alerts() -> dict[str, Any]:
 @router.get("/monitoring/business")
 async def get_business_metrics(
     db: AsyncSession = Depends(get_db),
+    _current_user: CurrentUser = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Business metrics dashboard: active matters, task completion, AI usage.
 

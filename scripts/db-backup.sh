@@ -53,15 +53,17 @@ notify_slack() {
   local color="${2:-good}" # good, warning, danger
 
   if [[ -n "${SLACK_WEBHOOK_URL}" ]]; then
+    # Use jq to build the JSON payload so that special characters in $message
+    # (e.g., quotes or backslashes in snapshot IDs or AWS error output) are
+    # safely escaped rather than injected into the JSON structure.
+    local payload
+    payload=$(jq -n \
+      --arg color "$color" \
+      --arg text "$message" \
+      '{"attachments": [{"color": $color, "text": $text, "footer": "Estate Executor DB Backup"}]}')
     curl -sf -X POST "${SLACK_WEBHOOK_URL}" \
       -H 'Content-type: application/json' \
-      -d "{
-        \"attachments\": [{
-          \"color\": \"${color}\",
-          \"text\": \"${message}\",
-          \"footer\": \"Estate Executor DB Backup\"
-        }]
-      }" || warn "Failed to send Slack notification"
+      -d "$payload" || warn "Failed to send Slack notification"
   fi
 }
 

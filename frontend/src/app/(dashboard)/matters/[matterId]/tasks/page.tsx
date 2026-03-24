@@ -68,10 +68,14 @@ export default function TasksPage({
   const { canWrite, can: _can, isReadOnly: _isReadOnly, isBeneficiary: _isBeneficiary } = usePermissions(matterId);
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
+  // Fetch up to 500 tasks — covers all realistic estate matters. Reducing this
+  // limit silently truncates tasks from bulk operations (e.g., "complete all"),
+  // which is a correctness hazard for legal workflows. If matters regularly
+  // exceed 500 tasks, implement server-side cursor pagination instead.
   const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useTasks(
     FIRM_ID,
     matterId,
-    { per_page: 200 },
+    { per_page: 500 },
   );
   const { data: stakeholdersData } = useStakeholders(FIRM_ID, matterId);
 

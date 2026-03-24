@@ -24,9 +24,20 @@ export function initSentry(): void {
       process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE || "0.1"
     ),
 
-    // Session replay for debugging (only in production)
+    // Session replay for debugging (only in production).
+    // replaysOnErrorSampleRate is intentionally low (10%) to limit PII exposure
+    // in replays - estate data includes SSNs, asset values, and beneficiary PII.
     replaysSessionSampleRate: 0.0,
-    replaysOnErrorSampleRate: 1.0,
+    replaysOnErrorSampleRate: 0.1,
+
+    integrations: [
+      // Mask all input fields in session replays to prevent capturing sensitive
+      // estate data (SSNs, asset values, beneficiary information, etc.).
+      Sentry.replayIntegration({
+        maskAllInputs: true,
+        maskAllText: false,
+      }),
+    ],
 
     // Filter noisy errors
     ignoreErrors: [

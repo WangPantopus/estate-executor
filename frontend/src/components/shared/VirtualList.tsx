@@ -18,7 +18,12 @@ import { useRef, useState, useEffect, useCallback, type ReactNode } from "react"
 
 interface VirtualListProps<T> {
   items: T[];
-  /** Fixed height per item in pixels */
+  /**
+   * Fixed height per item in pixels. MUST be a constant value — all items
+   * are assumed to have this exact height. Variable-height items (e.g., rows
+   * with multi-line text) will overlap or leave gaps. Use a real virtualization
+   * library (react-window, @tanstack/react-virtual) if item heights vary.
+   */
   itemHeight: number;
   /** Number of extra items to render above/below viewport */
   overscan?: number;
@@ -117,10 +122,12 @@ export function useClientPagination<T>(items: T[], pageSize: number = 50) {
     setVisibleCount((prev) => Math.min(prev + pageSize, items.length));
   }, [items.length, pageSize]);
 
-  // Reset when items change significantly (e.g., new filter applied)
+  // Reset when the items array reference changes (e.g., new filter applied).
+  // Depending on items.length alone would miss cases where the count stays
+  // the same but the contents change (different filter producing same N results).
   useEffect(() => {
     setVisibleCount(pageSize);
-  }, [items.length, pageSize]);
+  }, [items, pageSize]);
 
   return { visibleItems, hasMore, remainingCount, loadMore };
 }

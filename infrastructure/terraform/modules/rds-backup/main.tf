@@ -20,8 +20,12 @@ terraform {
   required_version = ">= 1.5"
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.0"
+      source                = "hashicorp/aws"
+      version               = ">= 5.0"
+      # configuration_aliases allows the calling root module to pass an aliased
+      # provider for the replica region, which is required by
+      # aws_db_instance_automated_backups_replication.
+      configuration_aliases = [aws.replica]
     }
   }
 }
@@ -170,12 +174,14 @@ resource "aws_db_instance" "backup_config" {
 # ── Cross-Region Backup Replication ──────────────────────────────────────────
 
 resource "aws_db_instance_automated_backups_replication" "cross_region" {
+  # This resource must be created in the DESTINATION (replica) region, not the
+  # source region. The aws.replica provider alias is passed by the calling root
+  # module (e.g., provider "aws" { alias = "replica"; region = "us-west-2" }).
+  provider = aws.replica
+
   source_db_instance_arn = "arn:aws:rds:${var.primary_region}:${data.aws_caller_identity.current.account_id}:db:${var.db_instance_id}"
   kms_key_id             = local.backup_kms_key_arn
   retention_period       = var.backup_retention_days
-
-  # Replication target is in the replica region
-  # Configure the AWS provider alias for the replica region
 }
 
 data "aws_caller_identity" "current" {}
@@ -194,29 +200,31 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint  = var.alarm_email
 }
 
-# ── CloudWatch Alarms ────────────────────────────────────────────────────────
+# ── RDS Event Subscription for Backup Failures ───────────────────────────────
+#
+# CloudWatch metrics cannot directly detect backup failures — there is no
+# "BackupFailed" metric in AWS/RDS. Instead, subscribe to RDS backup events
+# so that failures are routed to the SNS topic immediately.
 
-# Alert: No successful backup in 26 hours (daily backup + 2hr grace)
-resource "aws_cloudwatch_metric_alarm" "backup_failed" {
-  alarm_name          = "${local.name_prefix}-backup-failed"
-  alarm_description   = "No successful automated backup in the last 26 hours"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "DatabaseConnections"
-  namespace           = "AWS/RDS"
-  period              = 93600 # 26 hours
-  statistic           = "SampleCount"
-  threshold           = 1
-  treat_missing_data  = "breaching"
-  alarm_actions       = [aws_sns_topic.backup_alerts.arn]
-  ok_actions          = [aws_sns_topic.backup_alerts.arn]
+resource "aws_db_event_subscription" "backup_events" {
+  name      = "${local.name_prefix}-backup-events"
+  sns_topic = aws_sns_topic.backup_alerts.arn
 
-  dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
-  }
+  source_type = "db-instance"
+  source_ids  = [var.db_instance_id]
+
+  # "backup" category includes both backup-started and backup-failed events.
+  event_categories = ["backup", "maintenance"]
 
   tags = local.common_tags
 }
+
+# ── CloudWatch Alarms ────────────────────────────────────────────────────────
+
+# Alert: RDS storage space running low (< 10 GB free).
+# NOTE: A separate "backup failed" alarm is not practical via CloudWatch metrics
+# because there is no AWS/RDS metric for backup success/failure. Use the
+# aws_db_event_subscription above to receive backup failure notifications.
 
 # Alert: RDS storage space running low (< 10 GB free)
 resource "aws_cloudwatch_metric_alarm" "low_storage" {

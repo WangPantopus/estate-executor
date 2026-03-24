@@ -1,5 +1,11 @@
 "use client";
 
+// IMPORTANT: This module uses module-level state for token caching.
+// The "use client" directive ensures it is only bundled for the browser,
+// but be careful never to import this module in a server component or
+// server action — module-level state is shared across all requests in a
+// Node.js process and would leak tokens between users in an SSR context.
+
 import { useMemo } from "react";
 import { ApiClient } from "@/lib/api-client";
 
@@ -21,6 +27,7 @@ async function getCachedAccessToken(): Promise<string | null> {
     const res = await fetch("/auth/token");
     if (!res.ok) {
       _cachedToken = null;
+      _tokenExpiresAt = 0;
       return null;
     }
     const { accessToken } = await res.json();
@@ -29,6 +36,7 @@ async function getCachedAccessToken(): Promise<string | null> {
     return _cachedToken;
   } catch {
     _cachedToken = null;
+    _tokenExpiresAt = 0;
     return null;
   }
 }
