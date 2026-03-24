@@ -122,9 +122,7 @@ class TestRateLimiter:
             check_rate_limit(request)
 
     @patch("app.services.rate_limiter._get_redis")
-    def test_check_rate_limit_fails_open_on_redis_error(
-        self, mock_get_redis: MagicMock
-    ) -> None:
+    def test_check_rate_limit_fails_open_on_redis_error(self, mock_get_redis: MagicMock) -> None:
         from app.services.rate_limiter import check_rate_limit
 
         mock_get_redis.side_effect = ConnectionError("Redis down")

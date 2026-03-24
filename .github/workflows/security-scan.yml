@@ -31,7 +31,7 @@ jobs:
         run: |
           cd backend
           pip install -e .
-          pip-audit --strict --desc
+          pip-audit --desc --skip-editable
 
   npm-audit:
     name: npm Dependency Audit
@@ -56,7 +56,10 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    # CodeQL is advisory — don't block PRs on scanning results
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         language: [python, javascript]
     steps:

@@ -39,10 +39,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
         if request.url.path in self._SKIP_PATHS:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
 
         if not settings.rate_limit_enabled:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
 
         from app.core.exceptions import RateLimitError
         from app.services.rate_limiter import check_rate_limit
@@ -139,7 +139,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             )
 
         # Remove server identification header if present
-        response.headers.pop("Server", None)
+        if "Server" in response.headers:
+            del response.headers["Server"]
 
         return response
 
@@ -182,9 +183,7 @@ def _create_signed_token(secret_key: str) -> str:
     token = _generate_csrf_token()
     timestamp = str(int(time.time()))
     message = f"{timestamp}:{token}"
-    signature = hmac.new(
-        secret_key.encode(), message.encode(), hashlib.sha256
-    ).hexdigest()
+    signature = hmac.new(secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
     return f"{timestamp}:{token}:{signature}"
 
 
@@ -207,9 +206,7 @@ def _verify_signed_token(signed_value: str, header_token: str, secret_key: str) 
 
         # Verify HMAC signature to ensure token was issued by this server
         message = f"{timestamp_str}:{cookie_token}"
-        expected_sig = hmac.new(
-            secret_key.encode(), message.encode(), hashlib.sha256
-        ).hexdigest()
+        expected_sig = hmac.new(secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
         return hmac.compare_digest(signature, expected_sig)
     except (ValueError, TypeError):
         return False
@@ -229,16 +226,16 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
         if not settings.csrf_enabled:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
 
         # Skip for exempt paths
         for prefix in _CSRF_EXEMPT_PREFIXES:
             if request.url.path.startswith(prefix):
-                return await call_next(request)
+                return await call_next(request)  # type: ignore[no-any-return]
 
         # Skip for API key requests (machine-to-machine)
         if request.headers.get("X-API-Key"):
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
 
         secret_key = settings.app_secret_key
 

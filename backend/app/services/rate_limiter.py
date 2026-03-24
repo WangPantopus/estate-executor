@@ -59,6 +59,7 @@ return limit - count - 1
 # Tier definitions: (requests_per_minute)
 # ---------------------------------------------------------------------------
 
+
 def _get_tier_limits() -> dict[str, int]:
     """Return tier limits from settings, allowing runtime override via env vars."""
     return {
@@ -67,6 +68,7 @@ def _get_tier_limits() -> dict[str, int]:
         "standard": settings.rate_limit_standard,
         "relaxed": settings.rate_limit_relaxed,
     }
+
 
 # Route-suffix → tier mapping. We match on the *suffix* after the firm/matter
 # prefix to avoid false-positive matches on "/api/v1/firms/".
@@ -127,7 +129,7 @@ def check_rate_limit(request: Request) -> dict[str, int]:
         window_start = now - _WINDOW_SECONDS
         ttl = _WINDOW_SECONDS + 10
 
-        remaining = r.eval(
+        raw_result = r.eval(
             _RATE_LIMIT_SCRIPT,
             1,
             redis_key,
@@ -137,11 +139,9 @@ def check_rate_limit(request: Request) -> dict[str, int]:
             str(ttl),
         )
 
-        remaining = int(remaining)  # type: ignore[arg-type]
+        remaining = int(raw_result)  # type: ignore[arg-type]
         if remaining == -1:
-            raise RateLimitError(
-                detail=f"Rate limit exceeded: {limit} requests per minute"
-            )
+            raise RateLimitError(detail=f"Rate limit exceeded: {limit} requests per minute")
 
         return {
             "limit": limit,
