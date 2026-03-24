@@ -1221,6 +1221,13 @@ function IntegrationsTabContent({
             )}
           </div>
 
+          {connectDocuSign.error && (
+            <p className="text-xs text-danger mt-2">Failed to initiate DocuSign connection.</p>
+          )}
+          {disconnectDocuSign.error && (
+            <p className="text-xs text-danger mt-2">Failed to disconnect DocuSign.</p>
+          )}
+
           {docusign?.status === "connected" && (
             <p className="text-xs text-muted-foreground mt-3">
               Send documents for signature from any matter&apos;s Documents tab.
@@ -1302,6 +1309,13 @@ function IntegrationsTabContent({
               </Button>
             )}
           </div>
+
+          {connectQBO.error && (
+            <p className="text-xs text-danger mt-2">Failed to initiate QuickBooks connection.</p>
+          )}
+          {disconnectQBO.error && (
+            <p className="text-xs text-danger mt-2">Failed to disconnect QuickBooks.</p>
+          )}
         </CardContent>
       </Card>
 
@@ -1358,6 +1372,7 @@ function IntegrationsTabContent({
                 </p>
                 <p className="text-muted-foreground">
                   Created: {syncQBO.data.created} &middot;
+                  Updated: {syncQBO.data.updated} &middot;
                   Skipped: {syncQBO.data.skipped}
                   {syncQBO.data.errors.length > 0 && (
                     <span className="text-danger"> &middot; Errors: {syncQBO.data.errors.length}</span>

@@ -495,13 +495,19 @@ async def docusign_webhook(
 
     # DocuSign uses multiple signature headers depending on config
     ds_signature = request.headers.get("X-DocuSign-Signature-1", "")
+    if not ds_signature:
+        logger.warning("docusign_webhook_missing_signature")
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Missing signature header"},
+        )
+
     expected = hmac.new(
         settings.docusign_webhook_secret.encode(),
         body,
         hashlib.sha256,
     ).hexdigest()
-
-    if ds_signature and not hmac.compare_digest(ds_signature, expected):
+    if not hmac.compare_digest(ds_signature, expected):
         logger.warning("docusign_webhook_invalid_signature")
         return JSONResponse(
             status_code=401,

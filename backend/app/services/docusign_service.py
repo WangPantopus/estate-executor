@@ -304,6 +304,8 @@ async def send_for_signature(
         raise ValidationError(detail=f"Failed to send for signature: {e}") from e
 
     envelope_id = result.get("envelopeId", "")
+    if not envelope_id:
+        raise ValidationError(detail="DocuSign did not return an envelope ID")
 
     # Create signature request record
     sig_type = (
@@ -521,10 +523,15 @@ async def handle_docusign_webhook(
     if recipients:
         _update_signers_from_recipients(sig_req, recipients)
 
-    # Handle completion — download signed document
+    # Handle completion — download signed document, then mark completed
     if event_type == "envelope-completed":
+        download_ok = await _download_and_register_signed_doc(db, sig_req=sig_req)
         sig_req.completed_at = datetime.now(UTC)
-        await _download_and_register_signed_doc(db, sig_req=sig_req)
+        if not download_ok:
+            logger.warning(
+                "docusign_webhook_download_failed_but_marking_complete",
+                extra={"envelope_id": envelope_id},
+            )
 
     if event_type == "envelope-voided":
         sig_req.voided_at = datetime.now(UTC)
@@ -569,8 +576,13 @@ def _update_status_from_envelope(sig_req: SignatureRequest, envelope: dict[str, 
 
 def _update_signers_from_recipients(sig_req: SignatureRequest, recipients: dict[str, Any]) -> None:
     """Update signer statuses from DocuSign recipient data."""
+    from sqlalchemy.orm.attributes import flag_modified
+
     ds_signers = recipients.get("signers", [])
-    updated_signers = list(sig_req.signers) if sig_req.signers else []
+    # Deep-copy to ensure SQLAlchemy detects JSONB mutation
+    import copy
+
+    updated_signers = copy.deepcopy(sig_req.signers) if sig_req.signers else []
 
     for ds_signer in ds_signers:
         email = ds_signer.get("email", "")
@@ -585,42 +597,50 @@ def _update_signers_from_recipients(sig_req: SignatureRequest, recipients: dict[
                 break
 
     sig_req.signers = updated_signers
+    # Ensure SQLAlchemy detects the JSONB mutation
+    if hasattr(sig_req, "_sa_instance_state"):
+        flag_modified(sig_req, "signers")
 
 
 async def _download_and_register_signed_doc(
     db: AsyncSession,
     *,
     sig_req: SignatureRequest,
-) -> None:
-    """Download the signed document from DocuSign and register as new version."""
-    if not sig_req.envelope_id or not sig_req.document_id:
-        return
+) -> bool:
+    """Download the signed document from DocuSign and register as new version.
 
-    # Get connection for this matter's firm
+    Returns True if download and registration succeeded.
+    """
+    if not sig_req.envelope_id or not sig_req.document_id:
+        return False
+
     from app.models.matters import Matter
 
     matter_result = await db.execute(select(Matter).where(Matter.id == sig_req.matter_id))
     matter = matter_result.scalar_one_or_none()
     if not matter:
-        return
+        return False
 
     conn = await get_connection(db, firm_id=matter.firm_id)
     if not conn or not conn.access_token or not conn.external_account_id:
         logger.warning("docusign_download_no_connection")
-        return
+        return False
 
-    api = DocuSignAPI(conn.access_token, conn.external_account_id)
+    # Use token refresh to ensure valid token
+    try:
+        api = await _ensure_valid_token(db, conn)
+    except Exception:
+        logger.error("docusign_download_token_refresh_failed", exc_info=True)
+        return False
 
     try:
         pdf_bytes = await api.download_document(sig_req.envelope_id)
 
-        # Upload to S3 as a new version
         from app.services import storage_service
 
         storage_key = f"signed/{sig_req.matter_id}/{sig_req.envelope_id}.pdf"
         storage_service.upload_file(storage_key, pdf_bytes, "application/pdf")
 
-        # Register as new document version
         from app.models.document_versions import DocumentVersion
 
         doc_result = await db.execute(select(Document).where(Document.id == sig_req.document_id))
@@ -647,6 +667,9 @@ async def _download_and_register_signed_doc(
                     "envelope_id": sig_req.envelope_id,
                 },
             )
+            return True
 
-    except (httpx.HTTPError, Exception):
+    except Exception:
         logger.error("docusign_download_signed_doc_failed", exc_info=True)
+
+    return False

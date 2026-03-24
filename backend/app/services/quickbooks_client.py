@@ -175,6 +175,26 @@ class QuickBooksAPI:
 
     # ── Accounts ──────────────────────────────────────────────────────────
 
+    _VALID_ACCOUNT_TYPES = frozenset(
+        {
+            "Bank",
+            "Other Current Asset",
+            "Fixed Asset",
+            "Other Asset",
+            "Accounts Receivable",
+            "Equity",
+            "Expense",
+            "Other Expense",
+            "Cost of Goods Sold",
+            "Accounts Payable",
+            "Credit Card",
+            "Long Term Liability",
+            "Other Current Liability",
+            "Income",
+            "Other Income",
+        }
+    )
+
     async def query_accounts(
         self,
         account_type: str | None = None,
@@ -182,6 +202,8 @@ class QuickBooksAPI:
     ) -> dict[str, Any]:
         query = "SELECT * FROM Account"
         if account_type:
+            if account_type not in self._VALID_ACCOUNT_TYPES:
+                raise ValueError(f"Invalid QBO account type: {account_type}")
             query += f" WHERE AccountType = '{account_type}'"
         query += f" MAXRESULTS {limit}"
         return await self._get("/query", params={"query": query})
