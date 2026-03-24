@@ -33,7 +33,7 @@ from app.schemas.integrations import (
     SyncRequest,
     SyncResultResponse,
 )
-from app.services import clio_sync_service, docusign_service
+from app.services import clio_sync_service, docusign_service, quickbooks_sync_service
 
 logger = logging.getLogger(__name__)
 
@@ -515,3 +515,126 @@ async def docusign_webhook(
         logger.exception("docusign_webhook_handler_error")
 
     return JSONResponse(status_code=200, content={"received": True})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# QuickBooks Online Integration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.post("/quickbooks/connect", response_model=OAuthInitResponse)
+async def quickbooks_connect(
+    firm_id: UUID,
+    membership: FirmMembership = Depends(require_firm_member),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> OAuthInitResponse:
+    """Initiate QuickBooks Online OAuth2 connection."""
+    _require_admin(membership)
+    result = await quickbooks_sync_service.initiate_oauth(
+        db, firm_id=firm_id, current_user=current_user
+    )
+    return OAuthInitResponse(**result)
+
+
+@router.get("/quickbooks/callback")
+async def quickbooks_callback(
+    code: str = Query(...),
+    state: str = Query(...),
+    realm_id: str = Query(..., alias="realmId"),
+    db: AsyncSession = Depends(get_db),
+) -> RedirectResponse:
+    """Handle QuickBooks OAuth2 callback (includes realmId)."""
+    from sqlalchemy import select as sa_select
+
+    from app.models.integration_connections import IntegrationConnection as IntConn
+
+    result = await db.execute(sa_select(IntConn).where(IntConn.provider == "quickbooks"))
+    connections = list(result.scalars().all())
+    matched = None
+    for conn in connections:
+        if conn.settings.get("oauth_state") == state:
+            matched = conn
+            break
+
+    frontend_url = settings.frontend_url
+    if matched is None:
+        return RedirectResponse(url=f"{frontend_url}/settings?tab=integrations&error=invalid_state")
+
+    try:
+        await quickbooks_sync_service.complete_oauth(
+            db,
+            firm_id=matched.firm_id,
+            code=code,
+            state=state,
+            realm_id=realm_id,
+        )
+        return RedirectResponse(
+            url=f"{frontend_url}/settings?tab=integrations&quickbooks=connected"
+        )
+    except Exception:
+        logger.error("qbo_oauth_callback_failed", exc_info=True)
+        return RedirectResponse(
+            url=f"{frontend_url}/settings?tab=integrations&error=connection_failed"
+        )
+
+
+@router.get("/quickbooks", response_model=IntegrationConnectionResponse | None)
+async def get_quickbooks_connection(
+    firm_id: UUID,
+    _membership: FirmMembership = Depends(require_firm_member),
+    db: AsyncSession = Depends(get_db),
+) -> IntegrationConnectionResponse | None:
+    conn = await quickbooks_sync_service.get_connection(db, firm_id=firm_id)
+    if conn is None:
+        return None
+    return IntegrationConnectionResponse.model_validate(conn)
+
+
+@router.post("/quickbooks/disconnect", response_model=DisconnectResponse)
+async def quickbooks_disconnect(
+    firm_id: UUID,
+    membership: FirmMembership = Depends(require_firm_member),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> DisconnectResponse:
+    _require_admin(membership)
+    await quickbooks_sync_service.disconnect(db, firm_id=firm_id, current_user=current_user)
+    return DisconnectResponse(provider="quickbooks")
+
+
+@router.post("/quickbooks/sync", response_model=SyncResultResponse)
+async def quickbooks_sync(
+    firm_id: UUID,
+    body: SyncRequest,
+    membership: FirmMembership = Depends(require_firm_member),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> SyncResultResponse:
+    """Trigger a QuickBooks sync (distributions, transactions, or balances)."""
+    _require_admin(membership)
+
+    from app.core.exceptions import ValidationError
+
+    if body.resource == "distributions":
+        sync_result = await quickbooks_sync_service.push_distributions(
+            db,
+            firm_id=firm_id,
+            current_user=current_user,
+            matter_id=body.matter_id,
+        )
+    elif body.resource == "transactions":
+        sync_result = await quickbooks_sync_service.push_transactions(
+            db,
+            firm_id=firm_id,
+            current_user=current_user,
+            matter_id=body.matter_id,
+        )
+    elif body.resource == "account_balances":
+        sync_result = await quickbooks_sync_service.pull_account_balances(
+            db, firm_id=firm_id, current_user=current_user
+        )
+    else:
+        raise ValidationError(detail=f"Unknown resource: {body.resource}")
+
+    return SyncResultResponse(**sync_result)

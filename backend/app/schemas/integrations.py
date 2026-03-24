@@ -53,7 +53,14 @@ class SyncRequest(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
-    resource: Literal["matters", "time_entries", "contacts"]
+    resource: Literal[
+        "matters",
+        "time_entries",
+        "contacts",
+        "distributions",
+        "transactions",
+        "account_balances",
+    ]
     direction: Literal["push", "pull", "bidirectional"] = "bidirectional"
     matter_id: UUID | None = None
 

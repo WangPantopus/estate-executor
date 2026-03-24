@@ -76,6 +76,10 @@ import {
   useDocuSignConnection,
   useConnectDocuSign,
   useDisconnectDocuSign,
+  useQuickBooksConnection,
+  useConnectQuickBooks,
+  useDisconnectQuickBooks,
+  useSyncQuickBooks,
 } from "@/hooks";
 import type { FirmRole, TierLimits, Invoice, SyncRequest } from "@/lib/types";
 
@@ -895,6 +899,12 @@ function IntegrationsTabContent({
   const connectDocuSign = useConnectDocuSign(firmId);
   const disconnectDocuSign = useDisconnectDocuSign(firmId);
 
+  const { data: qbo, isLoading: qboLoading } = useQuickBooksConnection(firmId);
+  const connectQBO = useConnectQuickBooks(firmId);
+  const disconnectQBO = useDisconnectQuickBooks(firmId);
+  const syncQBO = useSyncQuickBooks(firmId);
+  const [qboSyncing, setQboSyncing] = useState<string | null>(null);
+
   const [syncingResource, setSyncingResource] = useState<string | null>(null);
 
   const isConnected = clio?.status === "connected";
@@ -1219,23 +1229,153 @@ function IntegrationsTabContent({
         </CardContent>
       </Card>
 
-      {/* Placeholder for future integrations */}
+      {/* QuickBooks Integration Card */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-lg bg-green-100 dark:bg-green-950 flex items-center justify-center">
+                <span className="text-green-700 dark:text-green-300 font-bold text-sm">QB</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-foreground">QuickBooks Online</h3>
+                <p className="text-xs text-muted-foreground">
+                  Accounting — push distributions, transactions, pull bank balances
+                </p>
+              </div>
+            </div>
+            <Badge
+              variant={qbo?.status === "connected" ? "default" : "muted"}
+              className="text-xs gap-1"
+            >
+              {qbo?.status === "connected" ? (
+                <><CheckCircle2 className="size-3" aria-hidden="true" /> Connected</>
+              ) : (
+                <><Unplug className="size-3" aria-hidden="true" /> Not Connected</>
+              )}
+            </Badge>
+          </div>
+
+          {qbo?.status === "connected" && qbo.external_account_name && (
+            <p className="text-xs text-muted-foreground mb-4">
+              Connected to: <span className="font-medium text-foreground">{qbo.external_account_name}</span>
+              {qbo.last_sync_at && <> &middot; Last synced {formatDate(qbo.last_sync_at)}</>}
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            {isAdmin && qbo?.status !== "connected" && (
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const r = await connectQBO.mutateAsync();
+                    window.location.href = r.authorize_url;
+                  } catch { /* handled */ }
+                }}
+                disabled={connectQBO.isPending}
+              >
+                {connectQBO.isPending ? (
+                  <Loader2 className="size-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Plug className="size-3.5 mr-1" />
+                )}
+                Connect QuickBooks
+              </Button>
+            )}
+            {isAdmin && qbo?.status === "connected" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  if (!confirm("Disconnect QuickBooks?")) return;
+                  try { await disconnectQBO.mutateAsync(); } catch { /* handled */ }
+                }}
+                disabled={disconnectQBO.isPending}
+              >
+                {disconnectQBO.isPending ? (
+                  <Loader2 className="size-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Unplug className="size-3.5 mr-1" />
+                )}
+                Disconnect
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* QuickBooks Sync Controls */}
+      {qbo?.status === "connected" && (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-sm font-medium text-foreground mb-4">QuickBooks Sync</h3>
+            <div className="space-y-3">
+              {([
+                { key: "distributions", label: "Distributions", desc: "Push distributions as journal entries" },
+                { key: "transactions", label: "Transactions", desc: "Push estate bank transactions" },
+                { key: "account_balances", label: "Account Balances", desc: "Pull bank balances for reconciliation" },
+              ] as const).map((item) => (
+                <div key={item.key}>
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="text-sm text-foreground">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={qboSyncing !== null}
+                        aria-label={`Sync ${item.label.toLowerCase()} with QuickBooks`}
+                        onClick={async () => {
+                          setQboSyncing(item.key);
+                          try {
+                            await syncQBO.mutateAsync({ resource: item.key });
+                          } catch { /* handled */ } finally {
+                            setQboSyncing(null);
+                          }
+                        }}
+                      >
+                        {qboSyncing === item.key ? (
+                          <Loader2 className="size-3.5 mr-1 animate-spin" />
+                        ) : (
+                          <RefreshCw className="size-3.5 mr-1" aria-hidden="true" />
+                        )}
+                        Sync
+                      </Button>
+                    )}
+                  </div>
+                  {item.key !== "account_balances" && <Separator />}
+                </div>
+              ))}
+            </div>
+
+            {syncQBO.data && !syncQBO.isPending && (
+              <div className="mt-4 p-3 rounded-md bg-muted/50 text-xs">
+                <p className="font-medium text-foreground mb-1">
+                  Last sync: {syncQBO.data.resource}
+                </p>
+                <p className="text-muted-foreground">
+                  Created: {syncQBO.data.created} &middot;
+                  Skipped: {syncQBO.data.skipped}
+                  {syncQBO.data.errors.length > 0 && (
+                    <span className="text-danger"> &middot; Errors: {syncQBO.data.errors.length}</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Xero coming soon */}
       <Card>
         <CardContent className="p-6">
           <h3 className="text-sm font-medium text-foreground mb-3">Coming Soon</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { name: "QuickBooks", desc: "Accounting sync" },
-              { name: "Xero", desc: "Accounting sync" },
-            ].map((item) => (
-              <div
-                key={item.name}
-                className="p-3 rounded-lg border border-dashed border-border text-center"
-              >
-                <p className="text-sm font-medium text-muted-foreground">{item.name}</p>
-                <p className="text-xs text-muted-foreground/60">{item.desc}</p>
-              </div>
-            ))}
+          <div className="p-3 rounded-lg border border-dashed border-border text-center max-w-xs">
+            <p className="text-sm font-medium text-muted-foreground">Xero</p>
+            <p className="text-xs text-muted-foreground/60">Accounting sync</p>
           </div>
         </CardContent>
       </Card>

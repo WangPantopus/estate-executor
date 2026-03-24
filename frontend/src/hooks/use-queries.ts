@@ -112,6 +112,8 @@ export const queryKeys = {
     ["firms", firmId, "integrations", "clio"] as const,
   docusignConnection: (firmId: string) =>
     ["firms", firmId, "integrations", "docusign"] as const,
+  quickbooksConnection: (firmId: string) =>
+    ["firms", firmId, "integrations", "quickbooks"] as const,
   signatureRequests: (firmId: string, matterId: string) =>
     ["firms", firmId, "matters", matterId, "signature-requests"] as const,
 };
@@ -1156,6 +1158,48 @@ export function useVoidSignatureRequest(firmId: string, matterId: string) {
       api.voidSignatureRequest(firmId, matterId, requestId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.signatureRequests(firmId, matterId) });
+    },
+  });
+}
+
+// ─── QuickBooks ───────────────────────────────────────────────────────────────
+
+export function useQuickBooksConnection(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.quickbooksConnection(firmId),
+    queryFn: () => api.getQuickBooksConnection(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectQuickBooks(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.connectQuickBooks(firmId),
+  });
+}
+
+export function useDisconnectQuickBooks(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectQuickBooks(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.quickbooksConnection(firmId) });
+    },
+  });
+}
+
+export function useSyncQuickBooks(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SyncRequest) => api.syncQuickBooks(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.quickbooksConnection(firmId) });
     },
   });
 }

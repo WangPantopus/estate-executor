@@ -1257,7 +1257,7 @@ export interface OAuthInitResponse {
 }
 
 export interface SyncRequest {
-  resource: 'matters' | 'time_entries' | 'contacts';
+  resource: 'matters' | 'time_entries' | 'contacts' | 'distributions' | 'transactions' | 'account_balances';
   direction?: string;
   matter_id?: string;
 }
@@ -1278,6 +1278,24 @@ export interface ClioSettingsUpdate {
   auto_sync_contacts?: boolean;
   sync_interval_minutes?: number;
   default_practice_area?: string;
+}
+
+export interface QBAccountBalance {
+  qbo_id: string;
+  name: string;
+  account_type: string;
+  account_sub_type: string;
+  current_balance: number;
+  currency: string;
+  active: boolean;
+}
+
+export interface QBBalancesResponse {
+  resource: string;
+  direction: string;
+  accounts: QBAccountBalance[];
+  errors: string[];
+  synced_at?: string | null;
 }
 
 export interface DisconnectResponse {

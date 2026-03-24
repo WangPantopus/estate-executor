@@ -53,6 +53,15 @@ class Settings(BaseSettings):
     clio_auth_url: str = "https://app.clio.com/oauth/authorize"
     clio_token_url: str = "https://app.clio.com/oauth/token"
 
+    # QuickBooks Online Integration
+    qbo_client_id: str = ""
+    qbo_client_secret: str = ""
+    qbo_redirect_uri: str = ""
+    qbo_webhook_verifier: str = ""
+    qbo_environment: str = "sandbox"  # "sandbox" or "production"
+    qbo_auth_url: str = "https://appcenter.intuit.com/connect/oauth2"
+    qbo_token_url: str = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
+
     # DocuSign Integration
     docusign_integration_key: str = ""  # OAuth client ID
     docusign_secret_key: str = ""

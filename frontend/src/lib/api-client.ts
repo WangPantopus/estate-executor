@@ -1239,6 +1239,27 @@ export class ApiClient {
     );
   }
 
+  // ─── QuickBooks ────────────────────────────────────────────────────
+
+  async getQuickBooksConnection(firmId: string): Promise<IntegrationConnection | null> {
+    return this.get(`${this.intBase(firmId)}/quickbooks`);
+  }
+
+  async connectQuickBooks(firmId: string): Promise<OAuthInitResponse> {
+    return this.post(`${this.intBase(firmId)}/quickbooks/connect`);
+  }
+
+  async disconnectQuickBooks(firmId: string): Promise<DisconnectResponse> {
+    return this.post(`${this.intBase(firmId)}/quickbooks/disconnect`);
+  }
+
+  async syncQuickBooks(
+    firmId: string,
+    data: SyncRequest,
+  ): Promise<SyncResultResponse> {
+    return this.post(`${this.intBase(firmId)}/quickbooks/sync`, data);
+  }
+
   async voidSignatureRequest(
     firmId: string,
     matterId: string,
