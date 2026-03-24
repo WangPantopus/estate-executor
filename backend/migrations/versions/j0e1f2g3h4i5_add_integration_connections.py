@@ -19,20 +19,32 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     integration_provider = postgresql.ENUM(
-        "clio", "quickbooks", "xero", "docusign",
-        name="integration_provider", create_type=False,
+        "clio",
+        "quickbooks",
+        "xero",
+        "docusign",
+        name="integration_provider",
+        create_type=False,
     )
     integration_provider.create(op.get_bind(), checkfirst=True)
 
     integration_status = postgresql.ENUM(
-        "connected", "disconnected", "error", "pending",
-        name="integration_status", create_type=False,
+        "connected",
+        "disconnected",
+        "error",
+        "pending",
+        name="integration_status",
+        create_type=False,
     )
     integration_status.create(op.get_bind(), checkfirst=True)
 
     sync_status = postgresql.ENUM(
-        "idle", "syncing", "success", "failed",
-        name="sync_status", create_type=False,
+        "idle",
+        "syncing",
+        "success",
+        "failed",
+        name="sync_status",
+        create_type=False,
     )
     sync_status.create(op.get_bind(), checkfirst=True)
 
@@ -56,8 +68,18 @@ def upgrade() -> None:
         sa.Column("entity_map", postgresql.JSONB(), server_default="{}", nullable=False),
         sa.Column("connected_by", sa.UUID(), nullable=True),
         sa.Column("disconnected_at", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["firm_id"], ["firms.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("firm_id", "provider", name="uq_integration_firm_provider"),

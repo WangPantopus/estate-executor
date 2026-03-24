@@ -385,9 +385,7 @@ def _validate_config(protocol: str, data: dict[str, Any]) -> None:
     domain_re = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$")
     for d in domains:
         if not isinstance(d, str) or not domain_re.match(d) or len(d) > 255:
-            raise ValidationError(
-                detail=f"Invalid domain: {d!r}. Use format: example.com"
-            )
+            raise ValidationError(detail=f"Invalid domain: {d!r}. Use format: example.com")
 
 
 async def _parse_saml_metadata(config: SSOConfig) -> None:
@@ -403,9 +401,7 @@ async def _parse_saml_metadata(config: SSOConfig) -> None:
             # Validate response size (max 1MB) to prevent DoS
             content_length = len(resp.content)
             if content_length > 1_048_576:
-                raise ValidationError(
-                    detail="SAML metadata too large (max 1MB)"
-                )
+                raise ValidationError(detail="SAML metadata too large (max 1MB)")
 
             xml_text = resp.text
 

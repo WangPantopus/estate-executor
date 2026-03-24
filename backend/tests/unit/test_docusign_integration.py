@@ -17,15 +17,23 @@ from app.services.docusign_client import (
 class TestSignatureEnums:
     def test_status_values(self):
         expected = {
-            "draft", "sent", "delivered", "signed",
-            "completed", "declined", "voided", "expired",
+            "draft",
+            "sent",
+            "delivered",
+            "signed",
+            "completed",
+            "declined",
+            "voided",
+            "expired",
         }
         assert {s.value for s in SignatureRequestStatus} == expected
 
     def test_type_values(self):
         expected = {
-            "distribution_consent", "beneficiary_acknowledgment",
-            "executor_oath", "general",
+            "distribution_consent",
+            "beneficiary_acknowledgment",
+            "executor_oath",
+            "general",
         }
         assert {t.value for t in SignatureRequestType} == expected
 
@@ -137,11 +145,7 @@ class TestStatusHelpers:
         from app.services.docusign_service import _update_signers_from_recipients
 
         sig = _FakeSigReq()
-        recipients = {
-            "signers": [
-                {"email": "other@example.com", "status": "sent"}
-            ]
-        }
+        recipients = {"signers": [{"email": "other@example.com", "status": "sent"}]}
         _update_signers_from_recipients(sig, recipients)
         # No match, original signer unchanged
         assert "status" not in sig.signers[0]

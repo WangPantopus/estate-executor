@@ -26,9 +26,7 @@ _redis_client: redis.Redis | None = None
 def _get_redis() -> redis.Redis:
     global _redis_client
     if _redis_client is None:
-        _redis_client = redis.from_url(
-            settings.redis_url, decode_responses=True
-        )
+        _redis_client = redis.from_url(settings.redis_url, decode_responses=True)
     return _redis_client
 
 
@@ -52,9 +50,7 @@ return count + 1
 """
 
 
-def check_api_key_rate_limit(
-    *, key_id: UUID, limit_per_minute: int
-) -> dict[str, int]:
+def check_api_key_rate_limit(*, key_id: UUID, limit_per_minute: int) -> dict[str, int]:
     """Check and increment rate limit for an API key.
 
     Returns dict with current count and limit.
@@ -81,10 +77,7 @@ def check_api_key_rate_limit(
         count = int(result)  # type: ignore[arg-type]
         if count == -1:
             raise RateLimitError(
-                detail=(
-                    f"API rate limit exceeded: {limit_per_minute} "
-                    f"requests per minute"
-                )
+                detail=(f"API rate limit exceeded: {limit_per_minute} requests per minute")
             )
 
         return {

@@ -19,16 +19,26 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     sig_status = postgresql.ENUM(
-        "draft", "sent", "delivered", "signed", "completed",
-        "declined", "voided", "expired",
-        name="signature_request_status", create_type=False,
+        "draft",
+        "sent",
+        "delivered",
+        "signed",
+        "completed",
+        "declined",
+        "voided",
+        "expired",
+        name="signature_request_status",
+        create_type=False,
     )
     sig_status.create(op.get_bind(), checkfirst=True)
 
     sig_type = postgresql.ENUM(
-        "distribution_consent", "beneficiary_acknowledgment",
-        "executor_oath", "general",
-        name="signature_request_type", create_type=False,
+        "distribution_consent",
+        "beneficiary_acknowledgment",
+        "executor_oath",
+        "general",
+        name="signature_request_type",
+        create_type=False,
     )
     sig_type.create(op.get_bind(), checkfirst=True)
 
@@ -51,8 +61,18 @@ def upgrade() -> None:
         sa.Column("expires_at", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("signed_document_id", sa.UUID(), nullable=True),
         sa.Column("metadata", postgresql.JSONB(), server_default="{}", nullable=False),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["matter_id"], ["matters.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["document_id"], ["documents.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["sent_by"], ["stakeholders.id"], ondelete="SET NULL"),

@@ -51,9 +51,7 @@ async def list_api_keys(
     return [APIKeyResponse.model_validate(k) for k in keys]
 
 
-@router.post(
-    "/api-keys", response_model=APIKeyCreatedResponse, status_code=201
-)
+@router.post("/api-keys", response_model=APIKeyCreatedResponse, status_code=201)
 async def create_api_key(
     firm_id: UUID,
     body: APIKeyCreate,
@@ -79,9 +77,7 @@ async def create_api_key(
     )
 
 
-@router.post(
-    "/api-keys/{key_id}/revoke", response_model=APIKeyResponse
-)
+@router.post("/api-keys/{key_id}/revoke", response_model=APIKeyResponse)
 async def revoke_api_key(
     firm_id: UUID,
     key_id: UUID,
@@ -90,9 +86,7 @@ async def revoke_api_key(
 ) -> APIKeyResponse:
     """Revoke an API key (soft-disable, keeps record)."""
     _require_admin(membership)
-    key = await api_key_service.revoke_api_key(
-        db, key_id=key_id, firm_id=firm_id
-    )
+    key = await api_key_service.revoke_api_key(db, key_id=key_id, firm_id=firm_id)
     return APIKeyResponse.model_validate(key)
 
 
@@ -108,9 +102,7 @@ async def regenerate_api_key(
 ) -> APIKeyCreatedResponse:
     """Regenerate an API key — old key becomes invalid immediately."""
     _require_admin(membership)
-    key_obj, raw_key = await api_key_service.regenerate_api_key(
-        db, key_id=key_id, firm_id=firm_id
-    )
+    key_obj, raw_key = await api_key_service.regenerate_api_key(db, key_id=key_id, firm_id=firm_id)
     return APIKeyCreatedResponse(
         key=APIKeyResponse.model_validate(key_obj),
         raw_key=raw_key,
@@ -126,9 +118,7 @@ async def delete_api_key(
 ) -> None:
     """Permanently delete an API key."""
     _require_admin(membership)
-    await api_key_service.delete_api_key(
-        db, key_id=key_id, firm_id=firm_id
-    )
+    await api_key_service.delete_api_key(db, key_id=key_id, firm_id=firm_id)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -141,9 +131,7 @@ async def list_supported_events(
     _membership: FirmMembership = Depends(require_firm_member),
 ) -> SupportedEventsResponse:
     """List all event types available for webhook subscription."""
-    return SupportedEventsResponse(
-        events=webhook_service.get_supported_events()
-    )
+    return SupportedEventsResponse(events=webhook_service.get_supported_events())
 
 
 @router.get("/webhooks", response_model=list[WebhookResponse])
@@ -207,9 +195,7 @@ async def delete_webhook(
 ) -> None:
     """Delete a webhook and all its delivery history."""
     _require_admin(membership)
-    await webhook_service.delete_webhook(
-        db, webhook_id=webhook_id, firm_id=firm_id
-    )
+    await webhook_service.delete_webhook(db, webhook_id=webhook_id, firm_id=firm_id)
 
 
 @router.post(
@@ -224,9 +210,7 @@ async def rotate_webhook_secret(
 ) -> WebhookCreatedResponse:
     """Rotate the HMAC signing secret. New secret returned ONLY here."""
     _require_admin(membership)
-    webhook = await webhook_service.rotate_secret(
-        db, webhook_id=webhook_id, firm_id=firm_id
-    )
+    webhook = await webhook_service.rotate_secret(db, webhook_id=webhook_id, firm_id=firm_id)
     return WebhookCreatedResponse.model_validate(webhook)
 
 
@@ -242,9 +226,7 @@ async def test_webhook(
 ) -> WebhookDeliveryResponse:
     """Send a test ping to the webhook endpoint."""
     _require_admin(membership)
-    delivery = await webhook_service.test_webhook(
-        db, webhook_id=webhook_id, firm_id=firm_id
-    )
+    delivery = await webhook_service.test_webhook(db, webhook_id=webhook_id, firm_id=firm_id)
     return WebhookDeliveryResponse.model_validate(delivery)
 
 

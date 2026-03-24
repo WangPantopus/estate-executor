@@ -32,24 +32,16 @@ class Webhook(BaseModel):
     secret: Mapped[str] = mapped_column(String(128), nullable=False)
 
     # Subscribed events — e.g. ["matter.created", "task.updated", "document.uploaded"]
-    events: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, server_default="[]"
-    )
+    events: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
 
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default="true"
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
 
     # Metadata
     last_triggered_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )
-    failure_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="0"
-    )
-    created_by: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False
-    )
+    failure_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     firm: Mapped[Firm] = relationship()
     deliveries: Mapped[list[WebhookDelivery]] = relationship(
@@ -69,25 +61,17 @@ class WebhookDelivery(BaseModel):
     )
 
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    payload: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, server_default="{}"
-    )
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
 
     # Delivery result
-    status_code: Mapped[int | None] = mapped_column(
-        SmallInteger, nullable=True
-    )
+    status_code: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     response_body: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    success: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default="false"
-    )
+    success: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # Retry tracking
-    attempt: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="1"
-    )
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
 
     webhook: Mapped[Webhook] = relationship(back_populates="deliveries")

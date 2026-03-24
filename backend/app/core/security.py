@@ -177,9 +177,7 @@ async def get_current_user(
             try:
                 from app.services.sso_service import auto_provision_sso_user
 
-                await auto_provision_sso_user(
-                    db, user=user, auth0_connection_name=auth0_connection
-                )
+                await auto_provision_sso_user(db, user=user, auth0_connection_name=auth0_connection)
             except Exception:
                 import logging
 

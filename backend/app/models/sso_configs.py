@@ -44,17 +44,11 @@ class SSOConfig(BaseModel):
     oidc_client_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Auth0 enterprise connection ID (created via Management API)
-    auth0_connection_id: Mapped[str | None] = mapped_column(
-        String, nullable=True
-    )
-    auth0_connection_name: Mapped[str | None] = mapped_column(
-        String, nullable=True
-    )
+    auth0_connection_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    auth0_connection_name: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # Configuration
-    enabled: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default="false"
-    )
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     enforce_sso: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false"
     )  # If true, users MUST use SSO — no password login
@@ -66,28 +60,18 @@ class SSOConfig(BaseModel):
     )  # Role assigned to auto-provisioned users
 
     # Allowed email domains (for domain-based auto-provisioning)
-    allowed_domains: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, server_default="[]"
-    )
+    allowed_domains: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
 
     # Status
-    verified: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default="false"
-    )
-    verified_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
-    last_login_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
-    )
+    verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    verified_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     # Metadata
     metadata_: Mapped[dict[str, Any]] = mapped_column(
         "metadata", JSONB, nullable=False, server_default="{}"
     )
 
-    configured_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    configured_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     firm: Mapped[Firm] = relationship()
