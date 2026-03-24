@@ -1,0 +1,69 @@
+# Mississippi — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ms_file_chancery_court"
+    title: "File Petition with Mississippi Chancery Court"
+    description: "File petition for probate with the Chancery Court in the appropriate county"
+    instructions: "Mississippi handles probate through the Chancery Court. File the petition in the county where the decedent was domiciled. The will must be filed within a reasonable time. Mississippi requires a bond from the executor unless the will waives it."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ms_muniment_of_title"
+    title: "Consider Muniment of Title (Mississippi)"
+    description: "Determine if estate can be administered by muniment of title"
+    instructions: "Mississippi allows probate of a will as a muniment of title when there are no debts. This simplified process avoids full administration."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate"]
+    subtasks: []
+
+  - key: "ms_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Mississippi)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "Mississippi requires notice to creditors by publication once a week for three consecutive weeks in a newspaper published in the county. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ms_file_chancery_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ms_creditor_claim_period"
+    title: "Mississippi Creditor Claim Period (90 Days)"
+    description: "Creditors have 90 days from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ms_inventory_deadline"
+    title: "Mississippi Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

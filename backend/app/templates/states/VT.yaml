@@ -1,0 +1,87 @@
+# Vermont — State-specific tasks and deadline rules
+
+tasks:
+  - key: "vt_file_probate_court"
+    title: "File with Vermont Probate Court"
+    description: "File petition for probate with the Probate Court in the appropriate district"
+    instructions: "Vermont has dedicated Probate Courts (one per county). File the petition in the district where the decedent was domiciled. Vermont's probate process is court-supervised. The Probate Court appoints the executor and oversees administration."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "vt_small_estate"
+    title: "Consider Small Estate (Under $10,000)"
+    description: "Determine if estate qualifies for simplified process"
+    instructions: "Vermont allows a summary process for estates valued at $10,000 or less. This is one of the lowest thresholds in the US. For qualifying estates, the process is significantly simplified."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "vt_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Vermont)"
+    description: "Publish notice as directed by the Probate Court"
+    instructions: "Vermont requires notice to creditors. The Probate Court directs the form of publication. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "vt_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "vt_file_estate_tax"
+    title: "File Vermont Estate Tax Return"
+    description: "File Vermont estate tax return if estate exceeds state threshold"
+    instructions: "Vermont imposes an estate tax on estates exceeding $5 million. File the Vermont estate tax return within 9 months of death. Vermont's estate tax rate is 16% on the taxable amount above the exclusion."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "vt_creditor_claim_period"
+    title: "Vermont Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "vt_estate_tax_deadline"
+    title: "Vermont Estate Tax Return Deadline"
+    description: "Vermont estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]

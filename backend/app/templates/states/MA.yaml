@@ -1,0 +1,95 @@
+# Massachusetts — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ma_file_probate_family_court"
+    title: "File with Massachusetts Probate and Family Court"
+    description: "File petition for probate with the Probate and Family Court in the appropriate county"
+    instructions: "File the petition with the Probate and Family Court in the county where the decedent was domiciled. Massachusetts uses the MUPC (Massachusetts Uniform Probate Code). Informal probate (registrar) is available for uncontested matters; formal probate requires a hearing."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ma_voluntary_administration"
+    title: "Consider Voluntary Administration (Under $25,000)"
+    description: "Determine if estate qualifies for voluntary administration"
+    instructions: "Massachusetts allows voluntary administration for estates with personal property valued at $25,000 or less (excluding one automobile). This simplified process can be completed at the Probate and Family Court without full administration."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ma_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Massachusetts)"
+    description: "Publish notice in a newspaper as required by the court"
+    instructions: "Massachusetts requires notice to creditors by publication. The personal representative must publish notice once in a newspaper in the county. Known creditors must receive individual notice within the deadline."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ma_file_probate_family_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ma_file_estate_tax"
+    title: "File Massachusetts Estate Tax Return"
+    description: "File Massachusetts estate tax return if estate exceeds $2 million"
+    instructions: "Massachusetts imposes an estate tax on estates exceeding $2 million (one of the lowest thresholds in the US). File Form M-706 within 9 months of death. Massachusetts has a 'cliff' — the entire estate is taxed if it exceeds the threshold. Rates range from 0.8% to 16%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ma_creditor_claim_period"
+    title: "Massachusetts Creditor Claim Period (1 Year)"
+    description: "Creditors generally have 1 year from date of death to file claims"
+    relative_to: "date_of_death"
+    offset_months: 12
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ma_estate_tax_deadline"
+    title: "Massachusetts Estate Tax Return Deadline"
+    description: "Form M-706 due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ma_inventory_deadline"
+    title: "Massachusetts Inventory Deadline (3 Months)"
+    description: "Inventory must be filed within 3 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

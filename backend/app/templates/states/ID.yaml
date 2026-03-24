@@ -1,0 +1,87 @@
+# Idaho — State-specific tasks and deadline rules
+
+tasks:
+  - key: "id_file_probate_magistrate_court"
+    title: "File Petition with Idaho Magistrate Court"
+    description: "File petition for probate with the Magistrate Division of the District Court"
+    instructions: "Idaho follows the Uniform Probate Code. File the petition with the Magistrate Division of the District Court in the county where the decedent was domiciled. Idaho allows informal (registrar) and formal (judicial) probate proceedings."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "id_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $100,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Idaho allows transfer by affidavit for personal property valued at $100,000 or less, after 30 days from death. No court filing is required for the affidavit process."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "id_community_property"
+    title: "Identify Community Property (Idaho)"
+    description: "Idaho is a community property state — determine community vs. separate property"
+    instructions: "Idaho is a community property state. Property acquired during marriage is presumed to be community property. The surviving spouse automatically owns their half. Properly characterizing assets is critical for administration."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "id_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Idaho)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "Idaho requires notice to creditors by publication once a week for three consecutive weeks in a newspaper of general circulation in the county. Known creditors must receive individual mailed notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "id_file_probate_magistrate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "id_creditor_claim_period"
+    title: "Idaho Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "id_inventory_deadline"
+    title: "Idaho Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

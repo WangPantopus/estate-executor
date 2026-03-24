@@ -1,0 +1,95 @@
+# Connecticut — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ct_file_probate_court"
+    title: "File with Connecticut Probate Court"
+    description: "File petition for probate with the regional Probate Court"
+    instructions: "Connecticut has a dedicated Probate Court system (separate from Superior Court). File the petition with the Probate Court for the district where the decedent was domiciled. Connecticut consolidated probate districts in 2011; verify the current district."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ct_small_estate"
+    title: "Consider Small Estate (Under $40,000)"
+    description: "Determine if estate qualifies for simplified probate"
+    instructions: "Connecticut allows a simplified procedure for estates valued at $40,000 or less. The process involves filing a short form with the Probate Court. No bond or formal accounting may be required for small estates."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ct_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Connecticut)"
+    description: "Publish notice in a newspaper as directed by the Probate Court"
+    instructions: "The Probate Court will direct publication of notice to creditors. Connecticut requires notice in a newspaper of general circulation in the probate district. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "ct_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ct_file_estate_tax"
+    title: "File Connecticut Estate Tax Return"
+    description: "File CT estate tax return if estate exceeds state exemption threshold"
+    instructions: "Connecticut imposes an estate tax on estates exceeding $13.61 million (2024 threshold, aligned with federal). File Form CT-706/709 within 9 months of death. Connecticut is one of the few states with both an estate tax and a gift tax."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ct_creditor_claim_period"
+    title: "Connecticut Creditor Claim Period (5 Months)"
+    description: "Creditors have approximately 5 months from appointment to file claims"
+    relative_to: "matter_created"
+    offset_months: 5
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ct_estate_tax_deadline"
+    title: "Connecticut Estate Tax Return Deadline"
+    description: "Form CT-706/709 due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ct_inventory_deadline"
+    title: "Connecticut Inventory Deadline (2 Months)"
+    description: "Inventory must be filed within 2 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

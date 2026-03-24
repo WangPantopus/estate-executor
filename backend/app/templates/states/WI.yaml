@@ -1,0 +1,87 @@
+# Wisconsin — State-specific tasks and deadline rules
+
+tasks:
+  - key: "wi_file_probate_circuit_court"
+    title: "File Petition with Wisconsin Circuit Court"
+    description: "File petition for probate with the Circuit Court in the appropriate county"
+    instructions: "Wisconsin handles probate through the Circuit Court (Probate Branch). File the petition in the county where the decedent was domiciled. Wisconsin allows informal administration (without court supervision for routine matters) and formal administration."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "wi_small_estate"
+    title: "Consider Transfer by Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Wisconsin allows transfer by affidavit for estates with personal property valued at $50,000 or less, after 30 days from death. No court filing is required. Additionally, Wisconsin has a summary settlement process for estates up to $50,000."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "wi_community_property"
+    title: "Identify Marital Property (Wisconsin)"
+    description: "Wisconsin is a community property state (marital property) — classify assets"
+    instructions: "Wisconsin adopted the Uniform Marital Property Act, making it effectively a community property state. Property acquired during marriage is presumed 'marital property' (community). The surviving spouse owns their half of marital property. Proper classification is essential."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "wi_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Wisconsin)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "Wisconsin requires the personal representative to publish a notice of the estate administration in a newspaper of general circulation. Creditors have 3 months from publication to file claims."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "wi_file_probate_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "wi_creditor_claim_period"
+    title: "Wisconsin Creditor Claim Period (3 Months)"
+    description: "Creditors have 3 months from publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 3
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "wi_inventory_deadline"
+    title: "Wisconsin Inventory Deadline (6 Months)"
+    description: "Inventory must be filed within 6 months of appointment"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

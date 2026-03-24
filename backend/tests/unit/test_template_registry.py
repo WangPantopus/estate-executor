@@ -24,10 +24,18 @@ class TestTemplateRegistryLoading:
             assert len(template_registry._estate_type_templates[et]) > 0
 
     def test_states_loaded(self):
-        """State templates are loaded for all 5 states."""
-        expected_states = ["CA", "TX", "NY", "FL", "IL"]
+        """State templates are loaded for all 51 jurisdictions (50 states + DC)."""
+        expected_states = [
+            "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
+            "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
+            "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
+            "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+            "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI",
+            "WY",
+        ]
         for state in expected_states:
             assert state in template_registry.loaded_states, f"Missing state {state}"
+        assert len(template_registry.loaded_states) == 51
 
     def test_base_templates_have_required_fields(self):
         """Every base template has the required fields."""
@@ -44,6 +52,44 @@ class TestTemplateRegistryLoading:
         for et, templates in template_registry._estate_type_templates.items():
             keys = [t["key"] for t in templates]
             assert len(keys) == len(set(keys)), f"Duplicate keys in {et} templates"
+
+    def test_all_state_templates_have_required_fields(self):
+        """Every state template task should have required fields."""
+        required = {"key", "title", "phase", "priority"}
+        for state, templates in template_registry._state_templates.items():
+            for tmpl in templates:
+                for field in required:
+                    assert field in tmpl, (
+                        f"State {state} template '{tmpl.get('key')}' missing '{field}'"
+                    )
+
+    def test_all_state_template_keys_unique(self):
+        """Template keys should be unique within each state."""
+        for state, templates in template_registry._state_templates.items():
+            keys = [t["key"] for t in templates]
+            assert len(keys) == len(set(keys)), f"Duplicate keys in {state} templates"
+
+    def test_all_state_deadline_keys_unique(self):
+        """Deadline keys should be unique within each state."""
+        for state, deadlines in template_registry._state_deadlines.items():
+            keys = [d["key"] for d in deadlines]
+            assert len(keys) == len(set(keys)), f"Duplicate deadline keys in {state}"
+
+    def test_every_state_has_tasks_and_deadlines(self):
+        """Every loaded state should have both tasks and deadlines."""
+        for state in template_registry.loaded_states:
+            assert state in template_registry._state_templates, (
+                f"State {state} loaded but has no tasks"
+            )
+            assert len(template_registry._state_templates[state]) > 0, (
+                f"State {state} has empty tasks list"
+            )
+            assert state in template_registry._state_deadlines, (
+                f"State {state} loaded but has no deadlines"
+            )
+            assert len(template_registry._state_deadlines[state]) > 0, (
+                f"State {state} has empty deadlines list"
+            )
 
 
 class TestGetTemplates:
@@ -162,3 +208,55 @@ class TestGetStateDeadlines:
 
         # Trust contest period is trust-only
         assert "ca_trust_contest_period" in trust_keys
+
+    def test_all_state_deadlines_have_required_fields(self):
+        """Every state deadline should have key, title, and date calc fields."""
+        for state, deadlines in template_registry._state_deadlines.items():
+            for dl in deadlines:
+                assert "key" in dl, f"State {state} deadline missing 'key'"
+                assert "title" in dl, f"State {state} deadline missing 'title'"
+                has_date_calc = (
+                    "offset_months" in dl or "offset_days" in dl
+                )
+                assert has_date_calc, (
+                    f"State {state} deadline '{dl.get('key')}' missing date calculation"
+                )
+
+    def test_all_states_produce_templates_for_testate_probate(self):
+        """Every state should generate templates when used with testate_probate."""
+        for state in template_registry.loaded_states:
+            templates = template_registry.get_templates("testate_probate", state)
+            # Should always get at least base + estate-type templates
+            assert len(templates) >= 20, (
+                f"State {state} produced only {len(templates)} templates for testate_probate"
+            )
+
+    def test_estate_tax_states_have_tax_deadline(self):
+        """States with estate/inheritance tax should include a tax deadline."""
+        # States known to have estate or inheritance taxes
+        tax_states = {
+            "CT", "DC", "HI", "IL", "IA", "KY", "ME", "MD", "MA", "MN",
+            "NE", "NJ", "NY", "OR", "PA", "RI", "VT", "WA",
+        }
+        for state in tax_states:
+            deadlines = template_registry.get_state_deadlines(state, "testate_probate")
+            deadline_keys = {dl["key"] for dl in deadlines}
+            has_tax_deadline = any(
+                "tax" in key or "inheritance" in key for key in deadline_keys
+            )
+            assert has_tax_deadline, (
+                f"Tax state {state} missing a tax/inheritance deadline"
+            )
+
+    def test_community_property_states_have_community_task(self):
+        """Community property states should have a community property identification task."""
+        community_property_states = {"AZ", "ID", "LA", "NM", "NV", "WA", "WI"}
+        for state in community_property_states:
+            templates = template_registry.get_templates(
+                "testate_probate", state, flags=["surviving_spouse"]
+            )
+            keys = {t["key"] for t in templates}
+            has_cp_task = any("community" in key or "marital" in key for key in keys)
+            assert has_cp_task, (
+                f"Community property state {state} missing community property task"
+            )

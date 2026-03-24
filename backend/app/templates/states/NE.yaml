@@ -1,0 +1,94 @@
+# Nebraska — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ne_file_probate_county_court"
+    title: "File Petition with Nebraska County Court"
+    description: "File petition for probate with the County Court in the appropriate county"
+    instructions: "Nebraska follows the Nebraska Probate Code (based on the UPC). File the petition with the County Court in the county where the decedent was domiciled. Nebraska allows informal (registrar) and formal (judicial) probate."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ne_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Nebraska allows transfer by affidavit for estates with personal property valued at $50,000 or less, after 30 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ne_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Nebraska)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "Nebraska requires notice to creditors by publication once a week for three consecutive weeks in a legal newspaper in the county. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ne_file_probate_county_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ne_file_inheritance_tax"
+    title: "File Nebraska Inheritance Tax"
+    description: "Nebraska imposes an inheritance tax on certain beneficiaries"
+    instructions: "Nebraska imposes an inheritance tax. Immediate family (Class 1) receives a $100,000 exemption taxed at 1%. Remote relatives (Class 2) get a $40,000 exemption taxed at 11%. Unrelated persons (Class 3) get a $25,000 exemption taxed at 15%. File within 12 months of death."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 12
+    dependencies:
+      - "inventory_bank_investment_accounts"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ne_creditor_claim_period"
+    title: "Nebraska Creditor Claim Period (2 Months)"
+    description: "Creditors have 2 months from publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 2
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ne_inheritance_tax_deadline"
+    title: "Nebraska Inheritance Tax Deadline (12 Months)"
+    description: "Inheritance tax return due within 12 months of death"
+    relative_to: "date_of_death"
+    offset_months: 12
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ne_inventory_deadline"
+    title: "Nebraska Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

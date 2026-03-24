@@ -1,0 +1,69 @@
+# Alaska — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ak_file_probate_superior_court"
+    title: "File Petition with Alaska Superior Court"
+    description: "File petition for probate with the Superior Court in the appropriate judicial district"
+    instructions: "Alaska follows the Uniform Probate Code (UPC). File the petition with the Superior Court in the judicial district where the decedent was domiciled. Alaska allows informal probate (without hearing) and formal probate (with hearing)."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ak_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $100,000)"
+    description: "Determine if estate qualifies for transfer by affidavit without probate"
+    instructions: "Alaska allows transfer by affidavit for estates with personal property valued at $100,000 or less, if 30 days have passed since death. No court filing is required. For vehicles valued under $100,000, a separate simplified process is available."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ak_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Alaska)"
+    description: "Publish notice in a newspaper once a week for three consecutive weeks"
+    instructions: "The personal representative must give notice to creditors by publication once a week for three consecutive weeks in a newspaper of general circulation. Individual notice must be sent to known creditors."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ak_file_probate_superior_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ak_creditor_claim_period"
+    title: "Alaska Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ak_inventory_deadline"
+    title: "Alaska Inventory Deadline (3 Months)"
+    description: "Inventory must be filed within 3 months of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

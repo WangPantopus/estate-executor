@@ -1,0 +1,69 @@
+# Tennessee — State-specific tasks and deadline rules
+
+tasks:
+  - key: "tn_file_probate_chancery_court"
+    title: "File Petition with Tennessee Court"
+    description: "File petition for probate with the appropriate court in the county"
+    instructions: "In Tennessee, probate matters may be handled by the Chancery Court, Circuit Court, or a dedicated Probate Court depending on the county. File the petition in the county where the decedent was domiciled. Tennessee requires the will to be filed within a reasonable time."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "tn_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for simplified transfer"
+    instructions: "Tennessee allows a small estate affidavit for estates with personal property valued at $50,000 or less, after 45 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "tn_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Tennessee)"
+    description: "Publish notice in a newspaper in the county"
+    instructions: "Tennessee requires notice to creditors by publication in a newspaper of general circulation in the county. Known creditors must receive individual notice. Creditors have 4 months from first publication to file claims."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "tn_file_probate_chancery_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "tn_creditor_claim_period"
+    title: "Tennessee Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "tn_inventory_deadline"
+    title: "Tennessee Inventory Deadline (60 Days)"
+    description: "Inventory must be filed within 60 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

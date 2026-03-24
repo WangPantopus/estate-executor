@@ -1,0 +1,95 @@
+# Rhode Island — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ri_file_probate_court"
+    title: "File with Rhode Island Probate Court"
+    description: "File petition for probate with the Municipal Probate Court"
+    instructions: "Rhode Island handles probate through municipal (city/town) Probate Courts. File the petition in the city or town where the decedent was domiciled. Rhode Island's probate process is relatively traditional with court supervision."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ri_small_estate"
+    title: "Consider Small Estate (Under $15,000)"
+    description: "Determine if estate qualifies for voluntary administration"
+    instructions: "Rhode Island allows voluntary administration for estates with personal property valued at $15,000 or less. The process is simplified and can be completed through the Probate Court."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ri_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Rhode Island)"
+    description: "Publish notice in a newspaper as directed by the Probate Court"
+    instructions: "Rhode Island requires notice to creditors. The Probate Court will direct the form and duration of publication. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 45
+    dependencies:
+      - "ri_file_probate_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ri_file_estate_tax"
+    title: "File Rhode Island Estate Tax Return"
+    description: "File Rhode Island estate tax return if estate exceeds state threshold"
+    instructions: "Rhode Island imposes an estate tax on estates exceeding $1,774,583 (2024, indexed for inflation). File within 9 months of death. Rates range from 0.8% to 16%."
+    phase: "tax"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "date_of_death"
+      offset_months: 9
+    dependencies:
+      - "inventory_bank_investment_accounts"
+      - "inventory_real_estate"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ri_creditor_claim_period"
+    title: "Rhode Island Creditor Claim Period (6 Months)"
+    description: "Creditors have 6 months from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 6
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ri_estate_tax_deadline"
+    title: "Rhode Island Estate Tax Return Deadline"
+    description: "Rhode Island estate tax return due within 9 months of death"
+    relative_to: "date_of_death"
+    offset_months: 9
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+
+  - key: "ri_inventory_deadline"
+    title: "Rhode Island Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

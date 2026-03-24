@@ -1,0 +1,85 @@
+# Virginia — State-specific tasks and deadline rules
+
+tasks:
+  - key: "va_file_circuit_court"
+    title: "File with Virginia Circuit Court"
+    description: "File petition for probate with the Circuit Court in the appropriate jurisdiction"
+    instructions: "Virginia handles probate through the Circuit Courts (specifically the Clerk of the Circuit Court). File in the city or county where the decedent was domiciled. The will must be proved before the Clerk can admit it to probate."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "va_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Virginia allows a small estate affidavit for estates with personal property valued at $50,000 or less. The affidavit can be used 60 days after death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "va_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Virginia)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "Virginia requires notice to creditors. The Commissioner of Accounts will direct publication. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "va_file_circuit_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "va_commissioner_of_accounts"
+    title: "File Inventory with Commissioner of Accounts (Virginia)"
+    description: "File the estate inventory with the Commissioner of Accounts"
+    instructions: "Virginia requires the executor to file an inventory with the Commissioner of Accounts within 4 months of qualification. The Commissioner oversees fiduciary accounts and ensures proper administration."
+    phase: "asset_inventory"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_months: 4
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "va_creditor_claim_period"
+    title: "Virginia Creditor Claim Period (1 Year)"
+    description: "Creditors generally have 1 year from date of death to file claims"
+    relative_to: "date_of_death"
+    offset_months: 12
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "va_inventory_deadline"
+    title: "Virginia Inventory Deadline (4 Months)"
+    description: "Inventory must be filed with Commissioner of Accounts within 4 months"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

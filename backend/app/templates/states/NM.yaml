@@ -1,0 +1,87 @@
+# New Mexico — State-specific tasks and deadline rules
+
+tasks:
+  - key: "nm_file_probate_district_court"
+    title: "File Petition with New Mexico District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "New Mexico follows the Uniform Probate Code. File the petition with the District Court (Probate Division) in the county where the decedent was domiciled. Informal and formal proceedings are available. Informal probate is appropriate for uncontested matters."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "nm_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $50,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "New Mexico allows transfer by affidavit for estates with personal property valued at $50,000 or less, after 30 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "nm_community_property"
+    title: "Identify Community Property (New Mexico)"
+    description: "New Mexico is a community property state — determine community vs. separate property"
+    instructions: "New Mexico is a community property state. Property acquired during the marriage is presumed to be community property. The surviving spouse automatically owns their half. Properly characterizing assets is critical for estate administration."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "nm_publish_notice_creditors"
+    title: "Publish Notice to Creditors (New Mexico)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "New Mexico requires notice to creditors by publication once a week for two consecutive weeks. Known creditors must receive individual notice."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "nm_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "nm_creditor_claim_period"
+    title: "New Mexico Creditor Claim Period (2 Months)"
+    description: "Creditors have 2 months from publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_months: 2
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "nm_inventory_deadline"
+    title: "New Mexico Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

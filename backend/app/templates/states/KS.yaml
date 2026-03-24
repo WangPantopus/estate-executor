@@ -1,0 +1,69 @@
+# Kansas — State-specific tasks and deadline rules
+
+tasks:
+  - key: "ks_file_probate_district_court"
+    title: "File Petition with Kansas District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "File the petition for probate with the District Court in the county where the decedent was domiciled. Kansas follows the Kansas Probate Code (based on the UPC with modifications). Kansas allows simplified estates and informal proceedings."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "ks_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $40,000)"
+    description: "Determine if estate qualifies for simplified transfer"
+    instructions: "Kansas allows transfer by affidavit for estates with personal property valued at $40,000 or less, after 30 days from death. No court filing is required for the affidavit process."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "ks_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Kansas)"
+    description: "Publish notice in the official county newspaper once a week for three consecutive weeks"
+    instructions: "Kansas requires notice to creditors by publication in the official county newspaper once a week for three consecutive weeks. Known creditors must receive individual notice by mail."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "ks_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "ks_creditor_claim_period"
+    title: "Kansas Creditor Claim Period (4 Months)"
+    description: "Creditors have 4 months from first publication to file claims"
+    relative_to: "matter_created"
+    offset_months: 4
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "ks_inventory_deadline"
+    title: "Kansas Inventory Deadline (90 Days)"
+    description: "Inventory must be filed within 90 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]

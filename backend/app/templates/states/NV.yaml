@@ -1,0 +1,103 @@
+# Nevada — State-specific tasks and deadline rules
+
+tasks:
+  - key: "nv_file_probate_district_court"
+    title: "File Petition with Nevada District Court"
+    description: "File petition for probate with the District Court in the appropriate county"
+    instructions: "File the petition with the District Court (Probate Division) in the county where the decedent was domiciled. Nevada allows summary administration for smaller estates and general administration for larger ones."
+    phase: "probate_filing"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "obtain_death_certificates"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+  - key: "nv_small_estate_affidavit"
+    title: "Consider Small Estate Affidavit (Under $25,000)"
+    description: "Determine if estate qualifies for transfer by affidavit"
+    instructions: "Nevada allows transfer by affidavit for estates with personal property valued at $25,000 or less, after 40 days from death. No court filing is required."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 14
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "nv_set_aside_estate"
+    title: "Consider Set-Aside of Estate (Under $100,000)"
+    description: "Determine if estate qualifies for summary administration"
+    instructions: "Nevada allows the entire estate to be set aside without administration if the value does not exceed the sum of funeral expenses, last illness costs, family allowance, and all debts, or if the total value is under $100,000. File a petition with the court."
+    phase: "immediate"
+    priority: "normal"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate"]
+    subtasks: []
+
+  - key: "nv_community_property"
+    title: "Identify Community Property (Nevada)"
+    description: "Nevada is a community property state — determine community vs. separate property"
+    instructions: "Nevada is a community property state. Property acquired during marriage is presumed community property. The surviving spouse owns their half outright. Nevada also allows community property with right of survivorship."
+    phase: "immediate"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: false
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 21
+    dependencies: []
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "trust_administration", "mixed_probate_trust"]
+      flags:
+        - "surviving_spouse"
+    subtasks: []
+
+  - key: "nv_publish_notice_creditors"
+    title: "Publish Notice to Creditors (Nevada)"
+    description: "Publish notice in a newspaper of general circulation"
+    instructions: "Nevada requires notice to creditors by publication. The personal representative must give notice to known creditors by mail and publish in a newspaper of general circulation."
+    phase: "notification"
+    priority: "critical"
+    default_assignee_role: "professional"
+    requires_document: true
+    due_date_rule:
+      relative_to: "matter_created"
+      offset_days: 30
+    dependencies:
+      - "nv_file_probate_district_court"
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+    subtasks: []
+
+deadlines:
+  - key: "nv_creditor_claim_period"
+    title: "Nevada Creditor Claim Period (90 Days)"
+    description: "Creditors have 90 days from first publication of notice to file claims"
+    relative_to: "matter_created"
+    offset_days: 90
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
+
+  - key: "nv_inventory_deadline"
+    title: "Nevada Inventory Deadline (60 Days)"
+    description: "Inventory must be filed within 60 days of appointment"
+    relative_to: "matter_created"
+    offset_days: 60
+    conditions:
+      estate_types: ["testate_probate", "intestate_probate", "mixed_probate_trust"]
