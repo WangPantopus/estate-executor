@@ -22,6 +22,7 @@ import {
   Menu,
   Search,
   LayoutGrid,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
@@ -67,6 +68,7 @@ const matterNavItems: NavItem[] = [
   { label: "Entities", href: "/entities", icon: Building2 },
   { label: "Documents", href: "/documents", icon: FileText },
   { label: "Calendar", href: "/deadlines", icon: Calendar },
+  { label: "Distributions", href: "/distributions", icon: BookOpen },
   { label: "Communications", href: "/communications", icon: MessageSquare },
   { label: "Activity", href: "/activity", icon: Activity },
   { label: "Reports", href: "/reports", icon: FileText },
@@ -80,6 +82,7 @@ const PAGE_LABELS: Record<string, string> = {
   entities: "Entities",
   documents: "Documents",
   deadlines: "Calendar",
+  distributions: "Distributions",
   communications: "Communications",
   activity: "Activity",
   reports: "Reports",

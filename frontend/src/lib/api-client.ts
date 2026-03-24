@@ -77,6 +77,15 @@ import type {
   TaskWaive,
   UpdateMemberRoleRequest,
   UserProfile,
+  PortalBeneficiaryMattersResponse,
+  PortalOverviewResponse,
+  PortalDocumentsResponse,
+  PortalMessagesResponse,
+  PortalMessageCreate,
+  PortalMessageItem,
+  DistributionCreate,
+  DistributionResponse,
+  DistributionSummaryResponse,
 } from './types';
 
 // ─── Error classes ───────────────────────────────────────────────────────────
@@ -908,5 +917,80 @@ export class ApiClient {
     matterId: string,
   ): Promise<AIUsageStats> {
     return this.get(`${this.aiBase(firmId, matterId)}/usage-stats`);
+  }
+
+  // ─── Distributions ─────────────────────────────────────────────────────
+
+  private distBase(firmId: string, matterId: string) {
+    return `/firms/${firmId}/matters/${matterId}/distributions`;
+  }
+
+  async getDistributions(
+    firmId: string,
+    matterId: string,
+    params?: { page?: number; per_page?: number; beneficiary_id?: string },
+  ): Promise<PaginatedResponse<DistributionResponse>> {
+    return this.get(
+      `${this.distBase(firmId, matterId)}${buildQueryString(params)}`,
+    );
+  }
+
+  async recordDistribution(
+    firmId: string,
+    matterId: string,
+    data: DistributionCreate,
+  ): Promise<DistributionResponse> {
+    return this.post(this.distBase(firmId, matterId), data);
+  }
+
+  async acknowledgeDistribution(
+    firmId: string,
+    matterId: string,
+    distId: string,
+  ): Promise<DistributionResponse> {
+    return this.post(
+      `${this.distBase(firmId, matterId)}/${distId}/acknowledge`,
+    );
+  }
+
+  async getDistributionSummary(
+    firmId: string,
+    matterId: string,
+  ): Promise<DistributionSummaryResponse> {
+    return this.get(`${this.distBase(firmId, matterId)}/summary`);
+  }
+
+  // ─── Portal (Beneficiary) ──────────────────────────────────────────────
+
+  async getPortalMatters(): Promise<PortalBeneficiaryMattersResponse> {
+    return this.get('/portal/matters');
+  }
+
+  async getPortalOverview(matterId: string): Promise<PortalOverviewResponse> {
+    return this.get(`/portal/matters/${matterId}/overview`);
+  }
+
+  async getPortalDocuments(matterId: string): Promise<PortalDocumentsResponse> {
+    return this.get(`/portal/matters/${matterId}/documents`);
+  }
+
+  async getPortalMessages(matterId: string): Promise<PortalMessagesResponse> {
+    return this.get(`/portal/matters/${matterId}/messages`);
+  }
+
+  async postPortalMessage(
+    matterId: string,
+    data: PortalMessageCreate,
+  ): Promise<PortalMessageItem> {
+    return this.post(`/portal/matters/${matterId}/messages`, data);
+  }
+
+  async acknowledgePortalNotice(
+    matterId: string,
+    commId: string,
+  ): Promise<PortalMessageItem> {
+    return this.post(
+      `/portal/matters/${matterId}/messages/${commId}/acknowledge`,
+    );
   }
 }

@@ -65,6 +65,8 @@ export type TransferMechanism =
   | 'other';
 export type AssetStatus = 'discovered' | 'valued' | 'transferred' | 'distributed';
 
+export type DistributionType = 'cash' | 'asset_transfer' | 'in_kind';
+
 export type EntityType =
   | 'revocable_trust'
   | 'irrevocable_trust'
@@ -814,6 +816,142 @@ export interface AIUsageStats {
     matter_limit_per_hour: number;
     firm_calls_this_hour: number;
   };
+}
+
+// ─── Distributions ──────────────────────────────────────────────────────────
+
+export interface DistributionCreate {
+  asset_id?: string | null;
+  beneficiary_stakeholder_id: string;
+  amount?: number | null;
+  description: string;
+  distribution_type: DistributionType;
+  distribution_date: string;
+  notes?: string | null;
+}
+
+export interface DistributionResponse {
+  id: string;
+  matter_id: string;
+  asset_id: string | null;
+  asset_title: string | null;
+  beneficiary_stakeholder_id: string;
+  beneficiary_name: string;
+  amount: number | null;
+  description: string;
+  distribution_type: DistributionType;
+  distribution_date: string;
+  receipt_acknowledged: boolean;
+  receipt_acknowledged_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface BeneficiarySummaryItem {
+  stakeholder_id: string;
+  beneficiary_name: string;
+  total_distributed: number;
+  distribution_count: number;
+  acknowledged_count: number;
+  pending_count: number;
+}
+
+export interface DistributionSummaryResponse {
+  total_distributed: number;
+  total_distributions: number;
+  total_acknowledged: number;
+  total_pending: number;
+  by_beneficiary: BeneficiarySummaryItem[];
+  by_type: Record<string, number>;
+}
+
+// ─── Portal (Beneficiary) ───────────────────────────────────────────────────
+
+export interface PortalMatterBrief {
+  matter_id: string;
+  firm_id: string;
+  decedent_name: string;
+  phase: MatterPhase;
+  firm_name: string;
+}
+
+export interface PortalBeneficiaryMattersResponse {
+  matters: PortalMatterBrief[];
+}
+
+export interface PortalContactInfo {
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface PortalMilestone {
+  title: string;
+  date: string;
+  completed: boolean;
+  is_next: boolean;
+}
+
+export interface PortalDistributionSummary {
+  total_estate_value: number | null;
+  distribution_status: string;
+  notices_count: number;
+  pending_acknowledgments: number;
+}
+
+export interface PortalMatterSummary {
+  matter_id: string;
+  decedent_name: string;
+  estate_type: string;
+  jurisdiction_state: string;
+  phase: MatterPhase;
+  completion_percentage: number;
+  estimated_completion: string | null;
+}
+
+export interface PortalOverviewResponse {
+  matter: PortalMatterSummary;
+  your_role: string;
+  your_relationship: string | null;
+  contacts: PortalContactInfo[];
+  milestones: PortalMilestone[];
+  distribution: PortalDistributionSummary;
+  firm_name: string;
+  firm_logo_url: string | null;
+}
+
+export interface PortalDocumentItem {
+  id: string;
+  filename: string;
+  doc_type: string | null;
+  size_bytes: number;
+  shared_at: string;
+}
+
+export interface PortalDocumentsResponse {
+  documents: PortalDocumentItem[];
+  total: number;
+}
+
+export interface PortalMessageItem {
+  id: string;
+  sender_name: string;
+  type: string;
+  subject: string | null;
+  body: string;
+  created_at: string;
+  requires_acknowledgment: boolean;
+  acknowledged: boolean;
+}
+
+export interface PortalMessagesResponse {
+  messages: PortalMessageItem[];
+  total: number;
+}
+
+export interface PortalMessageCreate {
+  subject?: string;
+  body: string;
 }
 
 // ─── Filter / query params ──────────────────────────────────────────────────

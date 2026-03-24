@@ -168,6 +168,12 @@ class CommunicationVisibility(enum.StrEnum):
     specific = "specific"
 
 
+class DistributionType(enum.StrEnum):
+    cash = "cash"
+    asset_transfer = "asset_transfer"
+    in_kind = "in_kind"
+
+
 class ActorType(enum.StrEnum):
     user = "user"
     system = "system"

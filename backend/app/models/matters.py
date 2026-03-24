@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.models.assets import Asset
     from app.models.communications import Communication
     from app.models.deadlines import Deadline
+    from app.models.distributions import Distribution
     from app.models.documents import Document
     from app.models.entities import Entity
     from app.models.firms import Firm
@@ -73,5 +74,8 @@ class Matter(BaseModel):
         back_populates="matter", cascade="all, delete-orphan"
     )
     communications: Mapped[list[Communication]] = relationship(
+        back_populates="matter", cascade="all, delete-orphan"
+    )
+    distributions: Mapped[list[Distribution]] = relationship(
         back_populates="matter", cascade="all, delete-orphan"
     )

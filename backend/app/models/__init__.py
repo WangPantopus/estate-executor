@@ -5,6 +5,7 @@ from app.models.assets import Asset
 from app.models.base import BaseModel
 from app.models.communications import Communication
 from app.models.deadlines import Deadline
+from app.models.distributions import Distribution
 from app.models.document_versions import DocumentVersion
 from app.models.documents import Document
 from app.models.email_logs import EmailLog
@@ -18,6 +19,7 @@ from app.models.enums import (
     CommunicationVisibility,
     DeadlineSource,
     DeadlineStatus,
+    DistributionType,
     EntityType,
     EstateType,
     FirmRole,
@@ -68,6 +70,7 @@ __all__ = [
     "TaskPhase",
     "TaskPriority",
     "TaskStatus",
+    "DistributionType",
     "TransferMechanism",
     # Base
     "BaseModel",
@@ -89,6 +92,7 @@ __all__ = [
     "asset_documents",
     "Deadline",
     "Communication",
+    "Distribution",
     "Event",
     "EmailLog",
     "AIUsageLog",

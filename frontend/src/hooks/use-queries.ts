@@ -17,6 +17,7 @@ import type {
   DeadlineCreate,
   DeadlineFilters,
   DeadlineUpdate,
+  DistributionCreate,
   EntityCreate,
   EntityUpdate,
   EventFilters,
@@ -84,6 +85,10 @@ export const queryKeys = {
     ["firms", firmId, "matters", matterId, "documents"] as const,
   document: (firmId: string, matterId: string, docId: string) =>
     ["firms", firmId, "matters", matterId, "documents", docId] as const,
+  distributions: (firmId: string, matterId: string) =>
+    ["firms", firmId, "matters", matterId, "distributions"] as const,
+  distributionSummary: (firmId: string, matterId: string) =>
+    ["firms", firmId, "matters", matterId, "distributions", "summary"] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -801,5 +806,53 @@ export function useAIUsageStats(firmId: string, matterId: string) {
     queryFn: () => api.getAIUsageStats(firmId, matterId),
     staleTime: 60_000, // Cache for 1 minute
     enabled: !!firmId && !!matterId,
+  });
+}
+
+// ─── Distributions ──────────────────────────────────────────────────────────
+
+export function useDistributions(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.distributions(firmId, matterId),
+    queryFn: () => api.getDistributions(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useDistributionSummary(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.distributionSummary(firmId, matterId),
+    queryFn: () => api.getDistributionSummary(firmId, matterId),
+    enabled: !!firmId && !!matterId,
+  });
+}
+
+export function useRecordDistribution(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DistributionCreate) =>
+      api.recordDistribution(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.distributions(firmId, matterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.distributionSummary(firmId, matterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.matterDashboard(firmId, matterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.communications(firmId, matterId) });
+    },
+  });
+}
+
+export function useAcknowledgeDistribution(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (distId: string) =>
+      api.acknowledgeDistribution(firmId, matterId, distId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.distributions(firmId, matterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.distributionSummary(firmId, matterId) });
+    },
   });
 }
