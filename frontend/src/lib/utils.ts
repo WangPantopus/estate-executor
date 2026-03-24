@@ -11,11 +11,16 @@ export function cn(...inputs: ClassValue[]) {
  * rendered via dangerouslySetInnerHTML (e.g., search result snippets).
  */
 export function sanitizeSnippet(html: string): string {
-  // Replace <mark> and </mark> with placeholders, strip all other tags, restore
-  return html
-    .replace(/<mark>/gi, "\x00MARK_OPEN\x00")
-    .replace(/<\/mark>/gi, "\x00MARK_CLOSE\x00")
-    .replace(/<[^>]*>/g, "")
-    .replace(/\x00MARK_OPEN\x00/g, "<mark>")
-    .replace(/\x00MARK_CLOSE\x00/g, "</mark>");
+  // First, escape all HTML entities to neutralize any malicious content
+  const escaped = html
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+
+  // Then restore only safe <mark> tags (no attributes allowed)
+  return escaped
+    .replace(/&lt;mark&gt;/gi, "<mark>")
+    .replace(/&lt;\/mark&gt;/gi, "</mark>");
 }
