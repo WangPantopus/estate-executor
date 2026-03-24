@@ -17,6 +17,12 @@ import {
   CheckCircle2,
   ArrowUpRight,
   Download,
+  RefreshCw,
+  Plug,
+  Unplug,
+  Clock,
+  FolderSync,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,8 +69,12 @@ import {
   useBillingInvoices,
   useCreateCheckout,
   useCreatePortalSession,
+  useClioConnection,
+  useConnectClio,
+  useDisconnectClio,
+  useSyncClio,
 } from "@/hooks";
-import type { FirmRole, TierLimits, Invoice } from "@/lib/types";
+import type { FirmRole, TierLimits, Invoice, SyncRequest } from "@/lib/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -153,7 +163,7 @@ export default function SettingsPage() {
             <CreditCard className="size-3.5" />
             Billing
           </TabsTrigger>
-          <TabsTrigger value="integrations" className="gap-1.5" disabled>
+          <TabsTrigger value="integrations" className="gap-1.5">
             <Puzzle className="size-3.5" />
             Integrations
           </TabsTrigger>
@@ -347,14 +357,9 @@ export default function SettingsPage() {
           <BillingTabContent firmId={FIRM_ID} isOwner={isOwner} isAdmin={isAdmin} />
         </TabsContent>
 
-        {/* ─── Integrations Tab (disabled) ────────────────────────────────── */}
+        {/* ─── Integrations Tab ─────────────────────────────────────────── */}
         <TabsContent value="integrations">
-          <Card>
-            <CardContent className="p-6 text-center py-12">
-              <Puzzle className="size-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Integrations coming in Phase 4.</p>
-            </CardContent>
-          </Card>
+          <IntegrationsTabContent firmId={FIRM_ID} isAdmin={isAdmin} />
         </TabsContent>
       </Tabs>
     </div>
@@ -865,6 +870,283 @@ function BillingTabContent({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ─── Integrations Tab Content ────────────────────────────────────────────────
+
+function IntegrationsTabContent({
+  firmId,
+  isAdmin,
+}: {
+  firmId: string;
+  isAdmin: boolean;
+}) {
+  const { data: clio, isLoading: clioLoading } = useClioConnection(firmId);
+  const connectClio = useConnectClio(firmId);
+  const disconnectClio = useDisconnectClio(firmId);
+  const syncClio = useSyncClio(firmId);
+
+  const [syncingResource, setSyncingResource] = useState<string | null>(null);
+
+  const isConnected = clio?.status === "connected";
+
+  const handleConnect = async () => {
+    try {
+      const result = await connectClio.mutateAsync();
+      window.location.href = result.authorize_url;
+    } catch {
+      // handled by mutation
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm("Disconnect Clio? Sync mappings will be preserved for reconnection.")) return;
+    try {
+      await disconnectClio.mutateAsync();
+    } catch {
+      // handled by mutation
+    }
+  };
+
+  const handleSync = async (resource: SyncRequest["resource"]) => {
+    setSyncingResource(resource);
+    try {
+      await syncClio.mutateAsync({ resource });
+    } catch {
+      // handled by mutation
+    } finally {
+      setSyncingResource(null);
+    }
+  };
+
+  if (clioLoading) {
+    return <LoadingState variant="detail" />;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Clio Integration Card */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
+                <span className="text-blue-700 dark:text-blue-300 font-bold text-sm">CL</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Clio Manage</h3>
+                <p className="text-xs text-muted-foreground">
+                  Legal practice management — sync matters, time entries, and contacts
+                </p>
+              </div>
+            </div>
+            <Badge
+              variant={isConnected ? "default" : "muted"}
+              className="text-xs gap-1"
+            >
+              {isConnected ? (
+                <><CheckCircle2 className="size-3" aria-hidden="true" /> Connected</>
+              ) : (
+                <><Unplug className="size-3" aria-hidden="true" /> Not Connected</>
+              )}
+            </Badge>
+          </div>
+
+          {isConnected && clio?.external_account_name && (
+            <p className="text-xs text-muted-foreground mb-4">
+              Connected to: <span className="font-medium text-foreground">{clio.external_account_name}</span>
+              {clio.last_sync_at && (
+                <> &middot; Last synced {formatDate(clio.last_sync_at)}</>
+              )}
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            {isAdmin && !isConnected && (
+              <Button
+                size="sm"
+                onClick={handleConnect}
+                disabled={connectClio.isPending}
+              >
+                {connectClio.isPending ? (
+                  <Loader2 className="size-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Plug className="size-3.5 mr-1" />
+                )}
+                Connect Clio
+              </Button>
+            )}
+            {isAdmin && isConnected && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDisconnect}
+                  disabled={disconnectClio.isPending}
+                >
+                  {disconnectClio.isPending ? (
+                    <Loader2 className="size-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <Unplug className="size-3.5 mr-1" />
+                  )}
+                  Disconnect
+                </Button>
+              </>
+            )}
+          </div>
+
+          {connectClio.error && (
+            <p className="text-xs text-danger mt-2">Failed to initiate Clio connection.</p>
+          )}
+          {disconnectClio.error && (
+            <p className="text-xs text-danger mt-2">Failed to disconnect Clio.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Sync Controls — only shown when connected */}
+      {isConnected && (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-sm font-medium text-foreground mb-4">Sync Controls</h3>
+
+            {clio?.last_sync_error && (
+              <div className="flex items-start gap-2 mb-4 p-3 rounded-md bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                <AlertTriangle className="size-4 text-red-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700 dark:text-red-300">{clio.last_sync_error}</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Matters sync */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <FolderSync className="size-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-foreground">Matters</p>
+                    <p className="text-xs text-muted-foreground">Bidirectional sync with Clio matters</p>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSync("matters")}
+                    disabled={syncingResource !== null}
+                  >
+                    {syncingResource === "matters" ? (
+                      <Loader2 className="size-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5 mr-1" />
+                    )}
+                    Sync
+                  </Button>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Time entries sync */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <Clock className="size-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-foreground">Time Entries</p>
+                    <p className="text-xs text-muted-foreground">Push time entries to Clio activities</p>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSync("time_entries")}
+                    disabled={syncingResource !== null}
+                  >
+                    {syncingResource === "time_entries" ? (
+                      <Loader2 className="size-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5 mr-1" />
+                    )}
+                    Sync
+                  </Button>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Contacts sync */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <UserCheck className="size-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-foreground">Contacts</p>
+                    <p className="text-xs text-muted-foreground">Sync contacts with Clio stakeholders</p>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSync("contacts")}
+                    disabled={syncingResource !== null}
+                  >
+                    {syncingResource === "contacts" ? (
+                      <Loader2 className="size-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5 mr-1" />
+                    )}
+                    Sync
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {syncClio.data && !syncClio.isPending && (
+              <div className="mt-4 p-3 rounded-md bg-muted/50 text-xs">
+                <p className="font-medium text-foreground mb-1">
+                  Last sync: {syncClio.data.resource}
+                </p>
+                <p className="text-muted-foreground">
+                  Created: {syncClio.data.created} &middot;
+                  Updated: {syncClio.data.updated} &middot;
+                  Skipped: {syncClio.data.skipped}
+                  {syncClio.data.errors.length > 0 && (
+                    <span className="text-danger"> &middot; Errors: {syncClio.data.errors.length}</span>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {syncClio.error && (
+              <p className="text-xs text-danger mt-2">Sync failed. Please try again.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Placeholder for future integrations */}
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="text-sm font-medium text-foreground mb-3">Coming Soon</h3>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { name: "QuickBooks", desc: "Accounting sync" },
+              { name: "DocuSign", desc: "e-Signatures" },
+              { name: "Xero", desc: "Accounting sync" },
+            ].map((item) => (
+              <div
+                key={item.name}
+                className="p-3 rounded-lg border border-dashed border-border text-center"
+              >
+                <p className="text-sm font-medium text-muted-foreground">{item.name}</p>
+                <p className="text-xs text-muted-foreground/60">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

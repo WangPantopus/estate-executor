@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # Clio Integration
+    clio_client_id: str = ""
+    clio_client_secret: str = ""
+    clio_redirect_uri: str = ""  # e.g. http://localhost:8000/api/v1/integrations/clio/callback
+    clio_webhook_secret: str = ""
+    clio_api_base_url: str = "https://app.clio.com"
+    clio_auth_url: str = "https://app.clio.com/oauth/authorize"
+    clio_token_url: str = "https://app.clio.com/oauth/token"
+
     # Email
     resend_api_key: str = ""
     email_from: str = "Estate Executor <notifications@estate-executor.com>"

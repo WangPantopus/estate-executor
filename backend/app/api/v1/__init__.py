@@ -15,6 +15,8 @@ from app.api.v1.entities import router as entities_router
 from app.api.v1.events import router as events_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
+from app.api.v1.integrations import router as integrations_router
+from app.api.v1.integrations import webhook_router as integrations_webhook_router
 from app.api.v1.matters import router as matters_router
 from app.api.v1.milestones import router as milestones_router
 from app.api.v1.portal import router as portal_router
@@ -111,7 +113,17 @@ api_router.include_router(
     tags=["billing"],
 )
 api_router.include_router(
+    integrations_router,
+    prefix="/firms/{firm_id}/integrations",
+    tags=["integrations"],
+)
+api_router.include_router(
     webhook_router,
+    prefix="/webhooks",
+    tags=["webhooks"],
+)
+api_router.include_router(
+    integrations_webhook_router,
     prefix="/webhooks",
     tags=["webhooks"],
 )

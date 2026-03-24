@@ -1224,3 +1224,63 @@ export interface CreateCheckoutRequest {
 export interface CreatePortalSessionRequest {
   return_url?: string;
 }
+
+// ─── Integrations ───────────────────────────────────────────────────────────
+
+export type IntegrationProvider = 'clio' | 'quickbooks' | 'xero' | 'docusign';
+export type IntegrationConnectionStatus = 'connected' | 'disconnected' | 'error' | 'pending';
+export type SyncStatusType = 'idle' | 'syncing' | 'success' | 'failed';
+
+export interface IntegrationConnection {
+  id: string;
+  firm_id: string;
+  provider: IntegrationProvider;
+  status: IntegrationConnectionStatus;
+  external_account_id?: string | null;
+  external_account_name?: string | null;
+  last_sync_at?: string | null;
+  last_sync_status: SyncStatusType;
+  last_sync_error?: string | null;
+  settings: Record<string, unknown>;
+  connected_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntegrationListResponse {
+  connections: IntegrationConnection[];
+}
+
+export interface OAuthInitResponse {
+  authorize_url: string;
+  state: string;
+}
+
+export interface SyncRequest {
+  resource: 'matters' | 'time_entries' | 'contacts';
+  direction?: string;
+  matter_id?: string;
+}
+
+export interface SyncResultResponse {
+  resource: string;
+  direction: string;
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+  synced_at?: string | null;
+}
+
+export interface ClioSettingsUpdate {
+  auto_sync_matters?: boolean;
+  auto_sync_time_entries?: boolean;
+  auto_sync_contacts?: boolean;
+  sync_interval_minutes?: number;
+  default_practice_area?: string;
+}
+
+export interface DisconnectResponse {
+  disconnected: boolean;
+  provider: string;
+}

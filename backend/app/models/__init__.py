@@ -29,6 +29,8 @@ from app.models.enums import (
     FirmRole,
     FirmType,
     FundingStatus,
+    IntegrationProvider,
+    IntegrationStatus,
     InviteStatus,
     MatterPhase,
     MatterStatus,
@@ -36,6 +38,8 @@ from app.models.enums import (
     StakeholderRole,
     SubscriptionStatus,
     SubscriptionTier,
+    SyncDirection,
+    SyncStatus,
     TaskPhase,
     TaskPriority,
     TaskStatus,
@@ -44,6 +48,7 @@ from app.models.enums import (
 from app.models.events import Event
 from app.models.firm_memberships import FirmMembership
 from app.models.firms import Firm
+from app.models.integration_connections import IntegrationConnection
 from app.models.matters import Matter
 from app.models.stakeholders import Stakeholder
 from app.models.subscriptions import Subscription
@@ -111,4 +116,9 @@ __all__ = [
     "AIUsageLog",
     "AIFeedback",
     "Subscription",
+    "IntegrationConnection",
+    "IntegrationProvider",
+    "IntegrationStatus",
+    "SyncDirection",
+    "SyncStatus",
 ]

@@ -8,10 +8,17 @@
 import type {
   BillingOverview,
   CheckoutSessionResponse,
+  ClioSettingsUpdate,
   CreateCheckoutRequest,
   CreatePortalSessionRequest,
+  DisconnectResponse,
+  IntegrationConnection,
+  IntegrationListResponse,
   InvoiceListResponse,
+  OAuthInitResponse,
   PortalSessionResponse,
+  SyncRequest,
+  SyncResultResponse,
   UsageInfo,
   AcceptInviteResponse,
   AIAnomalyResponse,
@@ -1136,5 +1143,41 @@ export class ApiClient {
 
   async getBillingUsage(firmId: string): Promise<UsageInfo> {
     return this.get(`${this.billingBase(firmId)}/usage`);
+  }
+
+  // ─── Integrations ─────────────────────────────────────────────────────
+
+  private intBase(firmId: string) {
+    return `/firms/${firmId}/integrations`;
+  }
+
+  async getIntegrations(firmId: string): Promise<IntegrationListResponse> {
+    return this.get(this.intBase(firmId));
+  }
+
+  async getClioConnection(firmId: string): Promise<IntegrationConnection | null> {
+    return this.get(`${this.intBase(firmId)}/clio`);
+  }
+
+  async connectClio(firmId: string): Promise<OAuthInitResponse> {
+    return this.post(`${this.intBase(firmId)}/clio/connect`);
+  }
+
+  async disconnectClio(firmId: string): Promise<DisconnectResponse> {
+    return this.post(`${this.intBase(firmId)}/clio/disconnect`);
+  }
+
+  async updateClioSettings(
+    firmId: string,
+    data: ClioSettingsUpdate,
+  ): Promise<IntegrationConnection> {
+    return this.patch(`${this.intBase(firmId)}/clio/settings`, data);
+  }
+
+  async syncClio(
+    firmId: string,
+    data: SyncRequest,
+  ): Promise<SyncResultResponse> {
+    return this.post(`${this.intBase(firmId)}/clio/sync`, data);
   }
 }

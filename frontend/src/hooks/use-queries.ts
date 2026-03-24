@@ -13,9 +13,11 @@ import type {
   AssetUpdate,
   AssetValuation,
   BillingOverview,
+  ClioSettingsUpdate,
   CreateCheckoutRequest,
   CreatePortalSessionRequest,
   InvoiceListResponse,
+  SyncRequest,
   CommunicationCreate,
   CommunicationFilters,
   DeadlineCreate,
@@ -102,6 +104,10 @@ export const queryKeys = {
     ["firms", firmId, "billing", "invoices"] as const,
   billingUsage: (firmId: string) =>
     ["firms", firmId, "billing", "usage"] as const,
+  integrations: (firmId: string) =>
+    ["firms", firmId, "integrations"] as const,
+  clioConnection: (firmId: string) =>
+    ["firms", firmId, "integrations", "clio"] as const,
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -1026,5 +1032,59 @@ export function useCreatePortalSession(firmId: string) {
   return useMutation({
     mutationFn: (data?: CreatePortalSessionRequest) =>
       api.createPortalSession(firmId, data),
+  });
+}
+
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
+export function useClioConnection(firmId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.clioConnection(firmId),
+    queryFn: () => api.getClioConnection(firmId),
+    enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectClio(firmId: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.connectClio(firmId),
+  });
+}
+
+export function useDisconnectClio(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectClio(firmId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
+  });
+}
+
+export function useUpdateClioSettings(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ClioSettingsUpdate) =>
+      api.updateClioSettings(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
+  });
+}
+
+export function useSyncClio(firmId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SyncRequest) => api.syncClio(firmId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.clioConnection(firmId) });
+    },
   });
 }

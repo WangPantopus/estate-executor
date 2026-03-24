@@ -85,6 +85,12 @@ export {
   useBillingInvoices,
   useCreateCheckout,
   useCreatePortalSession,
+  // Integrations
+  useClioConnection,
+  useConnectClio,
+  useDisconnectClio,
+  useUpdateClioSettings,
+  useSyncClio,
 } from "./use-queries";
 export { usePermissions } from "./use-permissions";
 export { useMatterSocket } from "./use-matter-socket";

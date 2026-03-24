@@ -205,3 +205,30 @@ class SubscriptionStatus(enum.StrEnum):
 class BillingInterval(enum.StrEnum):
     month = "month"
     year = "year"
+
+
+class IntegrationProvider(enum.StrEnum):
+    clio = "clio"
+    quickbooks = "quickbooks"
+    xero = "xero"
+    docusign = "docusign"
+
+
+class IntegrationStatus(enum.StrEnum):
+    connected = "connected"
+    disconnected = "disconnected"
+    error = "error"
+    pending = "pending"
+
+
+class SyncDirection(enum.StrEnum):
+    push = "push"
+    pull = "pull"
+    bidirectional = "bidirectional"
+
+
+class SyncStatus(enum.StrEnum):
+    idle = "idle"
+    syncing = "syncing"
+    success = "success"
+    failed = "failed"
