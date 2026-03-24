@@ -35,6 +35,8 @@ import type {
   DisputeFlagCreate,
   DisputeStatusUpdate,
   ActiveDisputes,
+  MilestoneStatusResponse,
+  MilestoneSettingUpdate,
   DocumentConfirmType,
   DocumentDetail,
   DocumentRegister,
@@ -833,6 +835,28 @@ export class ApiClient {
     const params = entityType ? `?entity_type=${entityType}` : '';
     return this.get(
       `${this.commBase(firmId, matterId)}/disputes${params}`,
+    );
+  }
+
+  // ─── Milestones ──────────────────────────────────────────────────────
+
+  async getMilestones(
+    firmId: string,
+    matterId: string,
+  ): Promise<MilestoneStatusResponse> {
+    return this.get(
+      `/firms/${firmId}/matters/${matterId}/milestones`,
+    );
+  }
+
+  async updateMilestoneSetting(
+    firmId: string,
+    matterId: string,
+    data: MilestoneSettingUpdate,
+  ): Promise<{ milestone_notifications: Record<string, boolean> }> {
+    return this.put(
+      `/firms/${firmId}/matters/${matterId}/milestones/settings`,
+      data,
     );
   }
 

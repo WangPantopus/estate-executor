@@ -741,6 +741,29 @@ export interface ActiveDisputes {
   disputes: Record<string, Array<{ entity_id: string; dispute_status: DisputeStatus }>>;
 }
 
+// ─── Milestones ──────────────────────────────────────────────────────────────
+
+export interface MilestoneStatus {
+  key: string;
+  title: string;
+  description: string;
+  phase: string;
+  total_tasks: number;
+  completed_tasks: number;
+  is_complete: boolean;
+  achieved_at: string | null;
+  auto_notify: boolean;
+}
+
+export interface MilestoneStatusResponse {
+  milestones: MilestoneStatus[];
+}
+
+export interface MilestoneSettingUpdate {
+  milestone_key: string;
+  enabled: boolean;
+}
+
 // ─── Events ──────────────────────────────────────────────────────────────────
 
 export interface EventResponse {

@@ -33,6 +33,7 @@ import type {
   DocumentRequestCreate,
   DisputeFlagCreate,
   DisputeStatusUpdate,
+  MilestoneSettingUpdate,
   FirmUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
@@ -735,6 +736,30 @@ export function useActiveDisputes(firmId: string, matterId: string) {
   return useQuery({
     queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
     queryFn: () => api.getActiveDisputes(firmId, matterId),
+  });
+}
+
+// ─── Milestones ──────────────────────────────────────────────────────────────
+
+export function useMilestones(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "milestones"],
+    queryFn: () => api.getMilestones(firmId, matterId),
+  });
+}
+
+export function useUpdateMilestoneSetting(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: MilestoneSettingUpdate) =>
+      api.updateMilestoneSetting(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "milestones"],
+      });
+    },
   });
 }
 

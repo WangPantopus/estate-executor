@@ -554,6 +554,28 @@ async def complete_task(
     # Cascade: unblock dependents
     unblocked = await _unblock_dependents(db, task=task)
 
+    # Detect milestones after task completion
+    try:
+        from app.services.milestone_service import detect_milestones_after_completion
+
+        milestones_fired = await detect_milestones_after_completion(
+            db,
+            matter_id=matter_id,
+            completed_task_phase=task.phase,
+            actor_id=current_user.user_id,
+        )
+        if milestones_fired:
+            logger.info(
+                "milestones_triggered",
+                extra={
+                    "task_id": str(task_id),
+                    "matter_id": str(matter_id),
+                    "milestones": milestones_fired,
+                },
+            )
+    except Exception:
+        logger.warning("milestone_detection_failed", exc_info=True)
+
     return task, unblocked
 
 

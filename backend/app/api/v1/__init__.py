@@ -14,6 +14,7 @@ from app.api.v1.events import router as events_router
 from app.api.v1.firms import router as firms_router
 from app.api.v1.health import router as health_router
 from app.api.v1.matters import router as matters_router
+from app.api.v1.milestones import router as milestones_router
 from app.api.v1.portal import router as portal_router
 from app.api.v1.reports import router as reports_router
 from app.api.v1.stakeholders import router as stakeholders_router
@@ -85,6 +86,11 @@ api_router.include_router(
     reports_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/reports",
     tags=["reports"],
+)
+api_router.include_router(
+    milestones_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/milestones",
+    tags=["milestones"],
 )
 api_router.include_router(
     ai_router,
