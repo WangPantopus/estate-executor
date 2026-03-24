@@ -245,10 +245,15 @@ async def ensure_stripe_customer(
     if firm.stripe_customer_id:
         return firm.stripe_customer_id
 
-    customer = stripe.Customer.create(
-        name=firm.name,
-        metadata={"firm_id": str(firm_id), "firm_slug": firm.slug},
-    )
+    try:
+        customer = stripe.Customer.create(
+            name=firm.name,
+            metadata={"firm_id": str(firm_id), "firm_slug": firm.slug},
+        )
+    except stripe.StripeError as e:
+        logger.error("stripe_customer_create_failed", exc_info=True)
+        raise ValidationError(detail=f"Failed to create billing account: {e}") from e
+
     firm.stripe_customer_id = customer.id
     await db.flush()
     return customer.id
@@ -281,41 +286,47 @@ async def create_checkout_session(
         else limits.stripe_monthly_price_id
     )
 
-    if not price_id:
-        # Development fallback: create ad-hoc price
-        price_cents = (
-            limits.annual_price_cents if billing_interval == "year" else limits.monthly_price_cents
-        )
-        price = stripe.Price.create(
-            unit_amount=price_cents,
-            currency="usd",
-            recurring={"interval": billing_interval},
-            product_data={
-                "name": f"Estate Executor OS — {tier.title()}",
-            },
-        )
-        price_id = price.id
+    try:
+        if not price_id:
+            # Development fallback: create ad-hoc price
+            price_cents = (
+                limits.annual_price_cents
+                if billing_interval == "year"
+                else limits.monthly_price_cents
+            )
+            price = stripe.Price.create(
+                unit_amount=price_cents,
+                currency="usd",
+                recurring={"interval": billing_interval},
+                product_data={
+                    "name": f"Estate Executor OS — {tier.title()}",
+                },
+            )
+            price_id = price.id
 
-    frontend_url = settings.frontend_url
-    session = stripe.checkout.Session.create(
-        customer=customer_id,
-        mode="subscription",
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=success_url or f"{frontend_url}/settings?billing=success",
-        cancel_url=cancel_url or f"{frontend_url}/settings?billing=cancel",
-        metadata={
-            "firm_id": str(firm_id),
-            "tier": tier,
-            "billing_interval": billing_interval,
-        },
-        subscription_data={
-            "metadata": {
+        frontend_url = settings.frontend_url
+        session = stripe.checkout.Session.create(
+            customer=customer_id,
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=success_url or f"{frontend_url}/settings?billing=success",
+            cancel_url=cancel_url or f"{frontend_url}/settings?billing=cancel",
+            metadata={
                 "firm_id": str(firm_id),
                 "tier": tier,
+                "billing_interval": billing_interval,
             },
-        },
-        allow_promotion_codes=True,
-    )
+            subscription_data={
+                "metadata": {
+                    "firm_id": str(firm_id),
+                    "tier": tier,
+                },
+            },
+            allow_promotion_codes=True,
+        )
+    except stripe.StripeError as e:
+        logger.error("stripe_checkout_create_failed", exc_info=True)
+        raise ValidationError(detail=f"Failed to create checkout session: {e}") from e
 
     await event_logger.log(
         db,
@@ -341,10 +352,14 @@ async def create_portal_session(
     customer_id = await ensure_stripe_customer(db, firm_id=firm_id)
     frontend_url = settings.frontend_url
 
-    session = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=return_url or f"{frontend_url}/settings?tab=billing",
-    )
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=return_url or f"{frontend_url}/settings?tab=billing",
+        )
+    except stripe.StripeError as e:
+        logger.error("stripe_portal_create_failed", exc_info=True)
+        raise ValidationError(detail=f"Failed to create billing portal session: {e}") from e
 
     return {"portal_url": session.url}
 
@@ -424,7 +439,11 @@ async def _handle_subscription_created(db: AsyncSession, sub_obj: Any) -> None:
 
     import uuid as uuid_mod
 
-    firm_uuid = uuid_mod.UUID(firm_id)
+    try:
+        firm_uuid = uuid_mod.UUID(firm_id)
+    except (ValueError, AttributeError):
+        logger.error("subscription_created_invalid_firm_id", extra={"firm_id": firm_id})
+        return
     sub = await get_or_create_subscription(db, firm_id=firm_uuid)
 
     tier_str = sub_obj.metadata.get("tier", "starter")
@@ -586,7 +605,12 @@ async def _handle_invoice_paid(db: AsyncSession, invoice_obj: Any) -> None:
         return
 
     sub.last_invoice_amount = invoice_obj.amount_paid
-    sub.last_invoice_paid_at = datetime.now(UTC)
+    # Prefer Stripe's timestamp over local time for accuracy
+    paid_ts = None
+    transitions = getattr(invoice_obj, "status_transitions", None)
+    if transitions:
+        paid_ts = getattr(transitions, "paid_at", None)
+    sub.last_invoice_paid_at = _ts_to_dt(paid_ts) or datetime.now(UTC)
     sub.last_payment_error = None
     sub.failed_payment_count = 0
     sub.grace_period_end = None

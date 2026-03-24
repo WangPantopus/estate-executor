@@ -996,6 +996,9 @@ export function useBillingOverview(firmId: string) {
     queryKey: queryKeys.billing(firmId),
     queryFn: () => api.getBillingOverview(firmId),
     enabled: !!firmId,
+    // Short stale time so data refetches when returning from Stripe
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -1005,6 +1008,8 @@ export function useBillingInvoices(firmId: string) {
     queryKey: queryKeys.billingInvoices(firmId),
     queryFn: () => api.getInvoices(firmId),
     enabled: !!firmId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 

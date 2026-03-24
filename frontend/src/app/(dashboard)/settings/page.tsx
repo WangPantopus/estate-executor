@@ -490,7 +490,7 @@ function BillingTabContent({
   isOwner: boolean;
   isAdmin: boolean;
 }) {
-  const { data: billing, isLoading: billingLoading } = useBillingOverview(firmId);
+  const { data: billing, isLoading: billingLoading, isError: billingError } = useBillingOverview(firmId);
   const { data: invoiceData, isLoading: invoicesLoading } = useBillingInvoices(firmId);
   const createCheckout = useCreateCheckout(firmId);
   const createPortal = useCreatePortalSession(firmId);
@@ -498,8 +498,27 @@ function BillingTabContent({
   const [selectedInterval, setSelectedInterval] = useState<"month" | "year">("month");
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
+  // Reset interval when dialog opens
+  const openUpgradeDialog = useCallback(() => {
+    setSelectedInterval("month");
+    setUpgradeDialogOpen(true);
+  }, []);
+
   if (billingLoading) {
     return <LoadingState variant="detail" />;
+  }
+
+  if (billingError) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center py-12">
+          <AlertTriangle className="size-8 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            Unable to load billing information. Please try again later.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   const sub = billing?.subscription;
@@ -609,7 +628,7 @@ function BillingTabContent({
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => setUpgradeDialogOpen(true)}
+                  onClick={openUpgradeDialog}
                 >
                   <ArrowUpRight className="size-3.5 mr-1" />
                   Upgrade
@@ -641,12 +660,14 @@ function BillingTabContent({
               <div className="flex items-center justify-between mb-1">
                 <p className="text-xs text-muted-foreground">Active Matters</p>
                 <p className="text-xs font-medium">
-                  {usage?.matter_count ?? 0} / {usage?.matter_limit ?? "—"}
+                  {usage?.matter_count ?? 0} /{" "}
+                  {usage && usage.matter_limit >= 999999 ? "Unlimited" : (usage?.matter_limit ?? "—")}
                 </p>
               </div>
               <Progress
+                aria-label={`${usage?.matter_count ?? 0} of ${usage?.matter_limit ?? 0} matters used`}
                 value={
-                  usage && usage.matter_limit > 0
+                  usage && usage.matter_limit > 0 && usage.matter_limit < 999999
                     ? Math.min((usage.matter_count / usage.matter_limit) * 100, 100)
                     : 0
                 }
@@ -657,12 +678,14 @@ function BillingTabContent({
               <div className="flex items-center justify-between mb-1">
                 <p className="text-xs text-muted-foreground">Team Members</p>
                 <p className="text-xs font-medium">
-                  {usage?.user_count ?? 0} / {usage?.user_limit ?? "—"}
+                  {usage?.user_count ?? 0} /{" "}
+                  {usage && usage.user_limit >= 999999 ? "Unlimited" : (usage?.user_limit ?? "—")}
                 </p>
               </div>
               <Progress
+                aria-label={`${usage?.user_count ?? 0} of ${usage?.user_limit ?? 0} team members used`}
                 value={
-                  usage && usage.user_limit > 0
+                  usage && usage.user_limit > 0 && usage.user_limit < 999999
                     ? Math.min((usage.user_count / usage.user_limit) * 100, 100)
                     : 0
                 }
@@ -718,8 +741,8 @@ function BillingTabContent({
                           size="sm"
                           asChild
                         >
-                          <a href={inv.invoice_pdf} target="_blank" rel="noopener noreferrer">
-                            <Download className="size-3.5" />
+                          <a href={inv.invoice_pdf} target="_blank" rel="noopener noreferrer" aria-label="Download PDF">
+                            <Download className="size-3.5" aria-hidden="true" />
                           </a>
                         </Button>
                       )}
@@ -729,8 +752,8 @@ function BillingTabContent({
                           size="sm"
                           asChild
                         >
-                          <a href={inv.invoice_url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="size-3.5" />
+                          <a href={inv.invoice_url} target="_blank" rel="noopener noreferrer" aria-label="View invoice">
+                            <ExternalLink className="size-3.5" aria-hidden="true" />
                           </a>
                         </Button>
                       )}
