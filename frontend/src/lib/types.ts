@@ -173,6 +173,13 @@ export interface FirmUpdate {
   settings?: Record<string, unknown>;
 }
 
+export interface FirmWhiteLabel {
+  logo_url?: string | null;
+  primary_color?: string | null;
+  custom_domain?: string | null;
+  custom_domain_verified?: boolean | null;
+}
+
 export interface Firm {
   id: string;
   name: string;
@@ -180,6 +187,7 @@ export interface Firm {
   type: FirmType;
   subscription_tier: SubscriptionTier;
   settings: Record<string, unknown> | null;
+  white_label: FirmWhiteLabel | null;
   created_at: string;
   updated_at: string;
 }
@@ -961,6 +969,7 @@ export interface DistributionSummaryResponse {
 export interface PortalMatterBrief {
   matter_id: string;
   firm_id: string;
+  firm_slug: string;
   decedent_name: string;
   phase: MatterPhase;
   firm_name: string;

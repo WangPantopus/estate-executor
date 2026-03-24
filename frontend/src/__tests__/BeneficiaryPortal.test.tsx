@@ -107,6 +107,7 @@ const mockPortalMatters: PortalBeneficiaryMattersResponse = {
     {
       matter_id: "matter-1",
       firm_id: "firm-1",
+      firm_slug: "smith-associates",
       decedent_name: "John Doe",
       phase: "administration",
       firm_name: "Smith & Associates",

@@ -83,9 +83,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const navItems = matterId ? getPortalNavItems(matterId) : [];
 
   // Dynamic CSS custom properties for branding colors
-  const brandStyle: React.CSSProperties = {};
+  const brandStyle: React.CSSProperties & Record<string, string> = {};
   if (branding.primary_color) {
-    brandStyle["--portal-primary" as string] = branding.primary_color;
+    brandStyle["--portal-primary"] = branding.primary_color;
   }
 
   return (

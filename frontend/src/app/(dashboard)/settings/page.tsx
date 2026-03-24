@@ -1800,7 +1800,7 @@ function WebhooksCard({ firmId, isAdmin }: { firmId: string; isAdmin: boolean })
                         {wh.is_active ? "Active" : "Inactive"}
                       </Badge>
                       {wh.failure_count > 0 && (
-                        <Badge variant="destructive" className="text-[10px]">
+                        <Badge variant="danger" className="text-[10px]">
                           {wh.failure_count} failures
                         </Badge>
                       )}
