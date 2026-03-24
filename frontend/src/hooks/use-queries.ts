@@ -34,6 +34,8 @@ import type {
   DisputeFlagCreate,
   DisputeStatusUpdate,
   MilestoneSettingUpdate,
+  TimeEntryCreate,
+  TimeEntryUpdate,
   FirmUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
@@ -736,6 +738,70 @@ export function useActiveDisputes(firmId: string, matterId: string) {
   return useQuery({
     queryKey: [...queryKeys.communications(firmId, matterId), "disputes"],
     queryFn: () => api.getActiveDisputes(firmId, matterId),
+  });
+}
+
+// ─── Time Tracking ───────────────────────────────────────────────────────────
+
+export function useTimeEntries(
+  firmId: string,
+  matterId: string,
+  params?: { task_id?: string; page?: number },
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "time", params],
+    queryFn: () => api.getTimeEntries(firmId, matterId, params),
+  });
+}
+
+export function useTimeSummary(firmId: string, matterId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["firms", firmId, "matters", matterId, "time", "summary"],
+    queryFn: () => api.getTimeSummary(firmId, matterId),
+  });
+}
+
+export function useCreateTimeEntry(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: TimeEntryCreate) =>
+      api.createTimeEntry(firmId, matterId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "time"],
+      });
+    },
+  });
+}
+
+export function useUpdateTimeEntry(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { entryId: string; data: TimeEntryUpdate }) =>
+      api.updateTimeEntry(firmId, matterId, params.entryId, params.data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "time"],
+      });
+    },
+  });
+}
+
+export function useDeleteTimeEntry(firmId: string, matterId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) =>
+      api.deleteTimeEntry(firmId, matterId, entryId),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["firms", firmId, "matters", matterId, "time"],
+      });
+    },
   });
 }
 

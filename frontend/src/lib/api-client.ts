@@ -37,6 +37,11 @@ import type {
   ActiveDisputes,
   MilestoneStatusResponse,
   MilestoneSettingUpdate,
+  TimeEntry,
+  TimeEntryCreate,
+  TimeEntryUpdate,
+  TimeEntryListResponse,
+  TimeTrackingSummary,
   DocumentConfirmType,
   DocumentDetail,
   DocumentRegister,
@@ -836,6 +841,54 @@ export class ApiClient {
     return this.get(
       `${this.commBase(firmId, matterId)}/disputes${params}`,
     );
+  }
+
+  // ─── Time Tracking ──────────────────────────────────────────────────
+
+  private timeBase(firmId: string, matterId: string): string {
+    return `/firms/${firmId}/matters/${matterId}/time`;
+  }
+
+  async getTimeEntries(
+    firmId: string,
+    matterId: string,
+    params?: { task_id?: string; stakeholder_id?: string; billable?: boolean; date_from?: string; date_to?: string; page?: number; per_page?: number },
+  ): Promise<TimeEntryListResponse> {
+    return this.get(
+      `${this.timeBase(firmId, matterId)}${buildQueryString(params)}`,
+    );
+  }
+
+  async createTimeEntry(
+    firmId: string,
+    matterId: string,
+    data: TimeEntryCreate,
+  ): Promise<TimeEntry> {
+    return this.post(this.timeBase(firmId, matterId), data);
+  }
+
+  async updateTimeEntry(
+    firmId: string,
+    matterId: string,
+    entryId: string,
+    data: TimeEntryUpdate,
+  ): Promise<TimeEntry> {
+    return this.put(`${this.timeBase(firmId, matterId)}/${entryId}`, data);
+  }
+
+  async deleteTimeEntry(
+    firmId: string,
+    matterId: string,
+    entryId: string,
+  ): Promise<void> {
+    return this.delete(`${this.timeBase(firmId, matterId)}/${entryId}`);
+  }
+
+  async getTimeSummary(
+    firmId: string,
+    matterId: string,
+  ): Promise<TimeTrackingSummary> {
+    return this.get(`${this.timeBase(firmId, matterId)}/summary`);
   }
 
   // ─── Milestones ──────────────────────────────────────────────────────

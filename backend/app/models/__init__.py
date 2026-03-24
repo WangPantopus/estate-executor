@@ -48,6 +48,7 @@ from app.models.task_comments import TaskComment
 from app.models.task_dependencies import TaskDependency
 from app.models.task_documents import task_documents
 from app.models.tasks import Task
+from app.models.time_entries import TimeEntry
 from app.models.users import User
 
 __all__ = [
@@ -101,6 +102,7 @@ __all__ = [
     "DocumentRequest",
     "Event",
     "EmailLog",
+    "TimeEntry",
     "AIUsageLog",
     "AIFeedback",
 ]

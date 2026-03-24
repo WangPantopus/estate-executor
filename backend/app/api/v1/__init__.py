@@ -19,6 +19,7 @@ from app.api.v1.portal import router as portal_router
 from app.api.v1.reports import router as reports_router
 from app.api.v1.stakeholders import router as stakeholders_router
 from app.api.v1.tasks import router as tasks_router
+from app.api.v1.time_tracking import router as time_tracking_router
 from app.api.v1.upload import router as upload_router
 
 api_router = APIRouter()
@@ -86,6 +87,11 @@ api_router.include_router(
     reports_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/reports",
     tags=["reports"],
+)
+api_router.include_router(
+    time_tracking_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/time",
+    tags=["time-tracking"],
 )
 api_router.include_router(
     milestones_router,

@@ -764,6 +764,56 @@ export interface MilestoneSettingUpdate {
   enabled: boolean;
 }
 
+// ─── Time Tracking ───────────────────────────────────────────────────────────
+
+export interface TimeEntry {
+  id: string;
+  matter_id: string;
+  task_id: string | null;
+  task_title: string | null;
+  stakeholder_id: string;
+  stakeholder_name: string;
+  hours: number;
+  minutes: number;
+  description: string;
+  entry_date: string;
+  billable: boolean;
+  created_at: string;
+}
+
+export interface TimeEntryCreate {
+  task_id?: string | null;
+  hours: number;
+  minutes: number;
+  description: string;
+  entry_date: string;
+  billable?: boolean;
+}
+
+export interface TimeEntryUpdate {
+  task_id?: string | null;
+  hours?: number;
+  minutes?: number;
+  description?: string;
+  entry_date?: string;
+  billable?: boolean;
+}
+
+export interface TimeEntryListResponse {
+  data: TimeEntry[];
+  meta: PaginationMeta;
+}
+
+export interface TimeTrackingSummary {
+  total_hours: number;
+  total_minutes: number;
+  total_decimal_hours: number;
+  billable_hours: number;
+  non_billable_hours: number;
+  by_stakeholder: Array<{ stakeholder_id: string; name: string; total_minutes: number; decimal_hours: number }>;
+  by_task: Array<{ task_id: string; title: string; total_minutes: number; decimal_hours: number }>;
+}
+
 // ─── Events ──────────────────────────────────────────────────────────────────
 
 export interface EventResponse {
