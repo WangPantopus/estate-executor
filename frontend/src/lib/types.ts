@@ -65,6 +65,8 @@ export type TransferMechanism =
   | 'other';
 export type AssetStatus = 'discovered' | 'valued' | 'transferred' | 'distributed';
 
+export type DistributionType = 'cash' | 'asset_transfer' | 'in_kind';
+
 export type EntityType =
   | 'revocable_trust'
   | 'irrevocable_trust'
@@ -814,6 +816,53 @@ export interface AIUsageStats {
     matter_limit_per_hour: number;
     firm_calls_this_hour: number;
   };
+}
+
+// ─── Distributions ──────────────────────────────────────────────────────────
+
+export interface DistributionCreate {
+  asset_id?: string | null;
+  beneficiary_stakeholder_id: string;
+  amount?: number | null;
+  description: string;
+  distribution_type: DistributionType;
+  distribution_date: string;
+  notes?: string | null;
+}
+
+export interface DistributionResponse {
+  id: string;
+  matter_id: string;
+  asset_id: string | null;
+  asset_title: string | null;
+  beneficiary_stakeholder_id: string;
+  beneficiary_name: string;
+  amount: number | null;
+  description: string;
+  distribution_type: DistributionType;
+  distribution_date: string;
+  receipt_acknowledged: boolean;
+  receipt_acknowledged_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface BeneficiarySummaryItem {
+  stakeholder_id: string;
+  beneficiary_name: string;
+  total_distributed: number;
+  distribution_count: number;
+  acknowledged_count: number;
+  pending_count: number;
+}
+
+export interface DistributionSummaryResponse {
+  total_distributed: number;
+  total_distributions: number;
+  total_acknowledged: number;
+  total_pending: number;
+  by_beneficiary: BeneficiarySummaryItem[];
+  by_type: Record<string, number>;
 }
 
 // ─── Portal (Beneficiary) ───────────────────────────────────────────────────

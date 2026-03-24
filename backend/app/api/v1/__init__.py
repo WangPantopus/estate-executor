@@ -7,6 +7,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.communications import dispute_flag_router
 from app.api.v1.communications import router as communications_router
 from app.api.v1.deadlines import router as deadlines_router
+from app.api.v1.distributions import router as distributions_router
 from app.api.v1.documents import router as documents_router
 from app.api.v1.entities import entity_map_router
 from app.api.v1.entities import router as entities_router
@@ -53,6 +54,11 @@ api_router.include_router(
     deadlines_router,
     prefix="/firms/{firm_id}/matters/{matter_id}/deadlines",
     tags=["deadlines"],
+)
+api_router.include_router(
+    distributions_router,
+    prefix="/firms/{firm_id}/matters/{matter_id}/distributions",
+    tags=["distributions"],
 )
 api_router.include_router(
     communications_router,

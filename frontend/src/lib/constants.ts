@@ -1,4 +1,4 @@
-import type { EstateType, AssetType, OwnershipType, TransferMechanism, AssetStatus, EntityType, FundingStatus } from "./types";
+import type { EstateType, AssetType, OwnershipType, TransferMechanism, AssetStatus, EntityType, FundingStatus, DistributionType } from "./types";
 
 export const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -204,6 +204,12 @@ export const FUNDING_STATUS_LABELS: Record<FundingStatus, string> = {
   fully_funded: "Fully Funded",
   partially_funded: "Partially Funded",
   unfunded: "Unfunded",
+};
+
+export const DISTRIBUTION_TYPE_LABELS: Record<DistributionType, string> = {
+  cash: "Cash",
+  asset_transfer: "Asset Transfer",
+  in_kind: "In Kind",
 };
 
 export const DOC_TYPE_LABELS: Record<string, string> = {

@@ -83,6 +83,9 @@ import type {
   PortalMessagesResponse,
   PortalMessageCreate,
   PortalMessageItem,
+  DistributionCreate,
+  DistributionResponse,
+  DistributionSummaryResponse,
 } from './types';
 
 // ─── Error classes ───────────────────────────────────────────────────────────
@@ -914,6 +917,47 @@ export class ApiClient {
     matterId: string,
   ): Promise<AIUsageStats> {
     return this.get(`${this.aiBase(firmId, matterId)}/usage-stats`);
+  }
+
+  // ─── Distributions ─────────────────────────────────────────────────────
+
+  private distBase(firmId: string, matterId: string) {
+    return `/firms/${firmId}/matters/${matterId}/distributions`;
+  }
+
+  async getDistributions(
+    firmId: string,
+    matterId: string,
+    params?: { page?: number; per_page?: number; beneficiary_id?: string },
+  ): Promise<PaginatedResponse<DistributionResponse>> {
+    return this.get(
+      `${this.distBase(firmId, matterId)}${buildQueryString(params)}`,
+    );
+  }
+
+  async recordDistribution(
+    firmId: string,
+    matterId: string,
+    data: DistributionCreate,
+  ): Promise<DistributionResponse> {
+    return this.post(this.distBase(firmId, matterId), data);
+  }
+
+  async acknowledgeDistribution(
+    firmId: string,
+    matterId: string,
+    distId: string,
+  ): Promise<DistributionResponse> {
+    return this.post(
+      `${this.distBase(firmId, matterId)}/${distId}/acknowledge`,
+    );
+  }
+
+  async getDistributionSummary(
+    firmId: string,
+    matterId: string,
+  ): Promise<DistributionSummaryResponse> {
+    return this.get(`${this.distBase(firmId, matterId)}/summary`);
   }
 
   // ─── Portal (Beneficiary) ──────────────────────────────────────────────
