@@ -93,13 +93,13 @@ async def clio_connect(
 
 @router.get("/clio/callback")
 async def clio_callback(
+    firm_id: UUID,
     code: str = Query(...),
     state: str = Query(...),
-    firm_id: str = Query("", alias="firm_id"),
     db: AsyncSession = Depends(get_db),
 ) -> RedirectResponse:
     """Handle Clio OAuth2 callback. Redirects to frontend settings page."""
-    # The firm_id is encoded in the state; we look it up from pending connections
+    # The firm_id comes from the path; we look it up from pending connections
     from sqlalchemy import select
 
     from app.models.integration_connections import IntegrationConnection
@@ -285,6 +285,7 @@ async def docusign_connect(
 
 @router.get("/docusign/callback")
 async def docusign_callback(
+    firm_id: UUID,
     code: str = Query(...),
     state: str = Query(...),
     db: AsyncSession = Depends(get_db),
@@ -544,6 +545,7 @@ async def quickbooks_connect(
 
 @router.get("/quickbooks/callback")
 async def quickbooks_callback(
+    firm_id: UUID,
     code: str = Query(...),
     state: str = Query(...),
     realm_id: str = Query(..., alias="realmId"),
